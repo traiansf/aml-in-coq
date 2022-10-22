@@ -7,13 +7,11 @@ From AML Require Import Structure Valuation PropositionalPatternValuation Patter
 
 Section sec_validity.
 
-Context
-  [sign : signature]
-  .
+Context `{signature}.
 
 Definition valid phi : Prop := forall (s : Structure), satisfies s phi.
 
-Lemma valid_top : valid (@pTop sign).
+Lemma valid_top : valid pTop.
 Proof. by intro; apply satisfies_top. Qed.
 
 Lemma valid_and_classic phi psi :
@@ -75,8 +73,6 @@ Proof.
   apply (member_of_indexed_intersection (λ a : idomain, pattern_valuation s (valuation_eupdate e x a) phi)).
 Qed.
 
-Context `{FinSet EVar EVarSet} `{FinSet SVar SVarSet}.
-
 Lemma valid_evar_rename x y phi :
   ~ EOccurs y phi ->
   EFreeFor x (PEVar y) phi ->
@@ -112,7 +108,6 @@ Proof.
     by cbn; rewrite IHphi1, IHphi2.
 Qed.
 
-(*
 Lemma valid_evar_sub_rename x y phi :
   valid (PImpl (esubst phi x (PEVar y)) (PEx x phi)).
 Proof.
@@ -137,6 +132,7 @@ Proof.
       contradict Hempty; apply not_elem_of_empty.
     }
     cbn.
-*)
+    remember (fresh _) as y'.
+Admitted.
 
 End sec_validity.

@@ -7,9 +7,8 @@ From AML Require Import Structure Valuation PropositionalPatternValuation.
 Section sec_pattern_valuation.
 
 Context
-  [sign : signature]
+  `{signature}
   (s : Structure)
-  (Pattern := @Pattern sign)
   .
 
 Definition ext_iapp (B C : Ensemble idomain) : Ensemble idomain :=
@@ -291,10 +290,6 @@ Proof.
   specialize (aes0 e).
   by apply constructive_indefinite_description in aes0.
 Qed.
-
-Context
-  `{FinSet EVar EVarSet}
-  `{FinSet SVar SVarSet}.
 
 Lemma pattern_valuation_evar_sub0_not_free e x delta phi c :
   ~ EVarFree x phi ->

@@ -7,9 +7,7 @@ From AML Require Import Validity.
 
 Section sec_tautology.
 
-Context
-  [sign : signature]
-  (Pattern := @Pattern sign).
+Context `{signature}.
 
 Definition Tautology (phi : Pattern) : Prop :=
   forall (s : Structure) F,  PropositionalPatternValuation F -> F phi ≡ top idomain.
@@ -62,7 +60,7 @@ Proof.
   by set_solver.
 Qed.
 
-Lemma tautology_bot_impl_phi phi : Tautology (PImpl (@PBot sign) phi).
+Lemma tautology_bot_impl_phi phi : Tautology (PImpl PBot phi).
 Proof.
   intros s F ?.
   rewrite top_pattern_valuation_impl_classic, ppv_bot by done.

@@ -8,7 +8,7 @@ From AML Require Import Valuation PropositionalPatternValuation PatternValuation
 Section sec_satisfaction.
 
 Context
-  [sign : signature]
+  `{signature}
   (s : Structure)
   .
 
@@ -29,13 +29,13 @@ Proof. done. Qed.
 Lemma esatisfies_cons e op : esatisfies e (POp op) <-> isigma op ≡ top idomain.
 Proof. done. Qed.
 
-Lemma esatisfies_bot e : ~ esatisfies e (@PBot sign).
+Lemma esatisfies_bot e : ~ esatisfies e PBot.
 Proof.
   intros contra. destruct (contra inhabitant) as [_ contra'].
   by apply contra'.
 Qed.
 
-Lemma esatisfies_top e : esatisfies e (@pTop sign).
+Lemma esatisfies_top e : esatisfies e pTop.
 Proof. by apply pattern_valuation_top. Qed.
 
 Lemma esatisfies_neg_classic e phi : esatisfies e (pNeg phi) <-> pattern_valuation s e phi ≡ ∅.
@@ -137,12 +137,12 @@ Proof.
   - by intro e; apply esatisfies_cons.
 Qed.
 
-Lemma satisfies_bot : ~ satisfies (@PBot sign).
+Lemma satisfies_bot : ~ satisfies PBot.
 Proof.
   by intros He; apply esatisfies_bot with inhabitant, He.
 Qed.
 
-Lemma satisfies_top : satisfies (@pTop sign).
+Lemma satisfies_top : satisfies pTop.
 Proof.
   by intro; apply esatisfies_top.
 Qed.
@@ -188,7 +188,7 @@ Proof.
   itauto.
 Qed.
 
-Context `{Set_ (@Pattern sign) PatternSet}.
+Context `{Set_ Pattern PatternSet}.
 
 Definition set_esatisfies (e : Valuation) (Gamma : PatternSet) :=
   forall phi, phi ∈ Gamma -> esatisfies e phi.

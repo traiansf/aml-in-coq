@@ -7,9 +7,7 @@ From AML Require Import Satisfaction SemanticConsequences.
 
 Section sec_predicates.
 
-Context
-  [sign : signature]
-  (Pattern := @Pattern sign).
+Context `{signature}.
 
 Definition spredicate (s : Structure) (phi : Pattern) : Prop :=
   forall (e : Valuation), CrispSet (pattern_valuation s e phi).

@@ -3,16 +3,15 @@ From stdpp Require Import prelude.
 From AML Require Import Ensemble.
 From AML Require Import Signature Pattern Structure.
 
-Class PropositionalPatternValuation {sign : signature} {idomain} (F : @Pattern sign -> Ensemble idomain) : Prop :=
+Class PropositionalPatternValuation `{signature} {idomain} (F : Pattern -> Ensemble idomain) : Prop :=
 {
-  ppv_bot : F (@PBot sign) ≡ ∅;
+  ppv_bot : F PBot ≡ ∅;
   ppv_impl : forall phi psi, F (PImpl phi psi) ≡ complement (F phi ∖ F psi);
 }.
 
 Section sec_propositional_pattern_valuation_props.
   Context
-    [sign : signature]
-    (Pattern := @Pattern sign)
+    `{signature}
     (s : Structure)
     (F : Pattern -> Ensemble idomain)
     `{!PropositionalPatternValuation F}.
@@ -32,7 +31,7 @@ Proof.
   by apply union_empty_r.
 Qed.
 
-Lemma pattern_valuation_top : F (@pTop sign) ≡ top idomain.
+Lemma pattern_valuation_top : F pTop ≡ top idomain.
 Proof.
   unfold pTop; rewrite pattern_valuation_neg_classic, ppv_bot.
   by apply complement_top.

@@ -6,10 +6,7 @@ From AML Require Import Valuation PropositionalPatternValuation PatternValuation
 
 Section sec_semantic_consequences.
 
-  Context
-    [sign : signature]
-    (Pattern := @Pattern sign)
-    .
+  Context `{signature}.
 
 Definition global_semantic_consequence (phi psi : Pattern) : Prop :=
   forall (s : Structure), satisfies s phi -> satisfies s psi.
@@ -32,7 +29,7 @@ Qed.
 Proof. by intros phi psi Hcns Hphi; apply Hcns, Hphi. Qed.
 
 #[export] Instance global_semantic_consequence_valid :
-  Proper (global_semantic_consequence ==> Basics.impl) (@valid sign).
+  Proper (global_semantic_consequence ==> Basics.impl) valid.
 Proof. intros phi psi Hcns Hphi s; rewrite <- Hcns; apply Hphi. Qed.
 
 #[export] Instance globally_logically_equivalent_satisfies s :
@@ -43,7 +40,7 @@ Proof.
 Qed.
 
 #[export] Instance globally_logically_equivalent_valid :
-  Proper (globally_logically_equivalent ==> iff) (@valid sign).
+  Proper (globally_logically_equivalent ==> iff) valid.
 Proof. by intros phi psi Heqv; unfold valid, Validity.valid; setoid_rewrite Heqv. Qed.
 
 Definition local_semantic_consequence (phi psi : Pattern) : Prop :=
@@ -67,7 +64,7 @@ Qed.
 Proof. intros phi psi Hcns Hphi; apply Hcns, Hphi. Qed.
 
 #[export] Instance local_semantic_consequence_valid :
-  Proper (local_semantic_consequence ==> Basics.impl) (@valid sign).
+  Proper (local_semantic_consequence ==> Basics.impl) valid.
 Proof. by intros phi psi Hcns Hphi s e; apply Hcns, Hphi. Qed.
 
 #[export] Instance locally_logically_equivalent_satisfies s e :
@@ -78,7 +75,7 @@ Proof.
 Qed.
 
 #[export] Instance locally_logically_equivalent_valid :
-  Proper (locally_logically_equivalent ==> iff) (@valid sign).
+  Proper (locally_logically_equivalent ==> iff) valid.
 Proof.
   intros phi psi; rewrite locally_logically_equivalent_iff; intros [Hl Hr].
   by split; [rewrite Hl | rewrite Hr].
@@ -114,14 +111,14 @@ Proof.
 Qed.
 
 #[export] Instance strong_semantic_consequence_valid_classic :
-  Proper (strong_semantic_consequence ==> Basics.impl) (@valid sign).
+  Proper (strong_semantic_consequence ==> Basics.impl) valid.
 Proof.
   intros phi psi; rewrite strong_semantic_consequence_valid.
   by unfold Basics.impl; apply valid_mp_classic.
 Qed.
 
 #[export] Instance strongly_logically_equivalent_valid_alt_classic :
-  Proper (strongly_logically_equivalent ==> iff) (@valid sign).
+  Proper (strongly_logically_equivalent ==> iff) valid.
 Proof.
   intros phi psi; rewrite strongly_logically_equivalent_iff; intros [Hl Hr].
   by split; [rewrite Hl | rewrite Hr].

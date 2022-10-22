@@ -2,11 +2,7 @@ From stdpp Require Import prelude.
 From Coq Require Import Program.Equality.
 From AML Require Import Signature.
 
-Section sec_expression.
-
-Context [sign : signature].
-
-Inductive Symbols : Type :=
+Inductive Symbols `{signature} : Type :=
 | evar : EVar  -> Symbols
 | svar : SVar -> Symbols
 | bot : Symbols
@@ -15,6 +11,10 @@ Inductive Symbols : Type :=
 | mu : Symbols
 | app : Symbols
 | op : Sigma -> Symbols.
+
+Section sec_expression.
+
+Context `{signature}.
 
 Definition Expression : Type := list Symbols.
 
@@ -206,5 +206,3 @@ Proof.
 Qed.
 
 End sec_expression.
-
-Arguments Expression sign : assert.

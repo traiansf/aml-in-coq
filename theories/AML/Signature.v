@@ -1,13 +1,7 @@
 From stdpp Require Import prelude.
 
-Class signature : Type := {
-    EVar : Type;
-    EVar_infinite :> Infinite EVar;
-    EVar_dec :> EqDecision EVar;
-    SVar : Type;
-    SVar_infinite :> Infinite SVar;
-    SVar_dec :> EqDecision SVar;
-    Sigma : Type;
-    Sigma_dec :> EqDecision Sigma;
-  }.
+Class signature (EVar SVar Sigma EVarSet SVarSet: Type)
+  `{Infinite EVar} `{FinSet EVar EVarSet}
+  `{Infinite SVar} `{FinSet SVar SVarSet}
+  `{EqDecision Sigma}.
   

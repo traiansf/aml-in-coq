@@ -1,14 +1,7 @@
 From stdpp Require Import prelude.
 From AML Require Import Signature Expression.
 
-Section sec_pattern.
-
-Context
-  [sign : signature]
-  (Expression := @Expression sign)
-  (expression_pattern := @expression_pattern sign).
-
-Inductive Pattern : Type :=
+Inductive Pattern `{signature} : Type :=
 | PEVar : EVar -> Pattern
 | PSVar : SVar -> Pattern
 | PBot : Pattern
@@ -17,6 +10,11 @@ Inductive Pattern : Type :=
 | PMu : SVar -> Pattern -> Pattern
 | PApp : Pattern -> Pattern -> Pattern
 | POp : Sigma -> Pattern.
+
+Section sec_pattern.
+
+Context
+  `{signature}.
 
 Definition pNeg (phi : Pattern) := PImpl phi PBot.
 Definition pTop := pNeg PBot.
@@ -74,11 +72,11 @@ Fixpoint unparser (p : Pattern) : Expression :=
   match p with
   | PEVar x => [evar x]
   | PSVar X => [svar X]
-  | PBot => [@bot sign]
-  | PImpl p1 p2 => [@impl sign] ++ unparser p1 ++ unparser p2
-  | PEx x p => [@ex sign; evar x] ++ unparser p
-  | PMu X p => [@mu sign; svar X] ++ unparser p
-  | PApp p1 p2 => [@app sign] ++ unparser p1 ++ unparser p2
+  | PBot => [bot]
+  | PImpl p1 p2 => [impl] ++ unparser p1 ++ unparser p2
+  | PEx x p => [ex; evar x] ++ unparser p
+  | PMu X p => [mu; svar X] ++ unparser p
+  | PApp p1 p2 => [app] ++ unparser p1 ++ unparser p2
   | POp c => [op c]
   end.
 

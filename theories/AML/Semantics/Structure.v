@@ -8,4 +8,3 @@ Class Structure `{signature} : Type :=
   iapp : idomain -> idomain -> Ensemble idomain;
   isigma : Sigma -> Ensemble idomain
 }.
-

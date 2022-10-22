@@ -2,69 +2,69 @@ From stdpp Require Import prelude.
 From AML Require Import Signature Pattern Variables Substitution.
 
 
-Class BotClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class BotClosed `{signature} (P : Pattern -> Prop) :=
 {
-  bot_closed : P (@PBot sign)
+  bot_closed : P PBot
 }.
 
-Class TopClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class TopClosed `{signature} (P : Pattern -> Prop) :=
 {
-  top_closed : P (@pTop sign)
+  top_closed : P pTop
 }.
 
-Class NegClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class NegClosed `{signature} (P : Pattern -> Prop) :=
 {
   neg_closed : forall phi, P phi -> P (pNeg phi)
 }.
 
-Class ImplClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class ImplClosed `{signature} (P : Pattern -> Prop) :=
 {
   impl_closed : forall phi psi, P phi -> P psi -> P (PImpl phi psi)
 }.
 
-Class AndClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class AndClosed `{signature} (P : Pattern -> Prop) :=
 {
   and_closed : forall phi psi, P phi -> P psi -> P (pAnd phi psi)
 }.
 
-Class OrClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class OrClosed `{signature} (P : Pattern -> Prop) :=
 {
   or_closed : forall phi psi, P phi -> P psi -> P (pOr phi psi)
 }.
 
-Class IffClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class IffClosed `{signature} (P : Pattern -> Prop) :=
 {
   iff_closed : forall phi psi, P phi -> P psi -> P (pIff phi psi)
 }.
 
-Class FiniteConjunctionClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class FiniteConjunctionClosed `{signature} (P : Pattern -> Prop) :=
 {
   finite_conjunction_closed :
     forall phis, Forall P phis -> P (finite_conjunction phis)
 }.
 
-Class FiniteDisjunctionClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class FiniteDisjunctionClosed `{signature} (P : Pattern -> Prop) :=
 {
   finite_disjunction_closed :
     forall phis, Forall P phis -> P (finite_disjunction phis)
 }.
 
-Class ExClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class ExClosed `{signature} (P : Pattern -> Prop) :=
 {
   ex_closed : forall x phi, P phi -> P (PEx x phi)
 }.
 
-Class AllClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class AllClosed `{signature} (P : Pattern -> Prop) :=
 {
   all_closed : forall x phi, P phi -> P (pAll x phi)
 }.
 
-Class MuClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class MuClosed `{signature} (P : Pattern -> Prop) :=
 {
   mu_closed : forall X phi, OccursPositively X phi -> P phi -> P (PMu X phi)
 }.
 
-Class NuClosed {sign : signature} (P : @Pattern sign -> Prop) :=
+Class NuClosed `{signature} (P : Pattern -> Prop) :=
 {
   nu_closed : forall X phi, OccursPositively X phi -> P phi -> P (pNu X phi)
 }.
@@ -72,7 +72,8 @@ Class NuClosed {sign : signature} (P : @Pattern sign -> Prop) :=
 Section sec_pattern_closure_properties.
 
 Context
-  `{BotClosed P}
+  `{signature}
+  `{!BotClosed P}
   `{!ImplClosed P}.
 
 #[export] Instance closed_neg : NegClosed P.
@@ -111,22 +112,22 @@ End sec_pattern_closure_properties.
 
 Section sec_closed_pattern_closure_properties.
 
-Context [sign : signature].
+Context `{signature}.
 
-#[export] Instance closed_pattern_bot : BotClosed (@ClosedPattern sign).
+#[export] Instance closed_pattern_bot : BotClosed ClosedPattern.
 Proof. by constructor; constructor; inversion 1. Qed.
 
-#[export] Instance closed_pattern_impl : ImplClosed (@ClosedPattern sign).
+#[export] Instance closed_pattern_impl : ImplClosed ClosedPattern.
 Proof.
   by constructor; intros phi psi [] []; constructor; inversion 1; subst; firstorder.
 Qed.
 
-#[export] Instance closed_pattern_ex : ExClosed (@ClosedPattern sign).
+#[export] Instance closed_pattern_ex : ExClosed ClosedPattern.
 Proof.
   by constructor; intros x phi []; constructor; inversion 1; subst; firstorder.
 Qed.
 
-#[export] Instance closed_pattern_mu : MuClosed (@ClosedPattern sign).
+#[export] Instance closed_pattern_mu : MuClosed ClosedPattern.
 Proof.
   by constructor; intros x phi Hpos []; constructor; inversion 1; subst; firstorder.
 Qed.

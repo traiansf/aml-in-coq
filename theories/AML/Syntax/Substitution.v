@@ -5,10 +5,7 @@ From AML Require Import Signature Pattern Variables.
 Section sec_substitution.
 
 Context
-  [sign : signature]
-  `{FinSet EVar EVarSet}
-  `{FinSet SVar SVarSet}
-  (Pattern := @Pattern sign).
+  `{signature}.
 
 Fixpoint evar_sub0 (x : EVar) (delta : Pattern) (p : Pattern) : Pattern :=
   match p with
@@ -99,7 +96,7 @@ Proof.
       contradict Hocc; [apply eo_impl_left | apply eo_impl_right].
   - feed specialize IHphi; [by contradict Hocc; apply eo_ex_neq |].
     case_decide; [subst e |].
-    + eapply EFreeForInd_x_not_occurs; [done |].
+    + apply EFreeForInd_x_not_occurs.
       cut (~ EOccursInd x (evar_sub0 x (PEVar y) (evar_rename x y phi)));
         [rewrite <- !EOccursInd_iff, EOccurs_ex by done; itauto |].
       by apply evar_sub_rename_not_occurs.
@@ -179,7 +176,7 @@ Definition svar_rename_iter (xs ys : list SVar) (p : Pattern) : Pattern :=
       by constructor; [| inversion 1].
     - feed specialize IHphi; [by contradict Hocc; apply so_mu_neq |].
       case_decide; [subst s |].
-      + eapply SFreeForInd_x_not_occurs; [done |].
+      + apply SFreeForInd_x_not_occurs.
         cut (~ SOccursInd x (svar_sub0 x (PSVar y) (svar_rename x y phi)));
           [rewrite <- !SOccursInd_iff, SOccurs_mu by done; itauto |].
         by apply svar_sub_rename_not_occurs.
@@ -194,8 +191,8 @@ Definition svar_rename_iter (xs ys : list SVar) (p : Pattern) : Pattern :=
     let bound_phi_psi_evars := elements bound_phi_psi_evar_set in
     let bound_phi_psi_svar_set := BSV phi ∩ SV psi  : SVarSet in
     let bound_phi_psi_svars := elements bound_phi_psi_svar_set in
-    let fresh_evars := fresh_set_iter (length bound_phi_psi_evars) phi_psi_evars in
-    let fresh_svars := fresh_set_iter (length bound_phi_psi_svars) phi_psi_svars in
+    let fresh_evars := fresh_list (length bound_phi_psi_evars) phi_psi_evars in
+    let fresh_svars := fresh_list (length bound_phi_psi_svars) phi_psi_svars in
     let etheta := evar_rename_iter bound_phi_psi_evars fresh_evars phi in
     let theta := svar_rename_iter bound_phi_psi_svars fresh_svars etheta in
     evar_sub0 x psi theta.
@@ -207,8 +204,8 @@ Definition svar_rename_iter (xs ys : list SVar) (p : Pattern) : Pattern :=
     let bound_phi_psi_evars := elements bound_phi_psi_evar_set in
     let bound_phi_psi_svar_set := BSV phi ∩ SV psi  : SVarSet in
     let bound_phi_psi_svars := elements bound_phi_psi_svar_set in
-    let fresh_evars := fresh_set_iter (length bound_phi_psi_evars) phi_psi_evars in
-    let fresh_svars := fresh_set_iter (length bound_phi_psi_svars) phi_psi_svars in
+    let fresh_evars := fresh_list (length bound_phi_psi_evars) phi_psi_evars in
+    let fresh_svars := fresh_list (length bound_phi_psi_svars) phi_psi_svars in
     let etheta := evar_rename_iter bound_phi_psi_evars fresh_evars phi in
     let theta := svar_rename_iter bound_phi_psi_svars fresh_svars etheta in
     svar_sub0 x psi theta.

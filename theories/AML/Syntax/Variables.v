@@ -5,10 +5,7 @@ From AML Require Import Signature Pattern.
 Section sec_variables.
 
 Context
-  [sign : signature]
-  `{FinSet EVar EVarSet}
-  `{FinSet SVar SVarSet}
-  (Pattern := @Pattern sign).
+  `{signature}.
 
 Inductive EVarFree (x : EVar) : Pattern -> Prop :=
 | ef_evar : EVarFree x (PEVar x)
@@ -418,7 +415,7 @@ Qed.
 Inductive EFreeForInd (x : EVar) (delta : Pattern) : Pattern -> Prop :=
 | effi_evar : forall y, EFreeForInd x delta (PEVar y)
 | effi_svar : forall Y, EFreeForInd x delta (PSVar Y)
-| effi_bot : EFreeForInd x delta (@PBot sign)
+| effi_bot : EFreeForInd x delta PBot
 | effi_op : forall o, EFreeForInd x delta (POp o)
 | effi_impl : forall phi1 phi2, EFreeForInd x delta phi1 -> EFreeForInd x delta phi2 ->
     EFreeForInd x delta (PImpl phi1 phi2)
@@ -467,7 +464,7 @@ Inductive OccursPositively (X : SVar) : Pattern -> Prop :=
 | op_evar : forall x, OccursPositively X (PEVar x)
 | op_svar : forall Y, OccursPositively X (PSVar Y)
 | op_cons : forall c, OccursPositively X (POp c)
-| op_bot : OccursPositively X (@PBot sign)
+| op_bot : OccursPositively X PBot
 | op_app : forall phi psi, OccursPositively X phi -> OccursPositively X psi ->
     OccursPositively X (PApp phi psi)
 | op_ex : forall x phi, OccursPositively X phi -> OccursPositively X (PEx x phi)
@@ -480,7 +477,7 @@ with OccursNegatively (X : SVar) : Pattern -> Prop :=
 | on_evar : forall x, OccursNegatively X (PEVar x)
 | on_svar : forall Y, Y <> X -> OccursNegatively X (PSVar Y)
 | on_cons : forall c, OccursNegatively X (POp c)
-| on_bot : OccursNegatively X (@PBot sign)
+| on_bot : OccursNegatively X PBot
 | on_app : forall phi psi, OccursNegatively X phi -> OccursNegatively X psi ->
     OccursNegatively X (PApp phi psi)
 | on_ex : forall x phi, OccursNegatively X phi -> OccursNegatively X (PEx x phi)
@@ -494,7 +491,7 @@ with OccursNegatively (X : SVar) : Pattern -> Prop :=
 Inductive SFreeForInd (x : SVar) (delta : Pattern) : Pattern -> Prop :=
 | sffi_evar : forall y, SFreeForInd x delta (PEVar y)
 | sffi_svar : forall Y, SFreeForInd x delta (PSVar Y)
-| sffi_bot : SFreeForInd x delta (@PBot sign)
+| sffi_bot : SFreeForInd x delta PBot
 | sffi_op : forall o, SFreeForInd x delta (POp o)
 | sffi_impl : forall phi1 phi2, SFreeForInd x delta phi1 -> SFreeForInd x delta phi2 ->
     SFreeForInd x delta (PImpl phi1 phi2)
@@ -517,25 +514,6 @@ Proof.
   - constructor; [by apply IHphi; contradict Hx; constructor |].
     by intros _; contradict Hx; constructor; apply SOccursInd_iff; left.
 Qed.
-
-Section sec_fresh.
-
-Context
-  `{Infinite A}
-  `{FinSet A SetA}.
-
-Definition fresh_set (avoid : SetA) : A :=
-  fresh (elements avoid).
-
-Fixpoint fresh_set_iter (n : nat) (avoid : SetA) :=
-  match n with
-  | 0 => []
-  | S n' =>
-    let a' := fresh_set avoid in
-      a' :: fresh_set_iter n' (avoid ∪ {[a']})
-  end.
-
-End sec_fresh.
 
 Record ClosedPattern (phi : Pattern) : Prop :=
 {
