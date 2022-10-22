@@ -676,6 +676,16 @@ Fixpoint evar_sub0 (x : EVar) (delta : Pattern) (p : Pattern) : Pattern :=
   | PMu X phi => PMu X (evar_sub0 x delta phi)
   end.
 
+Lemma evar_sub0_id x phi : evar_sub0 x (PEVar x) phi = phi.
+Proof.
+  induction phi; cbn. 2,3,8: done.
+  - by case_decide; subst.
+  - by rewrite IHphi1, IHphi2.
+  - by rewrite IHphi; case_decide.
+  - by rewrite IHphi.
+  - by rewrite IHphi1, IHphi2.
+Qed.
+
 Lemma SubPatternExBound z theta phi : SubPattern (PEx z theta) phi -> z ∈ BEV phi.
 Proof.
   induction 1; cbn.
@@ -798,6 +808,14 @@ Proof.
     by intros _; contradict Hx; constructor; apply EOccursInd_iff; left.
 Qed.
 
+Lemma EFreeFor_x_y_if_not_bound x y phi (Hx : ~ EVarBound y phi) : EFreeFor x (PEVar y) phi.
+Proof.
+  split; [| by inversion 1].
+  inversion 1; subst z; intros theta Hsub; contradict Hx.
+  by eapply EVarBound_BEV, SubPatternExBound. 
+Qed.
+ 
+
 Fixpoint evar_rename (x y : EVar) (p : Pattern) : Pattern :=
   match p with
   | PEVar _ => p
@@ -812,6 +830,15 @@ Fixpoint evar_rename (x y : EVar) (p : Pattern) : Pattern :=
       else PEx z (evar_rename x y phi)
   | PMu X phi => PMu X (evar_rename x y phi)
   end.
+
+Lemma evar_rename_id x phi : evar_rename x x phi = phi.
+Proof.
+  induction phi; cbn. 1-3,8: done.
+  - by rewrite IHphi1, IHphi2.
+  - by rewrite IHphi, evar_sub0_id; case_decide; subst.
+  - by rewrite IHphi.
+  - by rewrite IHphi1, IHphi2.
+Qed.
 
 Definition evar_rename_iter (xs ys : list EVar) (p : Pattern) : Pattern :=
   foldr (fun (xy : EVar * EVar) (p : Pattern) => evar_rename xy.1 xy.2 p)
@@ -850,7 +877,7 @@ Lemma evar_sub0_not_free x chi phi :
 Proof.
   induction phi; cbn; intro Hnfree; try done.
   - by case_decide; [subst; contradict Hnfree; constructor |].
-  - by rewrite IHphi1, IHphi2; [done |..];
+  - rewrite IHphi1, IHphi2; [done |..];
       contradict Hnfree; apply EVarFree_FEV; cbn;
       rewrite elem_of_union, <- !EVarFree_FEV;
       [right | left].
@@ -1073,32 +1100,32 @@ Class Structure : Type :=
 {
   idomain : Type;
   non_empty :> Inhabited idomain;
-  ipow_domain : Type := idomain -> Prop;
-  iapp : idomain -> idomain -> ipow_domain;
-  isigma : Sigma -> ipow_domain
+  Ensemble idomain : Type := idomain -> Prop;
+  iapp : idomain -> idomain -> Ensemble idomain;
+  isigma : Sigma -> Ensemble idomain
 }.
 
 Section fixed_structure.
 
 Context `(Structure).
 
-#[export] Instance pow_set_elem_of : ElemOf idomain ipow_domain := fun x A => A x.
-#[export] Instance pow_set_empty : Empty ipow_domain := const False.
-#[export] Instance pow_set_singleton : Singleton idomain ipow_domain :=
+#[export] Instance pow_set_elem_of : ElemOf idomain Ensemble idomain := fun x A => A x.
+#[export] Instance pow_set_empty : Empty Ensemble idomain := const False.
+#[export] Instance pow_set_singleton : Singleton idomain Ensemble idomain :=
   fun x => fun y => y = x.
-#[export] Instance pow_set_union : Union ipow_domain :=
+#[export] Instance pow_set_union : Union Ensemble idomain :=
   fun A B => fun x => x ∈ A \/ x ∈ B.
-#[export] Instance pow_set_intersection : Intersection ipow_domain :=
+#[export] Instance pow_set_intersection : Intersection Ensemble idomain :=
   fun A B => fun x => x ∈ A /\ x ∈ B.
-#[export] Instance pow_set_difference : Difference ipow_domain :=
+#[export] Instance pow_set_difference : Difference Ensemble idomain :=
   fun A B => fun x => x ∈ A /\ x ∉ B.
-#[export] Instance pow_set_semiset : SemiSet idomain ipow_domain.
+#[export] Instance pow_set_semiset : SemiSet idomain Ensemble idomain.
 Proof. by split; [inversion 1 |..]. Qed.
-#[export] Instance pow_set_set : Set_ idomain ipow_domain.
+#[export] Instance pow_set_set : Set_ idomain Ensemble idomain.
 Proof. by split; [typeclasses eauto |..]. Qed.
 
-Definition complement (A : ipow_domain) : ipow_domain := fun a => a ∉ A.
-Definition top : ipow_domain := const true.
+Definition complement (A : Ensemble idomain) : Ensemble idomain := fun a => a ∉ A.
+Definition top : Ensemble idomain := const true.
 
 Lemma elem_of_equiv_top X : X ≡ top ↔ ∀ x, x ∈ X.
 Proof. set_solver. Qed.
@@ -1107,19 +1134,19 @@ Lemma top_subseteq_equiv A : top ⊆ A <-> A ≡ top.
 Proof. by split; intro Hsub; [split; [done |] | intro]; apply Hsub. Qed.
 
 Definition filtered_union
-    `(P : index -> Prop) (A : index -> ipow_domain) : ipow_domain :=
+    `(P : index -> Prop) (A : index -> Ensemble idomain) : Ensemble idomain :=
   fun a => exists i, P i /\ a ∈ A i.
 
 Lemma elem_of_filtered_union
-    a `(P : index -> Prop) (A : index -> ipow_domain) :
+    a `(P : index -> Prop) (A : index -> Ensemble idomain) :
   a ∈ filtered_union P A <-> exists i, P i /\ a ∈ A i.
 Proof. done. Qed.
 
-Lemma member_of_filtered_union `(P : index -> Prop) (A : index -> ipow_domain) i :
+Lemma member_of_filtered_union `(P : index -> Prop) (A : index -> Ensemble idomain) i :
   P i -> A i ⊆ filtered_union P A.
 Proof. by intros Hi a HAi; apply elem_of_filtered_union; eexists. Qed.
 
-Lemma empty_filtered_union `(P : index -> Prop) (A : index -> ipow_domain) :
+Lemma empty_filtered_union `(P : index -> Prop) (A : index -> Ensemble idomain) :
   filtered_union P A ≡ ∅ <-> forall i, P i -> A i ≡ ∅.
 Proof.
   split.
@@ -1130,21 +1157,21 @@ Proof.
     by eapply Hunion.
 Qed.
 
-Definition indexed_union {index} : (index -> ipow_domain) -> ipow_domain :=
+Definition indexed_union {index} : (index -> Ensemble idomain) -> Ensemble idomain :=
   filtered_union (const True).
 
-Lemma elem_of_indexed_union a `(A : index -> ipow_domain) :
+Lemma elem_of_indexed_union a `(A : index -> Ensemble idomain) :
   a ∈ indexed_union A <-> exists i, a ∈ A i.
 Proof.
   unfold indexed_union; rewrite elem_of_filtered_union.
   by split; intros [i Hi]; exists i; [apply Hi | split].
 Qed.
 
-Lemma member_of_indexed_union `(A : index -> ipow_domain) i :
+Lemma member_of_indexed_union `(A : index -> Ensemble idomain) i :
   A i ⊆ indexed_union A.
 Proof. by apply member_of_filtered_union. Qed.
 
-Lemma empty_indexed_union `(A : index -> ipow_domain) :
+Lemma empty_indexed_union `(A : index -> Ensemble idomain) :
   indexed_union A ≡ ∅ <-> forall i, A i ≡ ∅.
 Proof.
   unfold indexed_union; rewrite empty_filtered_union.
@@ -1152,20 +1179,20 @@ Proof.
 Qed.
 
 Definition filtered_intersection
-    `(P : index -> Prop) (A : index -> ipow_domain) : ipow_domain :=
+    `(P : index -> Prop) (A : index -> Ensemble idomain) : Ensemble idomain :=
   fun a => forall i, P i -> a ∈ A i.
 
 Lemma elem_of_filtered_intersection
-    a `(P : index -> Prop) (A : index -> ipow_domain) :
+    a `(P : index -> Prop) (A : index -> Ensemble idomain) :
   a ∈ filtered_intersection P A <-> forall i, P i -> a ∈ A i.
 Proof. done. Qed.
 
-Lemma member_of_filtered_intersection `(P : index -> Prop) (A : index -> ipow_domain) i :
+Lemma member_of_filtered_intersection `(P : index -> Prop) (A : index -> Ensemble idomain) i :
   P i -> filtered_intersection P A ⊆ A i.
 Proof. by intros Hi a; rewrite elem_of_filtered_intersection; intros HA; apply HA. Qed.
 
 Lemma filtered_intersection_empty_top
-    `(P : index -> Prop) (A : index -> ipow_domain) :
+    `(P : index -> Prop) (A : index -> Ensemble idomain) :
   (forall i, ~ P i) -> filtered_intersection P A ≡ top.
 Proof.
   intros HnP; apply elem_of_equiv_top; intro a.
@@ -1173,21 +1200,21 @@ Proof.
   by exfalso; eapply HnP.
 Qed.
 
-Definition indexed_intersection {index} : (index -> ipow_domain) -> ipow_domain :=
+Definition indexed_intersection {index} : (index -> Ensemble idomain) -> Ensemble idomain :=
   filtered_intersection (const True).
 
-Lemma elem_of_indexed_intersection a `(A : index -> ipow_domain) :
+Lemma elem_of_indexed_intersection a `(A : index -> Ensemble idomain) :
   a ∈ indexed_intersection A <-> forall i, a ∈ A i.
 Proof.
   unfold indexed_intersection; rewrite elem_of_filtered_intersection.
   by split; intros Hall **; apply Hall.
 Qed.
 
-Lemma member_of_indexed_intersection `(A : index -> ipow_domain) i :
+Lemma member_of_indexed_intersection `(A : index -> Ensemble idomain) i :
   indexed_intersection A ⊆ A i.
 Proof. by apply member_of_filtered_intersection. Qed.
 
-Definition intersection_list : list ipow_domain → ipow_domain := fold_right (∩) top.
+Definition intersection_list : list Ensemble idomain → Ensemble idomain := fold_right (∩) top.
 Notation "⋂ l" := (intersection_list l) (at level 20, format "⋂ l") : stdpp_scope.
 
 Lemma elem_of_intersection_list Xs x : x ∈ ⋂ Xs ↔ forall X, X ∈ Xs -> x ∈ X.
@@ -1200,7 +1227,7 @@ Proof.
     by intros; apply HXs; right.
 Qed.
 
-Definition sym_diff (A B : ipow_domain) : ipow_domain := (A ∖ B) ∪ (B ∖ A).
+Definition sym_diff (A B : Ensemble idomain) : Ensemble idomain := (A ∖ B) ∪ (B ∖ A).
 
 #[export] Instance complement_subseteq_proper : Proper ((⊆) ==> flip (⊆)) complement.
 Proof.
@@ -1254,7 +1281,7 @@ Proof.
   by split; [apply not_and_or | intros [] []].
 Qed.
 
-Lemma complement_filtered_union `(P : index -> Prop) (A : index -> ipow_domain) :
+Lemma complement_filtered_union `(P : index -> Prop) (A : index -> Ensemble idomain) :
   complement (filtered_union P A) ≡ filtered_intersection P (complement ∘ A).
 Proof.
   intro x; rewrite elem_of_filtered_intersection; setoid_rewrite elem_of_complement;
@@ -1263,11 +1290,11 @@ Proof.
   by intros Hnix i Hi; contradict Hnix; eexists.
 Qed.
 
-Lemma complement_indexed_union `(f : index -> ipow_domain) :
+Lemma complement_indexed_union `(f : index -> Ensemble idomain) :
   complement (indexed_union f) ≡ indexed_intersection (complement ∘ f).
 Proof. by unfold indexed_union; rewrite complement_filtered_union. Qed.
 
-Lemma complement_filtered_intersection_classic `(P : index -> Prop) `(A : index -> ipow_domain) :
+Lemma complement_filtered_intersection_classic `(P : index -> Prop) `(A : index -> Ensemble idomain) :
   complement (filtered_intersection P A) ≡ filtered_union P (complement ∘ A).
 Proof.
   intro x; rewrite elem_of_filtered_union; setoid_rewrite elem_of_complement;
@@ -1277,21 +1304,21 @@ Proof.
   by eexists; apply imply_to_and in Hnot.
 Qed.
 
-Lemma complement_indexed_intersection_classic `(f : index -> ipow_domain) :
+Lemma complement_indexed_intersection_classic `(f : index -> Ensemble idomain) :
   complement (indexed_intersection f) ≡ indexed_union (complement ∘ f).
 Proof.
   by unfold indexed_intersection; rewrite complement_filtered_intersection_classic.
 Qed.
 
-#[export]  Instance intersection_empty_l : LeftId (≡@{ipow_domain}) top (∩).
+#[export]  Instance intersection_empty_l : LeftId (≡@{Ensemble idomain}) top (∩).
 Proof. intros X. set_solver. Qed.
-#[export] Instance intersection_empty_r : RightId (≡@{ipow_domain}) top (∩).
+#[export] Instance intersection_empty_r : RightId (≡@{Ensemble idomain}) top (∩).
 Proof. intros X. set_solver. Qed.
 
 Lemma top_intersection A B : A ∩ B ≡ top <-> A ≡ top /\ B ≡ top.
 Proof. set_solver. Qed.
 
-Lemma top_filtered_intersection `(P : index -> Prop) (f : index -> ipow_domain) :
+Lemma top_filtered_intersection `(P : index -> Prop) (f : index -> Ensemble idomain) :
   filtered_intersection P f ≡ top
     <->
   forall B, P B -> f B ≡ top.
@@ -1300,7 +1327,7 @@ Proof.
   itauto.
 Qed.
 
-Lemma top_indexed_intersection (f : ipow_domain -> ipow_domain) :
+Lemma top_indexed_intersection (f : Ensemble idomain -> Ensemble idomain) :
   indexed_intersection f ≡ top
     <->
   forall B, f B ≡ top.
@@ -1321,7 +1348,7 @@ Qed.
 Lemma difference_alt A B : A ∖ B ≡ A ∩ complement B.
 Proof. set_solver. Qed.
 
-Lemma subseteq_empty_difference_classic (X Y : ipow_domain) : X ⊆ Y <-> X ∖ Y ≡ ∅.
+Lemma subseteq_empty_difference_classic (X Y : Ensemble idomain) : X ⊆ Y <-> X ∖ Y ≡ ∅.
 Proof.
   split; [apply subseteq_empty_difference |].
   intros Hxy a Ha; destruct (Hxy a) as [Hxy' _].
@@ -1349,7 +1376,7 @@ Proof.
     by intros [[] | []].
 Qed.
 
-Definition ext_iapp (B C : ipow_domain) : ipow_domain :=
+Definition ext_iapp (B C : Ensemble idomain) : Ensemble idomain :=
   fun x => exists b, b ∈ B /\ exists c, c ∈ C /\ x ∈ iapp b c.
 
 Lemma elem_of_ext_iapp a B C :
@@ -1407,7 +1434,7 @@ Proof.
   by destruct Hcd as [Hc Hd]; repeat esplit.
 Qed.
 
-Lemma ext_iapp_filtered_union_l `(P : index -> Prop) (A : index -> ipow_domain) B :
+Lemma ext_iapp_filtered_union_l `(P : index -> Prop) (A : index -> Ensemble idomain) B :
   ext_iapp (filtered_union P A) B ≡ filtered_union P (fun i => ext_iapp (A i) B).
 Proof.
   split.
@@ -1415,33 +1442,33 @@ Proof.
   - by intros (i & Hi & ai & Hai & b & Hb & Hx); repeat esplit.
 Qed.
 
-Lemma ext_iapp_indexed_union_l `(A : index -> ipow_domain) B :
+Lemma ext_iapp_indexed_union_l `(A : index -> Ensemble idomain) B :
   ext_iapp (indexed_union A) B ≡ indexed_union (fun i => ext_iapp (A i) B).
 Proof. by apply ext_iapp_filtered_union_l. Qed.
 
-Lemma ext_iapp_filtered_union_r `(P : index -> Prop) (A : index -> ipow_domain) B :
+Lemma ext_iapp_filtered_union_r `(P : index -> Prop) (A : index -> Ensemble idomain) B :
   ext_iapp B (filtered_union P A) ≡ filtered_union P (fun i => ext_iapp B (A i)).
 Proof.
   split.
   - by intros (b & Hb & a & (i & Hi & Ha) & Hx); repeat esplit.
   - by intros (i & b & Hb & Hi & ai & Hai & Hx); repeat esplit.
 Qed.
-Lemma ext_iapp_indexed_union_r `(A : index -> ipow_domain) B :
+Lemma ext_iapp_indexed_union_r `(A : index -> Ensemble idomain) B :
   ext_iapp B (indexed_union A) ≡ indexed_union (fun i => ext_iapp B (A i)).
 Proof. by apply ext_iapp_filtered_union_r. Qed.
 
-Lemma ext_iapp_filtered_intersection_l `(P : index -> Prop) (A : index -> ipow_domain) B :
+Lemma ext_iapp_filtered_intersection_l `(P : index -> Prop) (A : index -> Ensemble idomain) B :
   ext_iapp (filtered_intersection P A) B ⊆ filtered_intersection P (fun i => ext_iapp (A i) B).
 Proof.
   intros x (a & Ha & b & Hb & Hx) i Hi.
   by exists a; split; [apply Ha | repeat esplit].
 Qed.
 
-Lemma ext_iapp_indexed_intersection_l `(A : index -> ipow_domain) B :
+Lemma ext_iapp_indexed_intersection_l `(A : index -> Ensemble idomain) B :
   ext_iapp (indexed_intersection A) B ⊆ indexed_intersection (fun i => ext_iapp (A i) B).
 Proof. by apply ext_iapp_filtered_intersection_l. Qed.
 
-Lemma ext_iapp_filtered_intersection_r `(P : index -> Prop) (A : index -> ipow_domain) B :
+Lemma ext_iapp_filtered_intersection_r `(P : index -> Prop) (A : index -> Ensemble idomain) B :
   ext_iapp B (filtered_intersection P A) ⊆ filtered_intersection P (fun i => ext_iapp B (A i)).
 Proof.
   intros x (b & Hb & a & Ha & Hx) i Hi.
@@ -1449,7 +1476,7 @@ Proof.
   by exists a; split; [apply Ha |].
 Qed.
 
-Lemma ext_iapp_indexed_intersection_r `(A : index -> ipow_domain) B :
+Lemma ext_iapp_indexed_intersection_r `(A : index -> Ensemble idomain) B :
   ext_iapp B (indexed_intersection A) ⊆ indexed_intersection (fun i => ext_iapp B (A i)).
 Proof. by apply ext_iapp_filtered_intersection_r. Qed.
 
@@ -1494,7 +1521,7 @@ Qed.
 Record Valuation : Type :=
 {
   eval : EVar -> idomain;
-  sval : SVar -> ipow_domain
+  sval : SVar -> Ensemble idomain
 }.
 
 #[export] Instance ValudationInhabited : Inhabited Valuation :=
@@ -1506,6 +1533,10 @@ Definition fn_update `{EqDecision A} `(f : A -> B) (a : A) (b : B) (x : A) : B :
 Lemma fn_update_id `{EqDecision A} `(f : A -> B) (a : A) :
   fn_update f a (f a) = f.
 Proof. by extensionality x; unfold fn_update; case_decide; subst. Qed.
+
+Lemma fn_update_eq `{EqDecision A} `(f : A -> B) a b :
+  fn_update f a b a = b.
+Proof. by unfold fn_update; rewrite decide_True by done. Qed.
 
 Lemma fn_update_comm `{EqDecision A} `(f : A -> B) a1 b1 a2 b2 :
   a1 <> a2 ->
@@ -1530,6 +1561,9 @@ Proof.
   destruct e; unfold valuation_eupdate; cbn; f_equal; apply fn_update_id.
 Qed.
 
+Lemma valuation_eupdate_eq e x a : eval (valuation_eupdate e x a) x = a.
+Proof. by destruct e; cbn; apply fn_update_eq. Qed.
+
 Lemma valuation_eupdate_comm e x a y b :
   x <> y ->
   valuation_eupdate (valuation_eupdate e x a) y b
@@ -1540,7 +1574,7 @@ Proof.
   by apply fn_update_comm.
 Qed.
 
-Definition valuation_supdate (e : Valuation) (x : SVar) (a : ipow_domain) : Valuation :=
+Definition valuation_supdate (e : Valuation) (x : SVar) (a : Ensemble idomain) : Valuation :=
 {|
   eval := eval e;
   sval := fn_update (sval e) x a
@@ -1551,6 +1585,9 @@ Lemma valuation_supdate_id (e : Valuation) (x : SVar) :
 Proof.
   destruct e; unfold valuation_supdate; cbn; f_equal; apply fn_update_id.
 Qed.
+
+Lemma valuation_supdate_eq e x a : sval (valuation_supdate e x a) x = a.
+Proof. by destruct e; cbn; apply fn_update_eq. Qed.
 
 Lemma valuation_supdate_comm e x a y b :
   x <> y ->
@@ -1568,7 +1605,7 @@ Lemma valuation_esupdate_comm e x a y b :
   valuation_eupdate (valuation_supdate e y b) x a.
 Proof. by destruct e. Qed.
 
-Class PropositionalPatternValuation (F : Pattern -> ipow_domain) : Prop :=
+Class PropositionalPatternValuation (F : Pattern -> Ensemble idomain) : Prop :=
 {
   ppv_bot : F PBot ≡ ∅;
   ppv_impl : forall phi psi, F (PImpl phi psi) ≡ complement (F phi ∖ F psi);
@@ -1576,7 +1613,7 @@ Class PropositionalPatternValuation (F : Pattern -> ipow_domain) : Prop :=
 
 Section sec_propositional_pattern_valuation_props.
   Context
-    (F : Pattern -> ipow_domain)
+    (F : Pattern -> Ensemble idomain)
     `{PropositionalPatternValuation F}.
 
 Lemma pattern_valuation_impl_alt_classic phi psi :
@@ -1684,7 +1721,7 @@ Qed.
 
 End sec_propositional_pattern_valuation_props.
 
-Fixpoint pattern_valuation (e : Valuation) (p : Pattern) : ipow_domain :=
+Fixpoint pattern_valuation (e : Valuation) (p : Pattern) : Ensemble idomain :=
   match p with
   | PEVar x => {[eval e x]}
   | PSVar X => sval e X
@@ -2533,7 +2570,7 @@ Proof.
 Qed.
 
 Definition set_pattern_valuation
-  (s : Structure) (e : Valuation s) (Gamma : PatternSet) : ipow_domain :=
+  (s : Structure) (e : Valuation s) (Gamma : PatternSet) : Ensemble idomain :=
     filtered_intersection s (.∈ Gamma ) (pattern_valuation s e).
 
 Lemma elem_of_set_pattern_valuation s e Gamma a :
@@ -2822,7 +2859,7 @@ Proof.
 Qed.
 
 Inductive CrispSet
-  (s : Structure) (A : ipow_domain) : Prop :=
+  (s : Structure) (A : Ensemble idomain) : Prop :=
 | cs_empty : A ≡ ∅ -> CrispSet s A
 | cs_top : A ≡ top s -> CrispSet s A.
 
@@ -3270,8 +3307,66 @@ Proof.
   apply (member_of_indexed_intersection _ (λ a : idomain, pattern_valuation s (valuation_eupdate s e x a) phi)).
 Qed.
 
+Lemma valid_evar_rename x y phi :
+  ~ EOccurs y phi ->
+  EFreeFor x (PEVar y) phi ->
+  valid (pIff phi (evar_rename x y phi)).
+Proof.
+  intros Hy Hfree_for.
+  destruct (decide (x = y));
+    [by subst; rewrite evar_rename_id; apply tautology_valid, tautology_phi_iff_phi |].
+  intros s e.
+  apply esatisfies_iff_classic.
+  revert e; induction phi; intro. 1-3, 8: done.
+  - apply EFreeForImpl in Hfree_for as [].
+    rewrite EOccurs_impl in Hy; apply not_or_and in Hy as [].
+    by cbn; rewrite IHphi1, IHphi2.
+  - rewrite EOccurs_ex in Hy; apply not_or_and in Hy as [? Hy].
+    cbn; case_decide; cbn; intro a; rewrite !elem_of_indexed_union; apply exist_proper; intro b;
+      [| by rewrite IHphi; [done..| eapply EFreeForEx]].
+    subst e.
+    assert (EFreeFor x (PEVar y) (evar_rename x y phi))
+      by (apply EFreeForInd_iff, evar_rename_FreeFor;
+            [|rewrite <- EOccursInd_iff]; done).
+    rewrite pattern_valuation_evar_sub0_evar by done.
+    apply EFreeForEx in Hfree_for as [].
+    rewrite <- IHphi, valuation_eupdate_eq by done.
+    apply pattern_valuation_fv; destruct e0; split; cbn; [| done].
+    intros z Hz; unfold fn_update; case_decide; [done |].
+    case_decide; [| done].
+    by subst; contradict Hy; left.
+  - cbn; intro a; rewrite !elem_of_filtered_intersection; apply forall_proper; intro A.
+    rewrite EOccurs_mu in Hy.
+    by rewrite IHphi; [..| eapply EFreeForMu].
+  - apply EFreeForApp in Hfree_for as [].
+    rewrite EOccurs_app in Hy; apply not_or_and in Hy as [].
+    by cbn; rewrite IHphi1, IHphi2.
+Qed.
 
-
+Lemma valid_evar_sub_rename x y phi :
+  valid (PImpl (esubst phi x (PEVar y)) (PEx x phi)).
+Proof.
+  unfold esubst, SV, EV; cbn.
+  replace (elements (BSV phi ∩ _)) with (@nil SVar)
+    by (symmetry; apply elements_empty_iff; set_solver).
+  cbn; destruct (decide (EVarBound y phi)); cycle 1.
+  - replace (elements _) with (@nil EVar).
+    + cbn; apply valid_evar_sub0_rename_ex.
+      by apply EFreeFor_x_y_if_not_bound.
+    + symmetry; apply elements_empty_iff, elem_of_equiv_empty; intro.
+      rewrite elem_of_intersection, elem_of_union, elem_of_singleton, <- EVarBound_BEV.
+      by intros [? [|Hempty]]; [subst | contradict Hempty; apply not_elem_of_empty].
+  - replace (elements _) with [y]; cycle 1.
+    {
+      apply Permutation_singleton_l.
+      rewrite <- elements_singleton.
+      apply elements_proper.
+      intro a; rewrite elem_of_intersection, elem_of_union, !elem_of_singleton.
+      rewrite <- EVarBound_BEV.
+      split; [by intros ->; split; [| left] | intros [? [-> | Hempty]]]; [done |].
+      contradict Hempty; apply not_elem_of_empty.
+    }
+    cbn.
 
 (*
 Lemma pattern_valuation_nu_classic e X phi :

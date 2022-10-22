@@ -1,0 +1,23 @@
+-Q theories/AML AML
+
+-arg -w -arg -future-coercion-class-field
+
+theories/AML/Lib/Functions.v
+theories/AML/Lib/Ensemble.v
+
+theories/AML/Signature.v
+theories/AML/Syntax/Expression.v
+theories/AML/Syntax/Pattern.v
+theories/AML/Syntax/Variables.v
+theories/AML/Syntax/Substitution.v
+theories/AML/Syntax/PatternClosureProps.v
+
+theories/AML/Semantics/Structure.v
+theories/AML/Semantics/Valuation.v
+theories/AML/Semantics/PropositionalPatternValuation.v
+theories/AML/Semantics/PatternValuation.v
+theories/AML/Semantics/Satisfaction.v
+theories/AML/Semantics/Validity.v
+theories/AML/Semantics/SemanticConsequences.v
+theories/AML/Semantics/Predicate.v
+theories/AML/Semantics/Tautology.v
