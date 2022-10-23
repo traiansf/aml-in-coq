@@ -453,12 +453,28 @@ Proof.
     by intros _; contradict Hx; constructor; apply EOccursInd_iff; left.
 Qed.
 
-Lemma EFreeFor_x_y_if_not_bound x y phi (Hx : ~ EVarBound y phi) : EFreeFor x (PEVar y) phi.
+Lemma EFreeFor_x_theta_if_not_bound x theta phi :
+  (forall y, EVarFree y theta -> ~ EVarBound y phi) ->
+  (forall y, SVarFree y theta -> ~ SVarBound y phi) ->
+  EFreeFor x theta phi.
 Proof.
-  split; [| by inversion 1].
-  inversion 1; subst z; intros theta Hsub; contradict Hx.
-  by eapply EVarBound_BEV, SubPatternExBound. 
+  intros Hetheta Hstheta; split; intros z Hz theta' Htheta'; exfalso.
+  - by eapply Hetheta; [| eapply EVarBound_BEV, SubPatternExBound].
+  - by eapply Hstheta; [| eapply SVarBound_BSV, SubPatternMuBound].
 Qed.
+
+Lemma EFreeFor_x_theta_if_no_free_vars x theta phi :
+  FEV theta ≡ ∅ ->
+  FSV theta ≡ ∅ ->
+  EFreeFor x theta phi.
+Proof.
+  intros Hetheta Hstheta; apply EFreeFor_x_theta_if_not_bound.
+  - by intro; rewrite EVarFree_FEV, Hetheta; set_solver.
+  - by intro; rewrite SVarFree_FSV, Hstheta; set_solver.
+Qed.
+
+Lemma EFreeFor_x_y_if_not_bound x y phi (Hx : ~ EVarBound y phi) : EFreeFor x (PEVar y) phi.
+Proof. by apply EFreeFor_x_theta_if_not_bound; inversion 1. Qed.
 
 Inductive OccursPositively (X : SVar) : Pattern -> Prop :=
 | op_evar : forall x, OccursPositively X (PEVar x)

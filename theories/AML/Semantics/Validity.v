@@ -35,6 +35,19 @@ Proof.
   eapply satisfies_mp_classic; [apply Himpl | apply Hphi].
 Qed.
 
+Definition valid_impl : relation Pattern := fun phi psi => valid (PImpl phi psi).
+
+#[export] Instance valid_impl_refl : Reflexive valid_impl.
+Proof. by intros phi s e; apply esatisfies_impl_classic. Qed.
+
+#[export] Instance valid_impl_tran : Transitive valid_impl.
+Proof.
+  intros phi psi chi Hphi Hpsi s e; apply esatisfies_impl_classic.
+  transitivity (pattern_valuation s e psi); apply esatisfies_impl_classic.
+  - by apply Hphi.
+  - by apply Hpsi.
+Qed.
+
 Lemma valid_iff_classic phi psi :
   valid (pIff phi psi) -> (valid phi <-> valid psi).
 Proof.
@@ -45,6 +58,25 @@ Qed.
 Lemma valid_phi_iff_phi phi :  valid (pIff phi phi).
 Proof.
   by intros s e; apply top_pattern_valuation_iff_classic; [typeclasses eauto |].
+Qed.
+
+Definition valid_iff : relation Pattern := fun phi psi => valid (pIff phi psi).
+
+#[export] Instance valid_iff_refl : Reflexive valid_iff.
+Proof. by intros phi s e; apply esatisfies_iff_classic. Qed.
+
+#[export] Instance valid_iff_tran : Transitive valid_iff.
+Proof.
+  intros phi psi chi Hphi Hpsi s e; apply esatisfies_iff_classic.
+  transitivity (pattern_valuation s e psi); apply esatisfies_iff_classic.
+  - by apply Hphi.
+  - by apply Hpsi.
+Qed.
+
+#[export] Instance valid_iff_sym : Symmetric valid_iff.
+Proof.
+  intros phi psi Hphi s e; apply esatisfies_iff_classic.
+  symmetry; apply esatisfies_iff_classic, Hphi.
 Qed.
 
 Lemma valid_finite_conjunction_classic phis :
@@ -108,7 +140,7 @@ Proof.
     by cbn; rewrite IHphi1, IHphi2.
 Qed.
 
-Lemma valid_evar_sub_rename x y phi :
+Lemma valid_esubst_ex x y phi :
   valid (PImpl (esubst phi x (PEVar y)) (PEx x phi)).
 Proof.
   unfold esubst, SV, EV; cbn.
@@ -132,7 +164,87 @@ Proof.
       contradict Hempty; apply not_elem_of_empty.
     }
     cbn.
-    remember (fresh _) as y'.
-Admitted.
-
+    remember (fresh _) as z.
+    assert (~ EOccurs z phi /\ z <> y) as [Hnoccurs Hnyz].
+    {
+      pose proof (Hz := is_fresh (FEV phi ∪ BEV phi ∪ ({[y]} ∪ ∅))).
+      rewrite <- Heqz, !elem_of_union, elem_of_singleton in Hz.
+      rewrite EV_Eoccurs; unfold EV; rewrite elem_of_union.
+      by intuition.
+    }
+    remember (evar_rename _ _ _) as theta.
+    assert (Hxfree : EFreeFor x (PEVar y) theta).
+    {
+      by subst theta; apply EFreeForInd_iff, evar_rename_FreeFor_1; [| rewrite <- EOccursInd_iff].
+    }
+    assert (Htheta_ex : valid (PImpl (evar_sub0 x (PEVar y) theta) (PEx x theta)))
+      by (apply valid_evar_sub0_rename_ex; done).
+    assert (Htheta_phi : valid (pIff theta phi)).
+    {
+      symmetry; subst theta; apply valid_evar_rename; [done |].
+      by apply EFreeFor_x_y_if_not_bound; contradict Hnoccurs; right.
+    }
+    intros s v; apply esatisfies_impl_classic; cbn.
+    specialize (Htheta_ex s v); apply esatisfies_impl_classic in Htheta_ex; cbn in Htheta_ex.
+    etransitivity; [apply Htheta_ex |].
+    intro a; rewrite !elem_of_indexed_union.
+    apply exist_proper; intro b.
+    specialize (Htheta_phi s (valuation_eupdate v x b)); apply esatisfies_iff_classic in Htheta_phi.
+    by symmetry; apply Htheta_phi.
+Qed.
+    
+Lemma valid_esubst_all x y phi :
+  valid (PImpl (pAll x phi) (esubst phi x (PEVar y))).
+Proof.
+  unfold esubst, SV, EV; cbn.
+  replace (elements (BSV phi ∩ _)) with (@nil SVar)
+    by (symmetry; apply elements_empty_iff; set_solver).
+  cbn; destruct (decide (EVarBound y phi)); cycle 1.
+  - replace (elements _) with (@nil EVar).
+    + cbn; apply valid_evar_sub0_rename_all.
+      by apply EFreeFor_x_y_if_not_bound.
+    + symmetry; apply elements_empty_iff, elem_of_equiv_empty; intro.
+      rewrite elem_of_intersection, elem_of_union, elem_of_singleton, <- EVarBound_BEV.
+      by intros [? [|Hempty]]; [subst | contradict Hempty; apply not_elem_of_empty].
+  - replace (elements _) with [y]; cycle 1.
+    {
+      apply Permutation_singleton_l.
+      rewrite <- elements_singleton.
+      apply elements_proper.
+      intro a; rewrite elem_of_intersection, elem_of_union, !elem_of_singleton.
+      rewrite <- EVarBound_BEV.
+      split; [by intros ->; split; [| left] | intros [? [-> | Hempty]]]; [done |].
+      contradict Hempty; apply not_elem_of_empty.
+    }
+    cbn.
+    remember (fresh _) as z.
+    assert (~ EOccurs z phi /\ z <> y) as [Hnoccurs Hnyz].
+    {
+      pose proof (Hz := is_fresh (FEV phi ∪ BEV phi ∪ ({[y]} ∪ ∅))).
+      rewrite <- Heqz, !elem_of_union, elem_of_singleton in Hz.
+      rewrite EV_Eoccurs; unfold EV; rewrite elem_of_union.
+      by intuition.
+    }
+    remember (evar_rename _ _ _) as theta.
+    assert (Hxfree : EFreeFor x (PEVar y) theta).
+    {
+      by subst theta; apply EFreeForInd_iff, evar_rename_FreeFor_1; [| rewrite <- EOccursInd_iff].
+    }
+    assert (Htheta_all : valid (PImpl (pAll x theta) (evar_sub0 x (PEVar y) theta)))
+      by (apply valid_evar_sub0_rename_all; done).
+    assert (Htheta_phi : valid (pIff theta phi)).
+    {
+      symmetry; subst theta; apply valid_evar_rename; [done |].
+      by apply EFreeFor_x_y_if_not_bound; contradict Hnoccurs; right.
+    }
+    intros s v; apply esatisfies_impl_classic; rewrite pattern_valuation_forall_classic.
+    specialize (Htheta_all s v); apply esatisfies_impl_classic in Htheta_all.
+    rewrite pattern_valuation_forall_classic in Htheta_all.
+    etransitivity; [| apply Htheta_all].
+    intro a; rewrite !elem_of_indexed_intersection.
+    apply forall_proper; intro b.
+    specialize (Htheta_phi s (valuation_eupdate v x b)); apply esatisfies_iff_classic in Htheta_phi.
+    by apply Htheta_phi.
+Qed.
+    
 End sec_validity.

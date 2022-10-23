@@ -84,6 +84,16 @@ Proof.
     + by contradict IHphi; inversion IHphi.
 Qed.
 
+Lemma evar_rename_not_bound x y phi :
+  x <> y -> ~ EVarBound x (evar_rename x y phi).
+Proof.
+  intros; induction phi; cbn. 1-4, 6-8: by inversion 1.
+  - case_decide; cbn.
+    + inversion 1; [done | subst].
+      by eapply evar_sub_rename_not_occurs, EOccursInd_iff; [| right].
+    + by contradict IHphi; inversion IHphi.
+Qed.
+
 Lemma evar_rename_FreeFor x y phi (Hxy : x <> y) (Hocc : ~ EOccursInd y phi) :
   EFreeForInd x (PEVar y) (evar_rename x y phi).
 Proof.
@@ -102,6 +112,13 @@ Proof.
       by apply evar_sub_rename_not_occurs.
     + constructor; [done |].
       by inversion 1; subst; contradict Hocc; constructor.
+Qed.
+
+Lemma evar_rename_FreeFor_1 x y z phi (Hxy : z <> y) (Hocc : ~ EOccursInd z phi) :
+  EFreeForInd x (PEVar y) (evar_rename y z phi).
+Proof.
+  apply EFreeForInd_iff, EFreeFor_x_theta_if_not_bound; [| by inversion 1].
+  by inversion 1; apply evar_rename_not_bound.
 Qed.
 
 Fixpoint svar_sub0 (x : SVar) (delta : Pattern) (p : Pattern) : Pattern :=
