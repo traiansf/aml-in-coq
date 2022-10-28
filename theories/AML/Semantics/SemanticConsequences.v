@@ -588,7 +588,7 @@ Lemma set_strong_semantic_consequence_and Gamma phi psi :
   set_strong_semantic_consequence Gamma phi /\ set_strong_semantic_consequence Gamma psi.
 Proof.
   unfold set_strong_semantic_consequence.
-  setoid_rewrite pattern_valuation_and_classic; [| done].
+  setoid_rewrite pattern_valuation_and_classic; [| typeclasses eauto].
   unfold subseteq, set_subseteq_instance.
   setoid_rewrite elem_of_intersection.
   by split; [intro Hand; split; intros; apply Hand | intros []; split; itauto].
@@ -683,7 +683,7 @@ Lemma set_strongly_logically_equivalent_set_finite_classic
 Proof.
   intros s e.
   rewrite set_pattern_valuation_singleton, pattern_valuation_finite_conjunction_classic
-    by done.
+    by typeclasses eauto.
   intro a; rewrite elem_of_set_pattern_valuation, elem_of_intersection_list.
   setoid_rewrite elem_of_list_fmap.
   setoid_rewrite elem_of_elements.

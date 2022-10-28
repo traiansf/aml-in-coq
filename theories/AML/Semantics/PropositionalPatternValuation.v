@@ -5,7 +5,7 @@ From AML Require Import Signature Pattern Structure.
 
 Class PropositionalPatternValuation `{signature} {idomain} (F : Pattern -> Ensemble idomain) : Prop :=
 {
-  ppv_bot : F PBot ≡ ∅;
+  ppv_bot : F pBot ≡ ∅;
   ppv_impl : forall phi psi, F (PImpl phi psi) ≡ complement (F phi ∖ F psi);
 }.
 

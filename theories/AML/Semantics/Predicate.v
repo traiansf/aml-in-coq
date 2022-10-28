@@ -16,7 +16,7 @@ Definition predicate (phi : Pattern) : Prop :=
   forall s : Structure, spredicate s phi.
 
 #[export] Instance spredicate_bot s : BotClosed (spredicate s).
-Proof. by constructor; intro e; constructor 1. Qed.
+Proof. by constructor; intro e; left; apply pattern_valuation_bot. Qed.
 
 #[export] Instance spredicate_impl s : ImplClosed (spredicate s).
 Proof.
@@ -25,7 +25,7 @@ Proof.
     [by right; apply esatisfies_impl_classic; rewrite Hphib; apply empty_subseteq |].
   destruct (Hpsi e) as [Hpsib | Hpsit];
     [| by right; apply esatisfies_impl_classic; rewrite Hpsit].
-  left. rewrite pattern_valuation_impl_alt_classic, Hphit, Hpsib by done.
+  left. rewrite pattern_valuation_impl_alt_classic, Hphit, Hpsib by typeclasses eauto.
   apply elem_of_equiv_empty; intros x; rewrite elem_of_union, elem_of_complement.
   by unfold top; cbn; intros [].
 Qed.

@@ -115,7 +115,7 @@ Proof.
     [by subst; rewrite evar_rename_id; apply valid_phi_iff_phi |].
   intros s e.
   apply esatisfies_iff_classic.
-  revert e; induction phi; intro. 1-3, 8: done.
+  revert e; induction phi; intro. 1-2, 7: done.
   - apply EFreeForImpl in Hfree_for as [].
     rewrite EOccurs_impl in Hy by done; apply not_or_and in Hy as [].
     by cbn; rewrite IHphi1, IHphi2.
@@ -246,5 +246,40 @@ Proof.
     specialize (Htheta_phi s (valuation_eupdate v x b)); apply esatisfies_iff_classic in Htheta_phi.
     by apply Htheta_phi.
 Qed.
-    
+ 
+Lemma valid_svar_rename x y phi :
+  ~ SOccurs y phi ->
+  valid (pIff phi (svar_rename x y phi)).
+Proof.
+  intros Hy.
+  destruct (decide (x = y));
+    [by subst; rewrite svar_rename_id; apply valid_phi_iff_phi |].
+  intros s e.
+  apply esatisfies_iff_classic.
+  revert e; induction phi; intro. 1-2, 7: done.
+  - rewrite SOccurs_impl in Hy by done; apply not_or_and in Hy as [].
+    by cbn; rewrite IHphi1, IHphi2.
+  - rewrite SOccurs_ex in Hy.
+    by cbn; intro a; rewrite !elem_of_indexed_union; apply exist_proper; intro b;
+      rewrite IHphi.
+  - rewrite SOccurs_mu in Hy by done; apply not_or_and in Hy as [Hys0 Hy].
+    cbn; intro a.
+    case_decide; cycle 1; cbn; rewrite !elem_of_filtered_intersection;
+      apply forall_proper; intro A; [by rewrite <- IHphi | subst s0].
+    assert (SFreeFor x (PSVar y) (svar_rename x y phi))
+      by (eapply SFreeForInd_iff, svar_rename_FreeFor; [..| rewrite <- SOccursInd_iff]; done).
+    rewrite pattern_valuation_svar_sub0_svar by done.
+    rewrite <- IHphi, valuation_supdate_eq by done.
+    cut (pattern_valuation s (valuation_supdate e x A) phi
+      ≡
+      pattern_valuation s (valuation_supdate (valuation_supdate e y A) x A) phi);
+      [by intros -> |].
+    rewrite valuation_supdate_comm by done.
+    remember (valuation_supdate e x A) as exA.
+    symmetry; apply pattern_valuation_supdate_not_free.
+    by contradict Hy; left.
+  - rewrite SOccurs_app in Hy by done; apply not_or_and in Hy as [].
+    by cbn; rewrite IHphi1, IHphi2.
+Qed.
+
 End sec_validity.

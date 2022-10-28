@@ -19,16 +19,34 @@ Fixpoint pattern_valuation (e : Valuation) (p : Pattern) : Ensemble idomain :=
   | PEVar x => {[eval e x]}
   | PSVar X => sval e X
   | POp o => isigma o
-  | PBot => ∅
   | PApp phi psi => ext_iapp (pattern_valuation e phi) (pattern_valuation e psi)
   | PImpl phi psi => complement (pattern_valuation e phi ∖ pattern_valuation e psi)
   | PEx x phi => indexed_union (fun a => pattern_valuation (valuation_eupdate e x a) phi)
   | PMu X phi => filtered_intersection (fun B => pattern_valuation (valuation_supdate e X B) phi ⊆ B) id
   end.
 
+Lemma pattern_valuation_ex e x phi : 
+  pattern_valuation e (PEx x phi)
+    =
+  indexed_union (fun a => pattern_valuation (valuation_eupdate e x a) phi).
+Proof. done. Qed.
+
+Lemma pattern_valuation_mu e X phi :
+  pattern_valuation e (PMu X phi)
+    =
+  filtered_intersection  (fun B => pattern_valuation (valuation_supdate e X B) phi ⊆ B) id.
+Proof. done. Qed.
+
+Lemma pattern_valuation_bot e : pattern_valuation e pBot ≡ ∅.
+Proof.
+  cbn; intro; rewrite elem_of_filtered_intersection; split;
+    [| by intro Hempty; contradict Hempty; apply not_elem_of_empty].
+  by intro Hbot; apply Hbot; rewrite fn_update_eq.
+Qed.
+
 #[export] Instance propositional_pattern_valuation e :
   PropositionalPatternValuation (pattern_valuation e).
-Proof. by constructor. Qed.
+Proof. by constructor; [apply pattern_valuation_bot |]. Qed.
 
 Section set_pattern_valuation.
 
@@ -56,7 +74,7 @@ Proof. by eapply set_propositional_pattern_valuation_empty_top. Qed.
 
 Lemma set_pattern_valuation_singleton e phi :
   set_pattern_valuation e {[phi]} ≡ pattern_valuation e phi.
-Proof. by eapply set_propositional_pattern_valuation_singleton. Qed.
+Proof. by eapply set_propositional_pattern_valuation_singleton; [typeclasses eauto |]. Qed.
 
 Lemma top_set_pattern_valuation e Gamma :
   set_pattern_valuation e Gamma ≡ top idomain
@@ -71,18 +89,23 @@ Lemma pattern_valuation_forall_classic e x phi :
     ≡
   indexed_intersection (fun a => pattern_valuation (valuation_eupdate e x a) phi).
 Proof.
-  unfold pAll; rewrite pattern_valuation_neg_classic by done; cbn.
-  rewrite complement_indexed_union.
-  intro a; rewrite !elem_of_indexed_intersection; cbn.
-  apply forall_proper; intro a_x; rewrite complement_twice_classic, elem_of_difference.
-  by split; [intros [] | intro; split; [| apply not_elem_of_empty]].
+  unfold pAll; rewrite pattern_valuation_neg_classic by typeclasses eauto.
+  rewrite pattern_valuation_ex, complement_indexed_union.
+  intro a; rewrite !elem_of_indexed_intersection.
+  apply forall_proper; intro a_x; unfold compose.
+  by rewrite pattern_valuation_neg_classic, complement_twice_classic by typeclasses eauto.
 Qed.
 
 Record FV_equal (e1 e2 : Valuation) (phi : Pattern) : Prop :=
 {
   fve_evar : forall x, EVarFree x phi -> eval e1 x = eval e2 x;
-  fve_svar : forall X, SVarFree X phi -> sval e1 X = sval e2 X;
+  fve_svar : forall X, SVarFree X phi -> sval e1 X ≡ sval e2 X;
 }.
+
+Lemma FV_equal_equiv e1 e2 phi : e1 ≡ e2 -> FV_equal e1 e2 phi.
+Proof.
+  intros []; split; intros; [apply veqve | apply veqvs].
+Qed.
 
 Lemma elem_of_ext_iapp a B C :
   a ∈ ext_iapp B C <-> exists b, b ∈ B /\ exists c, c ∈ C /\ a ∈ iapp b c.
@@ -230,7 +253,6 @@ Proof.
   induction phi; cbn; intros e1 e2 [].
   - by rewrite fve_evar0; [| constructor].
   - by rewrite fve_svar0; [| constructor].
-  - done.
   - rewrite IHphi1, IHphi2; [done |..]; split; intros.
     + by apply fve_evar0, ef_impl_right.
     + by apply fve_svar0, sf_impl_right.
@@ -262,6 +284,28 @@ Proof.
   - done.
 Qed.
 
+Lemma pattern_valuation_eupdate_not_free e x a phi :
+  ~ EVarFree x phi ->
+  pattern_valuation (valuation_eupdate e x a) phi
+    ≡
+  pattern_valuation e phi.
+Proof.
+  intro Hx.
+  apply pattern_valuation_fv; split; [cbn | done].
+  by intros; unfold fn_update; case_decide; subst.
+Qed.
+
+Lemma pattern_valuation_supdate_not_free e x a phi :
+  ~ SVarFree x phi ->
+  pattern_valuation (valuation_supdate e x a) phi
+    ≡
+  pattern_valuation e phi.
+Proof.
+  intro Hx.
+  apply pattern_valuation_fv; split; [done | cbn].
+  by intros; unfold fn_update; case_decide; subst.
+Qed.
+
 Lemma ClosedPattern_FV_equal (phi : Pattern) (e1 e2 : Valuation) :
   ClosedPattern phi -> FV_equal e1 e2 phi.
 Proof. intros []; split; intros x Hx; contradict Hx; done. Qed.
@@ -269,6 +313,25 @@ Proof. intros []; split; intros x Hx; contradict Hx; done. Qed.
 Lemma pattern_valuation_closed_pattern e1 e2 phi :
   ClosedPattern phi -> pattern_valuation e1 phi ≡ pattern_valuation e2 phi.
 Proof. by intro; apply pattern_valuation_fv, ClosedPattern_FV_equal. Qed.
+
+Instance pattern_valuation_proper : Proper ((≡) ==> (=) ==> (≡)) pattern_valuation. 
+Proof.
+  intros e1 e2 [] _phi phi ->.
+  induction phi.
+  - by cbn; rewrite veqve.
+  - by cbn; rewrite veqvs.
+  - by cbn; rewrite IHphi1, IHphi2.
+  - cbn; intro a; rewrite! elem_of_indexed_union.
+    apply exist_proper; intro b.
+    by apply pattern_valuation_fv, FV_equal_equiv, valuation_eupdate_proper; [split |..].
+  - cbn; intro a; rewrite! elem_of_filtered_intersection.
+    apply forall_proper; intro A.
+    cut (pattern_valuation (valuation_supdate e1 s0 A) phi ≡ pattern_valuation (valuation_supdate e2 s0 A) phi);
+      [by intros -> |].
+    by apply pattern_valuation_fv, FV_equal_equiv, valuation_supdate_proper; [split |..].
+  - by cbn; rewrite IHphi1, IHphi2.
+  - done.
+Qed.
 
 Definition evaluates_to_singleton (e : Valuation) (phi : Pattern) : Prop :=
   exists a, pattern_valuation e phi ≡ {[a]}.
@@ -317,18 +380,18 @@ Proof.
   revert e c Heqc; induction phi; try (by inversion Hfree); intros ? c Hc.
   - by inversion Hfree; subst; cbn; unfold fn_update;
       rewrite !decide_True by done; destruct singleton_value.
-  - rewrite pattern_valuation_impl_alt_classic by done.
+  - rewrite pattern_valuation_impl_alt_classic by typeclasses eauto.
     apply EFreeForImpl in Hfree_for as [Hfree_for1 Hfree_for2].
     destruct (classic (EVarFree x phi1)); [destruct (classic (EVarFree x phi2)) |].
     + rewrite <- IHphi1, <- IHphi2 by done.
-      by apply pattern_valuation_impl_alt_classic.
+      apply pattern_valuation_impl_alt_classic; typeclasses eauto.
     + rewrite <- IHphi1, <- pattern_valuation_evar_sub0_not_free
         with (phi := phi2) (delta := delta) by done.
-      by apply pattern_valuation_impl_alt_classic.
+      apply pattern_valuation_impl_alt_classic; typeclasses eauto.
     + inversion Hfree; [done | subst].
       rewrite <- IHphi2, <- pattern_valuation_evar_sub0_not_free
         with (phi := phi1) (delta := delta) by done.
-      by apply pattern_valuation_impl_alt_classic.
+      apply pattern_valuation_impl_alt_classic; typeclasses eauto.
   - apply EFreeForEx in Hfree_for as [Hfree_for1 Hx].
     inversion Hfree; subst y phi0.
     cbn; rewrite decide_False by done; cbn.
@@ -378,6 +441,208 @@ Proof.
     [typeclasses eauto |].
   destruct (singleton_value (PEVar y) e); cbn in *.
   by apply singleton_equiv_inj in e0 as <-.
+Qed.
+
+Lemma pattern_valuation_svar_sub0_not_free e x delta phi c :
+  ~ SVarFree x phi ->
+  pattern_valuation e (svar_sub0 x delta phi)
+    ≡
+  pattern_valuation (valuation_supdate e x c) phi.
+Proof.
+  intro; erewrite svar_sub0_not_free by done.
+  apply pattern_valuation_fv; split; [done |].
+  intros y Hy; cbn; unfold fn_update.
+  by case_decide; subst.
+Qed.
+
+Lemma pattern_valuation_svar_sub0 e x delta phi :
+  SFreeFor x delta phi ->
+  pattern_valuation e (svar_sub0 x delta phi)
+    ≡
+  pattern_valuation (valuation_supdate e x (pattern_valuation e delta)) phi.
+Proof.
+  intros Hfree_for.
+  destruct (classic (SVarFree x phi)) as [Hfree |];
+    [| by apply pattern_valuation_svar_sub0_not_free].
+  revert e; induction phi; try (by inversion Hfree); intros ?.
+  - by inversion Hfree; subst; cbn; unfold fn_update;
+      rewrite !decide_True by done.
+  - rewrite pattern_valuation_impl_alt_classic by typeclasses eauto.
+    apply SFreeForImpl in Hfree_for as [Hfree_for1 Hfree_for2].
+    destruct (classic (SVarFree x phi1)); [destruct (classic (SVarFree x phi2)) |].
+    + rewrite <- IHphi1, <- IHphi2 by done.
+      apply pattern_valuation_impl_alt_classic; typeclasses eauto.
+    + rewrite <- IHphi1, <- pattern_valuation_svar_sub0_not_free
+        with (phi := phi2) (delta := delta) by done.
+      apply pattern_valuation_impl_alt_classic; typeclasses eauto.
+    + inversion Hfree; [done | subst].
+      rewrite <- IHphi2, <- pattern_valuation_svar_sub0_not_free
+        with (phi := phi1) (delta := delta) by done.
+      apply pattern_valuation_impl_alt_classic; typeclasses eauto.
+  - apply SFreeForEx in Hfree_for as [Hfree_for1 Hx].
+    inversion Hfree; subst X phi0.
+    cbn.
+    intro a; rewrite !elem_of_indexed_union.
+    setoid_rewrite IHphi; [| done..].
+    apply exist_proper; intro b.
+    rewrite valuation_esupdate_comm by done.
+    apply pattern_valuation_proper; [| done].
+    apply valuation_eupdate_proper; [| done..].
+    apply valuation_supdate_proper; [done..|].
+    apply pattern_valuation_eupdate_not_free.
+    by intro; apply Hx.
+  - apply SFreeForMu in Hfree_for as [Hfree_for1 Hx].
+    inversion Hfree; subst; cbn; rewrite decide_False by done; cbn.
+    intro a; rewrite !elem_of_filtered_intersection.
+    setoid_rewrite IHphi; [| done..].
+    apply forall_proper; intro A.
+    rewrite valuation_supdate_comm by done.
+    cut
+      (pattern_valuation
+        (valuation_supdate
+          (valuation_supdate e x
+            (pattern_valuation (valuation_supdate e s0 A) delta)) s0 A) phi
+        ≡
+      pattern_valuation
+        (valuation_supdate (valuation_supdate e x (pattern_valuation e delta))
+          s0 A) phi);
+      [by intros -> |].
+    apply pattern_valuation_proper; [| done].
+    apply valuation_supdate_proper; [| done..].
+    apply valuation_supdate_proper; [done.. |].
+    apply pattern_valuation_supdate_not_free.
+    by intro; apply Hx.
+  - cbn.
+    apply SFreeForApp in Hfree_for as [Hfree_for1 Hfree_for2].
+    destruct (classic (SVarFree x phi1)); [destruct (classic (SVarFree x phi2)) |].
+    + by rewrite <- IHphi1, <- IHphi2.
+    + by rewrite <- IHphi1, <- pattern_valuation_svar_sub0_not_free
+        with (phi := phi2) (delta := delta).
+    + inversion Hfree; [done | subst].
+      by rewrite <- IHphi2, <- pattern_valuation_svar_sub0_not_free
+        with (phi := phi1) (delta := delta).
+Qed.
+
+Lemma pattern_valuation_svar_sub0_svar e x y phi :
+  SFreeFor x (PSVar y) phi ->
+  pattern_valuation e (svar_sub0 x (PSVar y) phi)
+    ≡
+  pattern_valuation (valuation_supdate e x (sval e y)) phi.
+Proof.
+  by intro Hfree_for; rewrite pattern_valuation_svar_sub0.
+Qed.
+
+Lemma pattern_valuation_nu_classic e X phi :
+  pattern_valuation e (pNu X phi)
+    ≡
+  filtered_union (fun B => B ⊆ pattern_valuation (valuation_supdate e X B) phi) id.
+Proof.
+  unfold pNu.
+  rewrite pattern_valuation_neg_classic, pattern_valuation_mu by typeclasses eauto.
+  rewrite complement_filtered_intersection_classic.
+  assert (Hfree_for : SFreeFor X (pNeg (PSVar X)) phi).
+  {
+    by apply SFreeFor_x_theta_if_no_free_vars; cbn; set_solver.
+  }
+  intro x; rewrite !elem_of_filtered_union.
+  split; intros (A & HA & Hx).
+  - rewrite pattern_valuation_neg_classic in HA by typeclasses eauto.
+    rewrite pattern_valuation_svar_sub0, valuation_supdate_twice in HA by done.
+    apply complement_subseteq_proper in HA; rewrite complement_twice_classic in HA.
+    exists (complement A); split; [| done].
+    etransitivity; [done |].
+    apply set_equiv_subseteq, pattern_valuation_proper; [| done].
+    apply valuation_supdate_proper; [done.. |].
+    rewrite pattern_valuation_neg_classic by typeclasses eauto.
+    by cbn; rewrite fn_update_eq.
+  - exists (complement A); split; [| by cbn; rewrite complement_twice_classic]. 
+    apply complement_subseteq_proper in HA.
+    etransitivity; [| done].
+    apply set_equiv_subseteq.
+    rewrite pattern_valuation_neg_classic by typeclasses eauto.
+    rewrite pattern_valuation_svar_sub0, valuation_supdate_twice by done.
+    apply complement_equiv_proper, pattern_valuation_proper; [| done].
+    apply valuation_supdate_proper; [done.. |].
+    rewrite pattern_valuation_neg_classic by typeclasses eauto.
+    by cbn; rewrite fn_update_eq, complement_twice_classic.
+Qed.
+
+Lemma pattern_valuation_positive_negative e X phi A B :
+  A ⊆ B ->
+  (OccursPositively X phi ->
+  pattern_valuation (valuation_supdate e X A) phi
+    ⊆
+  pattern_valuation (valuation_supdate e X B) phi)
+  /\
+  (OccursNegatively X phi ->
+  pattern_valuation (valuation_supdate e X B) phi
+    ⊆
+  pattern_valuation (valuation_supdate e X A) phi). 
+Proof.
+  intros Hincl; revert e; induction phi; try done; intro; split.
+  - by cbn; unfold fn_update; case_decide.
+  - by inversion 1; cbn; unfold fn_update; rewrite !decide_False.
+  - inversion 1 as [| | | | | | | ? ? Hphi1 Hphi2]; subst.
+    specialize (IHphi1 e) as [_ IHphi1].
+    specialize (IHphi2 e) as [IHphi2 _].
+    specialize (IHphi1 Hphi1). specialize (IHphi2 Hphi2).
+    rewrite !pattern_valuation_impl_alt_classic by typeclasses eauto.
+    intro a; rewrite !elem_of_union, !elem_of_complement.
+    by set_solver.
+  - inversion 1 as [| | | | | | | ? ? Hphi1 Hphi2]; subst.
+    specialize (IHphi1 e) as [IHphi1 _].
+    specialize (IHphi2 e) as [_ IHphi2].
+    specialize (IHphi1 Hphi1). specialize (IHphi2 Hphi2).
+    rewrite !pattern_valuation_impl_alt_classic by typeclasses eauto.
+    intro a; rewrite !elem_of_union, !elem_of_complement.
+    by set_solver.
+  - inversion 1; subst; cbn.
+    intro a; rewrite !elem_of_indexed_union.
+    intros [b Hb]; exists b.
+    rewrite <- valuation_esupdate_comm in Hb |- *.
+    by apply IHphi.
+  - inversion 1; subst; cbn.
+    intro a; rewrite !elem_of_indexed_union.
+    intros [b Hb]; exists b.
+    rewrite <- valuation_esupdate_comm in Hb |- *.
+    by apply IHphi.
+  - inversion 1; subst; cbn; intro a; rewrite !elem_of_filtered_intersection;
+      intros HA C HC; apply HA; [by rewrite valuation_supdate_twice in HC |- * |].
+    rewrite valuation_supdate_comm in HC |- * by done.
+    etransitivity; [| done].
+    by apply IHphi.
+  - inversion 1; subst; cbn; intro a; rewrite !elem_of_filtered_intersection;
+      intros HA C HC; apply HA; [by rewrite valuation_supdate_twice in HC |- * |].
+    rewrite valuation_supdate_comm in HC |- * by done.
+    etransitivity; [| done].
+    by apply IHphi.
+  - inversion 1 as [| | | ? ? Hphi1 Hphi2 | | | |]; subst.
+    specialize (IHphi1 e) as [IHphi1 _].
+    specialize (IHphi2 e) as [IHphi2 _].
+    specialize (IHphi1 Hphi1). specialize (IHphi2 Hphi2).
+    by cbn; rewrite IHphi1, IHphi2.
+  - inversion 1 as [| | | ? ? Hphi1 Hphi2 | | | |]; subst.
+    specialize (IHphi1 e) as [_ IHphi1].
+    specialize (IHphi2 e) as [_ IHphi2].
+    specialize (IHphi1 Hphi1). specialize (IHphi2 Hphi2).
+    by cbn; rewrite IHphi1, IHphi2.
+Qed.
+
+Definition pattern_valuation_fn phi X e A :=
+  pattern_valuation (valuation_supdate e X A) phi.
+
+Lemma pattern_valuation_positive phi X e :
+  OccursPositively X phi ->
+  Proper ((⊆) ==> (⊆)) (pattern_valuation_fn phi X e).
+Proof.
+  by intros Hpos A B Hincl; revert Hpos; apply pattern_valuation_positive_negative.
+Qed.
+
+Lemma pattern_valuation_negative phi X e :
+  OccursNegatively X phi ->
+  Proper ((⊆) --> (⊆)) (pattern_valuation_fn phi X e).
+Proof.
+  by intros Hneg A B Hincl; revert Hneg; apply pattern_valuation_positive_negative.
 Qed.
 
 End sec_pattern_valuation.

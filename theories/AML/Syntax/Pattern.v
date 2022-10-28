@@ -4,7 +4,6 @@ From AML Require Import Signature Expression.
 Inductive Pattern `{signature} : Type :=
 | PEVar : EVar -> Pattern
 | PSVar : SVar -> Pattern
-| PBot : Pattern
 | PImpl : Pattern -> Pattern -> Pattern
 | PEx : EVar -> Pattern -> Pattern
 | PMu : SVar -> Pattern -> Pattern
@@ -16,8 +15,9 @@ Section sec_pattern.
 Context
   `{signature}.
 
-Definition pNeg (phi : Pattern) := PImpl phi PBot.
-Definition pTop := pNeg PBot.
+Definition pBot := PMu inhabitant (PSVar inhabitant).
+Definition pNeg (phi : Pattern) := PImpl phi pBot.
+Definition pTop := pNeg pBot.
 Definition pOr (phi psi : Pattern) := PImpl (pNeg phi) psi.
 Definition pAnd (phi psi : Pattern) := pNeg (pOr (pNeg phi) (pNeg psi)).
 Definition pIff (phi psi : Pattern) := pAnd (PImpl phi psi) (PImpl psi phi).
@@ -27,14 +27,13 @@ Definition finite_conjunction (phis : list Pattern) : Pattern :=
   foldr pAnd pTop phis.
 
 Definition finite_disjunction (phis : list Pattern) : Pattern :=
-  foldr pOr PBot phis.
+  foldr pOr pBot phis.
 
 #[export] Instance PatternDec : EqDecision Pattern.
 Proof.
   intros x; induction x; intros []; try (by right; inversion 1).
   - destruct (decide (e = e0)); [by left; subst | by right; inversion 1].
   - destruct (decide (s = s0)); [by left; subst | by right; inversion 1].
-  - by left.
   - by destruct (IHx1 p); [destruct (IHx2 p0) |]; [left; subst | right; inversion 1..].
   - by destruct (decide (e = e0)); [destruct (IHx p) |];
       [left; subst | right; inversion 1..].
@@ -47,7 +46,6 @@ Qed.
 Inductive PatternAtomic : Pattern -> Prop :=
 | pa_evar : forall x, PatternAtomic (PEVar x)
 | pa_svar : forall X, PatternAtomic (PSVar X)
-| pa_bot : PatternAtomic PBot
 | pa_op : forall o, PatternAtomic (POp o).
 
 Fixpoint is_pattern_to_Pattern [e : Expression] (He : is_pattern e) : Pattern :=
@@ -57,7 +55,6 @@ Fixpoint is_pattern_to_Pattern [e : Expression] (He : is_pattern e) : Pattern :=
     | atomic_evar x => PEVar x
     | atomic_svar X => PSVar X
     | atomic_cons c => POp c
-    | atomic_bot => PBot
     end
   | pattern_app phi psi Hphi Hpsi => PApp (is_pattern_to_Pattern Hphi) (is_pattern_to_Pattern Hpsi)
   | pattern_impl phi psi Hphi Hpsi => PImpl (is_pattern_to_Pattern Hphi) (is_pattern_to_Pattern Hpsi)
@@ -72,7 +69,6 @@ Fixpoint unparser (p : Pattern) : Expression :=
   match p with
   | PEVar x => [evar x]
   | PSVar X => [svar X]
-  | PBot => [bot]
   | PImpl p1 p2 => [impl] ++ unparser p1 ++ unparser p2
   | PEx x p => [ex; evar x] ++ unparser p
   | PMu X p => [mu; svar X] ++ unparser p
@@ -83,7 +79,6 @@ Fixpoint unparser (p : Pattern) : Expression :=
 Lemma unparser_is_pattern (p : Pattern) : is_pattern (unparser p).
 Proof.
   induction p; cbn.
-  - by constructor 1; constructor.
   - by constructor 1; constructor.
   - by constructor 1; constructor.
   - by constructor 3.

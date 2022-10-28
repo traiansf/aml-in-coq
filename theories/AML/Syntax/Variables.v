@@ -51,7 +51,6 @@ Fixpoint FEV (p : Pattern) : EVarSet :=
 match p with
 | PEVar x => {[x]}
 | PSVar X => ∅
-| PBot => ∅
 | POp _ => ∅
 | PImpl phi psi => FEV phi ∪ FEV psi
 | PApp phi psi => FEV phi ∪ FEV psi
@@ -64,7 +63,6 @@ EVarFree x p <-> x ∈ FEV p.
 Proof.
 induction p; cbn.
 - by rewrite elem_of_singleton; split; inversion 1; constructor.
-- by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - rewrite elem_of_union, <- IHp1, <- IHp2.
   by split; [inversion 1; [left | right] | intros []; [apply ef_impl_left | apply ef_impl_right]].
@@ -87,7 +85,6 @@ Fixpoint FSV (p : Pattern) : SVarSet :=
 match p with
 | PSVar x => {[x]}
 | PEVar X => ∅
-| PBot => ∅
 | POp _ => ∅
 | PImpl phi psi => FSV phi ∪ FSV psi
 | PApp phi psi => FSV phi ∪ FSV psi
@@ -101,7 +98,6 @@ Proof.
 induction p; cbn.
 - by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - by rewrite elem_of_singleton; split; inversion 1; constructor.
-- by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - rewrite elem_of_union, <- IHp1, <- IHp2.
   by split; [inversion 1; [left | right] | intros []; [apply sf_impl_left | apply sf_impl_right]].
 - rewrite <- IHp.
@@ -123,7 +119,6 @@ Fixpoint BEV (p : Pattern) : EVarSet :=
 match p with
 | PEVar _ => ∅
 | PSVar _ => ∅
-| PBot => ∅
 | POp _ => ∅
 | PImpl phi psi => BEV phi ∪ BEV psi
 | PApp phi psi => BEV phi ∪ BEV psi
@@ -135,7 +130,6 @@ Lemma EVarBound_BEV : forall x p,
 EVarBound x p <-> x ∈ BEV p.
 Proof.
 induction p; cbn.
-- by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - rewrite elem_of_union, <- IHp1, <- IHp2.
@@ -212,7 +206,7 @@ Inductive EOccursInd (x : EVar) : Pattern -> Prop :=
 Lemma EOccursInd_iff x phi : EOccurs x phi <-> EOccursInd x phi.
 Proof.
 induction phi.
-2,3,8: by split; [intros [Hx | Hx]; inversion Hx | inversion 1].
+2,7: by split; [intros [Hx | Hx]; inversion Hx | inversion 1].
 - by split; [intros [Hx | Hx]; inversion Hx | inversion 1; left ]; constructor.
 - rewrite EOccurs_impl, IHphi1, IHphi2.
   by split; [intros []; constructor | inversion 1]; itauto.
@@ -229,7 +223,6 @@ Fixpoint BSV (p : Pattern) : SVarSet :=
 match p with
 | PEVar _ => ∅
 | PSVar _ => ∅
-| PBot => ∅
 | POp _ => ∅
 | PImpl phi psi => BSV phi ∪ BSV psi
 | PApp phi psi => BSV phi ∪ BSV psi
@@ -241,7 +234,6 @@ Lemma SVarBound_BSV : forall x p,
 SVarBound x p <-> x ∈ BSV p.
 Proof.
 induction p; cbn.
-- by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - by split; [inversion 1 | intro Hx; contradict Hx; apply not_elem_of_empty].
 - rewrite elem_of_union, <- IHp1, <- IHp2.
@@ -318,7 +310,7 @@ Inductive SOccursInd (x : SVar) : Pattern -> Prop :=
 Lemma SOccursInd_iff x phi : SOccurs x phi <-> SOccursInd x phi.
 Proof.
 induction phi.
-1,3,8: by split; [intros [Hx | Hx]; inversion Hx | inversion 1].
+1,7: by split; [intros [Hx | Hx]; inversion Hx | inversion 1].
 - by split; [intros [Hx | Hx]; inversion Hx | inversion 1; left ]; constructor.
 - rewrite SOccurs_impl, IHphi1, IHphi2.
   by split; [intros []; constructor | inversion 1]; itauto.
@@ -357,22 +349,23 @@ Qed.
 
 Record EFreeFor (x : EVar) (delta phi : Pattern) :=
 {
-  eff_evar : forall z, EVarFree z delta ->
+  eff_evar : forall z, EVarFree z delta -> z <> x ->
     forall theta, SubPattern (PEx z theta) phi -> ~ EVarFree x theta;
   eff_svar : forall z, SVarFree z delta ->
     forall theta, SubPattern (PMu z theta) phi -> ~ EVarFree x theta
 }.
 
 Lemma EFreeForAtomic x delta a : PatternAtomic a -> EFreeFor x delta a.
-Proof. by inversion 1; split; inversion 2. Qed.
+Proof. by inversion 1; (split; [inversion 3 | inversion 2]). Qed.
 
 Lemma EFreeForImpl x delta phi1 phi2 :
   EFreeFor x delta (PImpl phi1 phi2) <-> EFreeFor x delta phi1 /\ EFreeFor x delta phi2.
 Proof.
-  split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]]; repeat split; intros z Hz theta Hsub.
-  - by eapply He; [| apply sp_impl_left].
+  split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]];
+    [split |]; (split; intros z Hz; [intros Hxz|]; intros theta Hsub).
+  - by eapply He; [..| apply sp_impl_left].
   - by eapply Hs; [| apply sp_impl_left].
-  - by eapply He; [| apply sp_impl_right].
+  - by eapply He; [..| apply sp_impl_right].
   - by eapply Hs; [| apply sp_impl_right].
   - by inversion_clear Hsub; [eapply He1 | eapply He2].
   - by inversion_clear Hsub; [eapply Hs1 | eapply Hs2].
@@ -381,23 +374,24 @@ Qed.
 Lemma EFreeForApp x delta phi1 phi2 :
   EFreeFor x delta (PApp phi1 phi2) <-> EFreeFor x delta phi1 /\ EFreeFor x delta phi2.
 Proof.
-  split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]]; repeat split; intros z Hz theta Hsub.
-  - by eapply He; [| apply sp_app_left].
+  split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]];
+    [split |]; (split; intros z Hz; [intros Hxz|]; intros theta Hsub).
+  - by eapply He; [..| apply sp_app_left].
   - by eapply Hs; [| apply sp_app_left].
-  - by eapply He; [| apply sp_app_right].
+  - by eapply He; [..| apply sp_app_right].
   - by eapply Hs; [| apply sp_app_right].
   - by inversion_clear Hsub; [eapply He1 | eapply He2].
   - by inversion_clear Hsub; [eapply Hs1 | eapply Hs2].
 Qed.
 
 Lemma EFreeForEx x delta y phi :
-  EFreeFor x delta (PEx y phi) <-> EFreeFor x delta phi /\ (EVarFree y delta -> ~ EVarFree x phi).
+  EFreeFor x delta (PEx y phi) <-> EFreeFor x delta phi /\ (EVarFree y delta -> x <> y -> ~ EVarFree x phi).
 Proof.
   split; [intros [He Hs] | intros [[He Hs] Hy]]; repeat split.
-  - by intros; eapply He; [| apply sp_ex].
+  - by intros; eapply He; [..| apply sp_ex].
   - by intros; eapply Hs; [| apply sp_ex].
-  - by intros; eapply He; [| apply sp_refl].
-  - by inversion 2; subst; [apply Hy | eapply He].
+  - by intros; eapply He; [.. | apply sp_refl].
+  - by inversion 3; subst; [apply Hy | eapply He].
   - by inversion 2; subst; eapply Hs.
 Qed.
 
@@ -405,23 +399,22 @@ Lemma EFreeForMu x delta y phi :
   EFreeFor x delta (PMu y phi) <-> EFreeFor x delta phi /\ (SVarFree y delta -> ~ EVarFree x phi).
 Proof.
   split; [intros [He Hs] | intros [[He Hs] Hy]]; repeat split.
-  - by intros; eapply He; [| apply sp_mu].
+  - by intros; eapply He; [..| apply sp_mu].
   - by intros; eapply Hs; [| apply sp_mu].
   - by intros; eapply Hs; [| apply sp_refl].
-  - by inversion 2; subst; eapply He.
+  - by inversion 3; subst; eapply He.
   - by inversion 2; subst; [apply Hy | eapply Hs].
 Qed.
 
 Inductive EFreeForInd (x : EVar) (delta : Pattern) : Pattern -> Prop :=
 | effi_evar : forall y, EFreeForInd x delta (PEVar y)
 | effi_svar : forall Y, EFreeForInd x delta (PSVar Y)
-| effi_bot : EFreeForInd x delta PBot
 | effi_op : forall o, EFreeForInd x delta (POp o)
 | effi_impl : forall phi1 phi2, EFreeForInd x delta phi1 -> EFreeForInd x delta phi2 ->
     EFreeForInd x delta (PImpl phi1 phi2)
 | effi_app : forall phi1 phi2, EFreeForInd x delta phi1 -> EFreeForInd x delta phi2 ->
     EFreeForInd x delta (PApp phi1 phi2)
-| effi_ex : forall y phi, EFreeForInd x delta phi -> (EVarFree y delta -> ~ EVarFree x phi) ->
+| effi_ex : forall y phi, EFreeForInd x delta phi -> (EVarFree y delta -> x <> y -> ~ EVarFree x phi) ->
     EFreeForInd x delta (PEx y phi)
 | effi_mu : forall Y phi, EFreeForInd x delta phi -> (SVarFree Y delta -> ~ EVarFree x phi) ->
     EFreeForInd x delta (PMu Y phi).
@@ -429,7 +422,7 @@ Inductive EFreeForInd (x : EVar) (delta : Pattern) : Pattern -> Prop :=
 Lemma EFreeForInd_iff x delta phi : EFreeFor x delta phi <-> EFreeForInd x delta phi.
 Proof.
   induction phi.
-  1-3,8: by split; [constructor | split; inversion 2].
+  1-2,7: by split; [constructor |split; [inversion 3 | inversion 2]].
   - rewrite EFreeForImpl, IHphi1, IHphi2.
     by split; [by intros []; constructor | inversion 1].
   - rewrite EFreeForEx, IHphi.
@@ -442,7 +435,7 @@ Qed.
 
 Lemma EFreeForInd_x_not_occurs x delta phi (Hx : ~ EOccursInd x phi) : EFreeForInd x delta phi.
 Proof.
-  induction phi; cycle 5. 3-6 : by constructor.
+  induction phi; cycle 4. 3-5 : by constructor.
   - constructor; [by apply IHphi; contradict Hx; constructor |].
     by intros _; contradict Hx; constructor; apply EOccursInd_iff; left.
   - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
@@ -450,37 +443,158 @@ Proof.
   - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
       [apply eo_impl_left | apply eo_impl_right].
   - constructor; [by apply IHphi; contradict Hx; constructor |].
-    by intros _; contradict Hx; constructor; apply EOccursInd_iff; left.
+    by intros _ _; contradict Hx; constructor; apply EOccursInd_iff; left.
 Qed.
 
 Lemma EFreeFor_x_theta_if_not_bound x theta phi :
-  (forall y, EVarFree y theta -> ~ EVarBound y phi) ->
+  (forall y, EVarFree y theta -> y <> x -> ~ EVarBound y phi) ->
   (forall y, SVarFree y theta -> ~ SVarBound y phi) ->
   EFreeFor x theta phi.
 Proof.
-  intros Hetheta Hstheta; split; intros z Hz theta' Htheta'; exfalso.
-  - by eapply Hetheta; [| eapply EVarBound_BEV, SubPatternExBound].
+  intros Hetheta Hstheta; (split; intros z Hz; [intros Hzx |]; intros theta' Htheta'); exfalso.
+  - by eapply Hetheta; [..| eapply EVarBound_BEV, SubPatternExBound].
   - by eapply Hstheta; [| eapply SVarBound_BSV, SubPatternMuBound].
 Qed.
 
 Lemma EFreeFor_x_theta_if_no_free_vars x theta phi :
-  FEV theta ≡ ∅ ->
+  FEV theta ⊆ {[x]} ->
   FSV theta ≡ ∅ ->
   EFreeFor x theta phi.
 Proof.
   intros Hetheta Hstheta; apply EFreeFor_x_theta_if_not_bound.
-  - by intro; rewrite EVarFree_FEV, Hetheta; set_solver.
+  - by intros y Hy; apply EVarFree_FEV, Hetheta, elem_of_singleton in Hy.
   - by intro; rewrite SVarFree_FSV, Hstheta; set_solver.
 Qed.
 
 Lemma EFreeFor_x_y_if_not_bound x y phi (Hx : ~ EVarBound y phi) : EFreeFor x (PEVar y) phi.
 Proof. by apply EFreeFor_x_theta_if_not_bound; inversion 1. Qed.
 
+Record SFreeFor (x : SVar) (delta phi : Pattern) :=
+{
+  sff_evar : forall z, EVarFree z delta ->
+    forall theta, SubPattern (PEx z theta) phi -> ~ SVarFree x theta;
+  sff_svar : forall z, SVarFree z delta -> z <> x ->
+    forall theta, SubPattern (PMu z theta) phi -> ~ SVarFree x theta
+}.
+
+Lemma SFreeForAtomic x delta a : PatternAtomic a -> SFreeFor x delta a.
+Proof. by inversion 1; (split; [inversion 2 | inversion 3]). Qed.
+
+Lemma SFreeForImpl x delta phi1 phi2 :
+  SFreeFor x delta (PImpl phi1 phi2) <-> SFreeFor x delta phi1 /\ SFreeFor x delta phi2.
+Proof.
+  split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]];
+    [split |]; (split; intros z Hz; [| intros Hxz]; intros theta Hsub).
+  - by eapply He; [| apply sp_impl_left].
+  - by eapply Hs; [..| apply sp_impl_left].
+  - by eapply He; [| apply sp_impl_right].
+  - by eapply Hs; [..| apply sp_impl_right].
+  - by inversion_clear Hsub; [eapply He1 | eapply He2].
+  - by inversion_clear Hsub; [eapply Hs1 | eapply Hs2].
+Qed.
+
+Lemma SFreeForApp x delta phi1 phi2 :
+  SFreeFor x delta (PApp phi1 phi2) <-> SFreeFor x delta phi1 /\ SFreeFor x delta phi2.
+Proof.
+  split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]];
+    [split |]; (split; intros z Hz; [| intros Hxz]; intros theta Hsub).
+  - by eapply He; [| apply sp_app_left].
+  - by eapply Hs; [..| apply sp_app_left].
+  - by eapply He; [| apply sp_app_right].
+  - by eapply Hs; [..| apply sp_app_right].
+  - by inversion_clear Hsub; [eapply He1 | eapply He2].
+  - by inversion_clear Hsub; [eapply Hs1 | eapply Hs2].
+Qed.
+
+Lemma SFreeForEx x delta y phi :
+  SFreeFor x delta (PEx y phi) <-> SFreeFor x delta phi /\ (EVarFree y delta -> ~ SVarFree x phi).
+Proof.
+  split; [intros [He Hs] | intros [[He Hs] Hy]]; repeat split.
+  - by intros; eapply He; [| apply sp_ex].
+  - by intros; eapply Hs; [..| apply sp_ex].
+  - by intros; eapply He; [| apply sp_refl].
+  - by inversion 2; subst; [apply Hy | eapply He].
+  - by inversion 3; subst; eapply Hs.
+Qed.
+
+Lemma SFreeForMu x delta y phi :
+  SFreeFor x delta (PMu y phi) <-> SFreeFor x delta phi /\ (SVarFree y delta -> y <> x -> ~ SVarFree x phi).
+Proof.
+  split; [intros [He Hs] | intros [[He Hs] Hy]]; repeat split.
+  - by intros; eapply He; [| apply sp_mu].
+  - by intros; eapply Hs; [..| apply sp_mu].
+  - by intros; eapply Hs; [..| apply sp_refl].
+  - by inversion 2; subst; eapply He.
+  - by inversion 3; subst; [apply Hy | eapply Hs].
+Qed.
+
+Inductive SFreeForInd (x : SVar) (delta : Pattern) : Pattern -> Prop :=
+| sffi_evar : forall y, SFreeForInd x delta (PEVar y)
+| sffi_svar : forall Y, SFreeForInd x delta (PSVar Y)
+| sffi_op : forall o, SFreeForInd x delta (POp o)
+| sffi_impl : forall phi1 phi2, SFreeForInd x delta phi1 -> SFreeForInd x delta phi2 ->
+    SFreeForInd x delta (PImpl phi1 phi2)
+| sffi_app : forall phi1 phi2, SFreeForInd x delta phi1 -> SFreeForInd x delta phi2 ->
+    SFreeForInd x delta (PApp phi1 phi2)
+| sffi_ex : forall y phi, SFreeForInd x delta phi -> (EVarFree y delta -> ~ SVarFree x phi) ->
+    SFreeForInd x delta (PEx y phi)
+| sffi_mu : forall Y phi, SFreeForInd x delta phi -> (SVarFree Y delta -> Y <> x -> ~ SVarFree x phi) ->
+    SFreeForInd x delta (PMu Y phi).
+
+Lemma SFreeForInd_iff x delta phi : SFreeFor x delta phi <-> SFreeForInd x delta phi.
+Proof.
+  induction phi.
+  1-2,7: by split; [constructor | split; [inversion 2 | inversion 3]].
+  - rewrite SFreeForImpl, IHphi1, IHphi2.
+    by split; [by intros []; constructor | inversion 1].
+  - rewrite SFreeForEx, IHphi.
+    by split; [by intros []; constructor | inversion 1].
+  - rewrite SFreeForMu, IHphi.
+    by split; [intros []; constructor | inversion 1].
+  - rewrite SFreeForApp, IHphi1, IHphi2.
+    by split; [by intros []; constructor | inversion 1].
+Qed.
+
+Lemma SFreeForInd_x_not_occurs x delta phi (Hx : ~ SOccursInd x phi) : SFreeForInd x delta phi.
+Proof.
+  induction phi; cycle 4. 3-5 : by constructor.
+  - constructor; [by apply IHphi; contradict Hx; constructor |].
+    by intros _ _; contradict Hx; constructor; apply SOccursInd_iff; left.
+  - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
+      [apply so_app_left | apply so_app_right].
+  - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
+      [apply so_impl_left | apply so_impl_right].
+  - constructor; [by apply IHphi; contradict Hx; constructor |].
+    by intros _; contradict Hx; constructor; apply SOccursInd_iff; left.
+Qed.
+
+Lemma SFreeFor_x_theta_if_not_bound x theta phi :
+  (forall y, EVarFree y theta -> ~ EVarBound y phi) ->
+  (forall y, SVarFree y theta -> y <> x -> ~ SVarBound y phi) ->
+  SFreeFor x theta phi.
+Proof.
+  intros Hetheta Hstheta; (split; intros z Hz; [| intros Hxz]; intros theta' Htheta'); exfalso.
+  - by eapply Hetheta; [| eapply EVarBound_BEV, SubPatternExBound].
+  - by eapply Hstheta; [..| eapply SVarBound_BSV, SubPatternMuBound].
+Qed.
+
+Lemma SFreeFor_x_theta_if_no_free_vars x theta phi :
+  FEV theta ≡ ∅ ->
+  FSV theta ⊆ {[x]} ->
+  SFreeFor x theta phi.
+Proof.
+  intros Hetheta Hstheta; apply SFreeFor_x_theta_if_not_bound.
+  - by intro; rewrite EVarFree_FEV, Hetheta; set_solver.
+  - by intros y Hy; apply SVarFree_FSV, Hstheta, elem_of_singleton in Hy.
+Qed.
+
+Lemma SFreeFor_x_y_if_not_bound x y phi (Hx : ~ SVarBound y phi) : SFreeFor x (PSVar y) phi.
+Proof. by apply SFreeFor_x_theta_if_not_bound; inversion 1. Qed.
+
 Inductive OccursPositively (X : SVar) : Pattern -> Prop :=
 | op_evar : forall x, OccursPositively X (PEVar x)
 | op_svar : forall Y, OccursPositively X (PSVar Y)
 | op_cons : forall c, OccursPositively X (POp c)
-| op_bot : OccursPositively X PBot
 | op_app : forall phi psi, OccursPositively X phi -> OccursPositively X psi ->
     OccursPositively X (PApp phi psi)
 | op_ex : forall x phi, OccursPositively X phi -> OccursPositively X (PEx x phi)
@@ -493,7 +607,6 @@ with OccursNegatively (X : SVar) : Pattern -> Prop :=
 | on_evar : forall x, OccursNegatively X (PEVar x)
 | on_svar : forall Y, Y <> X -> OccursNegatively X (PSVar Y)
 | on_cons : forall c, OccursNegatively X (POp c)
-| on_bot : OccursNegatively X PBot
 | on_app : forall phi psi, OccursNegatively X phi -> OccursNegatively X psi ->
     OccursNegatively X (PApp phi psi)
 | on_ex : forall x phi, OccursNegatively X phi -> OccursNegatively X (PEx x phi)
@@ -504,33 +617,6 @@ with OccursNegatively (X : SVar) : Pattern -> Prop :=
     OccursNegatively X (PImpl phi psi)
 .
 
-Inductive SFreeForInd (x : SVar) (delta : Pattern) : Pattern -> Prop :=
-| sffi_evar : forall y, SFreeForInd x delta (PEVar y)
-| sffi_svar : forall Y, SFreeForInd x delta (PSVar Y)
-| sffi_bot : SFreeForInd x delta PBot
-| sffi_op : forall o, SFreeForInd x delta (POp o)
-| sffi_impl : forall phi1 phi2, SFreeForInd x delta phi1 -> SFreeForInd x delta phi2 ->
-    SFreeForInd x delta (PImpl phi1 phi2)
-| sffi_app : forall phi1 phi2, SFreeForInd x delta phi1 -> SFreeForInd x delta phi2 ->
-    SFreeForInd x delta (PApp phi1 phi2)
-| sffi_ex : forall y phi, SFreeForInd x delta phi -> (EVarFree y delta -> ~ SVarFree x phi) ->
-    SFreeForInd x delta (PEx y phi)
-| sffi_mu : forall Y phi, SFreeForInd x delta phi -> (SVarFree Y delta -> ~ SVarFree x phi) ->
-    SFreeForInd x delta (PMu Y phi).
-
-Lemma SFreeForInd_x_not_occurs x delta phi (Hx : ~ SOccursInd x phi) : SFreeForInd x delta phi.
-Proof.
-  induction phi; cycle 6. 2-5 : by constructor.
-  - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
-      [apply so_app_left | apply so_app_right].
-  - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
-      [apply so_impl_left | apply so_impl_right].
-  - constructor; [by apply IHphi; contradict Hx; constructor |].
-    by intros _; contradict Hx; constructor; apply SOccursInd_iff; left.
-  - constructor; [by apply IHphi; contradict Hx; constructor |].
-    by intros _; contradict Hx; constructor; apply SOccursInd_iff; left.
-Qed.
-
 Record ClosedPattern (phi : Pattern) : Prop :=
 {
   cpe : forall x, ~ EVarFree x phi;
@@ -539,5 +625,23 @@ Record ClosedPattern (phi : Pattern) : Prop :=
 
 Definition set_closed_pattern `{Set_ Pattern PatternSet} (Gamma : PatternSet) : Prop :=
   forall phi, phi ∈ Gamma -> ClosedPattern phi.
+
+Lemma ClosedPattern_iff phi :
+  ClosedPattern phi <-> FEV phi ≡ ∅ /\ FSV phi ≡ ∅.
+Proof.
+  split; intros [HEV HSV]; cycle 1; split.
+  - by intros x Hx; rewrite EVarFree_FEV, HEV in Hx; contradict Hx; apply not_elem_of_empty.
+  - by intros x Hx; rewrite SVarFree_FSV, HSV in Hx; contradict Hx; apply not_elem_of_empty.
+  - intro x; specialize (HEV x).
+    rewrite EVarFree_FEV in HEV.
+    by set_solver.
+  - intro x; specialize (HSV x).
+    rewrite SVarFree_FSV in HSV.
+    by set_solver.
+Qed.
+
+Lemma ClosedPattern_elim phi :
+  FEV phi ≡ ∅ -> FSV phi ≡ ∅ -> ClosedPattern phi.
+Proof. by intros; apply ClosedPattern_iff. Qed.
 
 End sec_variables.

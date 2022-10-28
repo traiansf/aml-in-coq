@@ -2,7 +2,7 @@ From stdpp Require Import prelude.
 From Coq Require Import Classical.
 From AML Require Import Ensemble.
 From AML Require Import Signature Pattern.
-From AML Require Import Structure Valuation PropositionalPatternValuation.
+From AML Require Import Structure Valuation PropositionalPatternValuation PatternValuation.
 From AML Require Import Validity.
 
 Section sec_tautology.
@@ -13,7 +13,7 @@ Definition Tautology (phi : Pattern) : Prop :=
   forall (s : Structure) F,  PropositionalPatternValuation F -> F phi ≡ top idomain.
 
 Lemma tautology_valid phi : Tautology phi -> valid phi.
-Proof. by intros Htauto s e; apply Htauto. Qed.
+Proof. intros Htauto s e; apply Htauto; typeclasses eauto. Qed.
 
 Lemma tautology_phi_iff_phi phi : Tautology (pIff phi phi).
 Proof. by intros s F ?; apply top_pattern_valuation_iff_classic. Qed.
@@ -60,7 +60,7 @@ Proof.
   by set_solver.
 Qed.
 
-Lemma tautology_bot_impl_phi phi : Tautology (PImpl PBot phi).
+Lemma tautology_bot_impl_phi phi : Tautology (PImpl pBot phi).
 Proof.
   intros s F ?.
   rewrite top_pattern_valuation_impl_classic, ppv_bot by done.

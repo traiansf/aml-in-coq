@@ -5,7 +5,6 @@ From AML Require Import Signature.
 Inductive Symbols `{signature} : Type :=
 | evar : EVar  -> Symbols
 | svar : SVar -> Symbols
-| bot : Symbols
 | impl : Symbols
 | ex : Symbols
 | mu : Symbols
@@ -21,8 +20,7 @@ Definition Expression : Type := list Symbols.
 Inductive AtomicPattern : Expression -> Type :=
 | atomic_evar : forall e : EVar, AtomicPattern [evar e]
 | atomic_svar : forall e : SVar, AtomicPattern [svar e]
-| atomic_cons : forall c : Sigma, AtomicPattern [op c]
-| atomic_bot : AtomicPattern [bot].
+| atomic_cons : forall c : Sigma, AtomicPattern [op c].
 
 Inductive is_pattern : Expression -> Type :=
 | pattern_atomic : forall e, AtomicPattern e -> is_pattern e

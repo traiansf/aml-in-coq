@@ -4,7 +4,7 @@ From AML Require Import Signature Pattern Variables Substitution.
 
 Class BotClosed `{signature} (P : Pattern -> Prop) :=
 {
-  bot_closed : P PBot
+  bot_closed : P pBot
 }.
 
 Class TopClosed `{signature} (P : Pattern -> Prop) :=
@@ -115,7 +115,7 @@ Section sec_closed_pattern_closure_properties.
 Context `{signature}.
 
 #[export] Instance closed_pattern_bot : BotClosed ClosedPattern.
-Proof. by constructor; constructor; inversion 1. Qed.
+Proof. by constructor; apply ClosedPattern_elim; cbn; set_solver. Qed.
 
 #[export] Instance closed_pattern_impl : ImplClosed ClosedPattern.
 Proof.

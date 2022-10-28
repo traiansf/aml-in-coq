@@ -29,17 +29,18 @@ Proof. done. Qed.
 Lemma esatisfies_cons e op : esatisfies e (POp op) <-> isigma op ≡ top idomain.
 Proof. done. Qed.
 
-Lemma esatisfies_bot e : ~ esatisfies e PBot.
+Lemma esatisfies_bot e : ~ esatisfies e pBot.
 Proof.
   intros contra. destruct (contra inhabitant) as [_ contra'].
+  rewrite pattern_valuation_bot in contra'.
   by apply contra'.
 Qed.
 
 Lemma esatisfies_top e : esatisfies e pTop.
-Proof. by apply pattern_valuation_top. Qed.
+Proof. by apply pattern_valuation_top; typeclasses eauto. Qed.
 
 Lemma esatisfies_neg_classic e phi : esatisfies e (pNeg phi) <-> pattern_valuation s e phi ≡ ∅.
-Proof. by apply top_pattern_valuation_neg_classic. Qed.
+Proof. by apply top_pattern_valuation_neg_classic; typeclasses eauto. Qed.
 
 Lemma esatisfies_app e phi psi :
   esatisfies e (PApp phi psi)
@@ -49,25 +50,25 @@ Proof. done. Qed.
 
 Lemma esatisfies_and_classic e phi psi :
   esatisfies e (pAnd phi psi) <-> esatisfies e phi /\ esatisfies e psi.
-Proof. by apply top_pattern_valuation_and_classic. Qed.
+Proof. by apply top_pattern_valuation_and_classic; typeclasses eauto. Qed.
 
 Lemma esatisfies_or_classic e phi psi :
   esatisfies e (pOr phi psi)
     <->
   pattern_valuation s e phi ∪ pattern_valuation s e psi ≡ top idomain.
-Proof. by apply top_pattern_valuation_or_classic. Qed.
+Proof. by apply top_pattern_valuation_or_classic; typeclasses eauto. Qed.
 
 Lemma esatisfies_impl_classic e phi psi :
   esatisfies e (PImpl phi psi)
     <->
   pattern_valuation s e phi ⊆ pattern_valuation s e psi.
-Proof. by apply top_pattern_valuation_impl_classic. Qed.
+Proof. by apply top_pattern_valuation_impl_classic; typeclasses eauto. Qed.
 
 Lemma esatisfies_iff_classic e phi psi :
   esatisfies e (pIff phi psi)
     <->
   pattern_valuation s e phi ≡ pattern_valuation s e psi.
-Proof. by apply top_pattern_valuation_iff_classic. Qed.
+Proof. by apply top_pattern_valuation_iff_classic; typeclasses eauto. Qed.
 
 Lemma esatisfies_iff_alt_classic e phi psi :
   esatisfies e (pIff phi psi)
@@ -95,10 +96,10 @@ Lemma esatisfies_all_classic e x phi :
     <->
   forall a, esatisfies (valuation_eupdate e x a) phi.
 Proof.
-  unfold pAll; rewrite esatisfies_neg_classic; cbn.
+  unfold pAll; rewrite esatisfies_neg_classic, pattern_valuation_ex.
   rewrite empty_indexed_union.
   apply forall_proper; intro a.
-  by rewrite complement_empty_classic, difference_empty .
+  by rewrite pattern_valuation_neg_classic, complement_empty_classic by typeclasses eauto.
 Qed.
 
 Lemma esatisfies_mu_elim e X phi :
@@ -111,14 +112,14 @@ Qed.
 
 Lemma esatisfies_finite_conjunction_classic e phis :
   esatisfies e (finite_conjunction phis) <-> Forall (esatisfies e) phis.
-Proof. by apply top_pattern_valuation_finite_conjunction_classic. Qed.
+Proof. by apply top_pattern_valuation_finite_conjunction_classic; typeclasses eauto. Qed.
 
 Lemma esatisfies_finite_disjunction_classic e phis :
   esatisfies e (finite_disjunction phis)
     <->
   ⋃ (map (pattern_valuation s e) phis) ≡ top idomain.
 Proof.
-  by unfold esatisfies; rewrite pattern_valuation_finite_disjunction_classic.
+  by unfold esatisfies; rewrite pattern_valuation_finite_disjunction_classic by typeclasses eauto.
 Qed.
 
 Definition satisfies phi : Prop := forall e, esatisfies e phi.
@@ -137,7 +138,7 @@ Proof.
   - by intro e; apply esatisfies_cons.
 Qed.
 
-Lemma satisfies_bot : ~ satisfies PBot.
+Lemma satisfies_bot : ~ satisfies pBot.
 Proof.
   by intros He; apply esatisfies_bot with inhabitant, He.
 Qed.

@@ -814,7 +814,6 @@ Proof.
   inversion 1; subst z; intros theta Hsub; contradict Hx.
   by eapply EVarBound_BEV, SubPatternExBound. 
 Qed.
- 
 
 Fixpoint evar_rename (x y : EVar) (p : Pattern) : Pattern :=
   match p with
