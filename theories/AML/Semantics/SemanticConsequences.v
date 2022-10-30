@@ -1,6 +1,6 @@
 From Cdcl Require Import Itauto. #[local] Tactic Notation "itauto" := itauto auto.
 From stdpp Require Import prelude.
-From AML Require Import Ensemble.
+From AML Require Import Functions Ensemble.
 From AML Require Import Signature Pattern Variables Structure Satisfaction Validity.
 From AML Require Import Valuation PropositionalPatternValuation PatternValuation.
 
@@ -200,6 +200,51 @@ Proof.
   by contradict Hncons; apply strongly_logically_equivalent_iff in Hncons as [].
 Qed.
 
+Lemma globally_logically_equivalent_not_local :
+  exists phi psi, globally_logically_equivalent phi psi /\ ~ local_semantic_consequence phi psi.
+Proof.
+  assert (exists x y : EVar, x <> y) as (x & y & Hxy).
+  {
+    pose (x := fresh [] : EVar ).
+    exists x, (fresh [x]).
+    intro Hx.
+    by apply infinite_is_fresh with [x], elem_of_list_singleton.
+  }
+  exists (pOr (PEVar x) (PEVar y)), (pAnd (PEVar x) (PEVar y)); split.
+  - intro s; cbn. rewrite satisfies_and_classic; split; cycle 1; unfold satisfies, esatisfies.
+    + intros [Hx Hy] e.
+      rewrite top_pattern_valuation_or_classic by typeclasses eauto.
+      unfold satisfies, esatisfies in Hx. rewrite (Hx e).
+      set_solver.
+    + intro Hor.
+      specialize (Hor (valuation_eupdate inhabitant y (eval inhabitant x))).
+      rewrite top_pattern_valuation_or_classic in Hor by typeclasses eauto.
+      rewrite subseteq_union_1 in Hor
+        by (cbn; unfold fn_update; rewrite decide_False, decide_True; done).
+      cbn in Hor; unfold fn_update in Hor; rewrite decide_True in Hor by done.
+      by split; apply satisfies_evar; eexists.
+  - intro Hlocal.
+    pose (s := {| idomain := bool; non_empty := populate true;
+                  iapp := fun x y z => False; isigma := fun x y => False |}).
+    specialize (Hlocal s (valuation_eupdate (valuation_eupdate inhabitant x true) y false)).
+    unfold esatisfies in Hlocal.
+    rewrite top_pattern_valuation_and_classic in Hlocal by typeclasses eauto.
+    feed specialize Hlocal.
+    {
+      rewrite top_pattern_valuation_or_classic by typeclasses eauto.
+      cbn; rewrite fn_update_eq.
+      unfold fn_update at 1; rewrite decide_False by done.
+      rewrite fn_update_eq.
+      intros []; set_solver.
+    }
+    destruct Hlocal as [Hx Hy].
+    apply esatisfies_evar in Hx as [a Ha].
+    cbn in Ha.
+    cut (true = false); [done |].
+    by transitivity a; [| symmetry];
+      eapply elem_of_singleton; rewrite <- Ha.
+    Unshelve. all: typeclasses eauto.
+Qed.
 
 Context
   `{Set_ Pattern PatternSet}.
@@ -524,7 +569,6 @@ Proof.
   setoid_rewrite elem_of_elements.
   itauto.
 Qed.
-
 
 Definition set_strong_semantic_consequence (Gamma : PatternSet) (phi : Pattern) :=
   forall s e, set_pattern_valuation s e Gamma ⊆ pattern_valuation s e phi.
