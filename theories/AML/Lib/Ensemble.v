@@ -286,3 +286,80 @@ Inductive CrispSet (A : Ensemble idomain) : Prop :=
 End sec_ensemble.
 
 Notation "⋂ l" := (intersection_list l) (at level 20, format "⋂ l") : stdpp_scope.
+
+Section SecKnasterTarski.
+
+Context
+  {idomain : Type}
+  (F : Ensemble idomain -> Ensemble idomain)
+  `{!Proper ((⊆) ==> (⊆)) F}.
+
+Definition lfp : Ensemble idomain :=
+  filtered_intersection (fun B => F B ⊆ B) id.
+
+Lemma elem_of_lfp x : x ∈ lfp <-> forall A, F A ⊆ A -> x ∈ A.
+Proof. by apply elem_of_filtered_intersection. Qed.
+
+Lemma knaster_tarsky_least_pre_fixpoint A :
+  F A ⊆ A -> lfp ⊆ A.
+Proof.
+  intros HA a; rewrite elem_of_lfp.
+  by intro Hall; apply Hall in HA.
+Qed.
+
+Lemma knaster_tarsky_lfp_least A :
+  F A ≡ A -> lfp ⊆ A.
+Proof.
+  intro HA; apply set_equiv_subseteq in HA as [HA _].
+  by apply knaster_tarsky_least_pre_fixpoint.
+Qed.
+
+Lemma knaster_tarsky_lfp_fix :
+  F lfp ≡ lfp.
+Proof.
+  apply set_equiv_subseteq.
+  cut (F lfp ⊆ lfp); [intros Hincl; split; [done |] |].
+  - intro a; rewrite elem_of_lfp.
+    by intro Hall; apply Proper0, Hall in Hincl.  
+  - intro a; rewrite elem_of_lfp.
+    intros Ha B HB.
+    apply HB.
+    assert (Hincl : lfp ⊆ B)
+      by (apply knaster_tarsky_least_pre_fixpoint; done).
+    by apply Proper0 in Hincl; apply Hincl.
+Qed.
+
+Definition gfp : Ensemble idomain :=
+  filtered_union (fun B => B ⊆ F B) id.
+
+Lemma elem_of_gfp x : x ∈ gfp <-> exists A, A ⊆ F A /\ x ∈ A.
+Proof. by apply elem_of_filtered_union. Qed.
+
+Lemma knaster_tarsky_greatest_post_fixpoint A :
+  A ⊆ F A -> A ⊆ gfp.
+Proof.
+  by intros HA a Ha; rewrite elem_of_gfp; eexists.
+Qed.
+
+Lemma knaster_tarsky_gfp_greatest A :
+  F A ≡ A -> A ⊆ gfp.
+Proof.
+  intro HA; apply set_equiv_subseteq in HA as [_ HA].
+  by apply knaster_tarsky_greatest_post_fixpoint.
+Qed.
+
+Lemma knaster_tarsky_gfp_fix :
+  F gfp ≡ gfp.
+Proof.
+  apply set_equiv_subseteq.
+  cut (gfp ⊆ F gfp); [intros Hincl; split; [| done] |].
+  - intros a Ha; rewrite elem_of_gfp.
+    by apply Proper0 in Hincl; eexists.
+  - intro a; rewrite elem_of_gfp.
+    intros (A & HA & Ha).
+    assert (Hincl : A ⊆ gfp)
+      by (apply knaster_tarsky_greatest_post_fixpoint; done).
+    by apply Proper0 in Hincl; apply Hincl, HA.
+Qed.
+
+End SecKnasterTarski.
