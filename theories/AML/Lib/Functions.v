@@ -21,3 +21,17 @@ Proof.
   intro Ha; extensionality x; unfold fn_update.
   by do 2 case_decide; [congruence |..].
 Qed.
+
+Fixpoint pow_compose `(f : A -> A) (n : nat) : A -> A :=
+  match n with
+  | 0 => id
+  | S n' => f ∘ pow_compose f n'
+  end.
+
+Lemma pow_compose_one `(f : A -> A) (n : nat) :
+  pow_compose f 1 = f.
+Proof. by extensionality a. Qed.
+
+Lemma compose_assoc {A B C D} (f : A -> B) (g : B -> C) (h : C -> D) :
+  h ∘ (g ∘ f) = h ∘ g ∘ f.
+Proof. by extensionality x. Qed.

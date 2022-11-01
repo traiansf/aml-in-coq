@@ -25,7 +25,7 @@ Fixpoint pattern_valuation (e : Valuation) (p : Pattern) : Ensemble idomain :=
   | PMu X phi => filtered_intersection (fun B => pattern_valuation (valuation_supdate e X B) phi ⊆ B) id
   end.
 
-Lemma pattern_valuation_ex e x phi : 
+Lemma pattern_valuation_ex e x phi :
   pattern_valuation e (PEx x phi)
     =
   indexed_union (fun a => pattern_valuation (valuation_eupdate e x a) phi).
@@ -314,7 +314,7 @@ Lemma pattern_valuation_closed_pattern e1 e2 phi :
   ClosedPattern phi -> pattern_valuation e1 phi ≡ pattern_valuation e2 phi.
 Proof. by intro; apply pattern_valuation_fv, ClosedPattern_FV_equal. Qed.
 
-Instance pattern_valuation_proper : Proper ((≡) ==> (=) ==> (≡)) pattern_valuation. 
+Instance pattern_valuation_proper : Proper ((≡) ==> (=) ==> (≡)) pattern_valuation.
 Proof.
   intros e1 e2 [] _phi phi ->.
   induction phi.
@@ -555,7 +555,7 @@ Proof.
     apply valuation_supdate_proper; [done.. |].
     rewrite pattern_valuation_neg_classic by typeclasses eauto.
     by cbn; rewrite fn_update_eq.
-  - exists (complement A); split; [| by cbn; rewrite complement_twice_classic]. 
+  - exists (complement A); split; [| by cbn; rewrite complement_twice_classic].
     apply complement_subseteq_proper in HA.
     etransitivity; [| done].
     apply set_equiv_subseteq.
@@ -567,7 +567,7 @@ Proof.
     by cbn; rewrite fn_update_eq, complement_twice_classic.
 Qed.
 
-Lemma pattern_valuation_positive_negative e X phi A B :
+Lemma pattern_valuation_positive_negative_proper e X phi A B :
   A ⊆ B ->
   (OccursPositively X phi ->
   pattern_valuation (valuation_supdate e X A) phi
@@ -577,7 +577,7 @@ Lemma pattern_valuation_positive_negative e X phi A B :
   (OccursNegatively X phi ->
   pattern_valuation (valuation_supdate e X B) phi
     ⊆
-  pattern_valuation (valuation_supdate e X A) phi). 
+  pattern_valuation (valuation_supdate e X A) phi).
 Proof.
   intros Hincl; revert e; induction phi; try done; intro; split.
   - by cbn; unfold fn_update; case_decide.
@@ -631,18 +631,65 @@ Qed.
 Definition pattern_valuation_fn phi X e A :=
   pattern_valuation (valuation_supdate e X A) phi.
 
-Lemma pattern_valuation_positive phi X e :
+Lemma pattern_valuation_positive_proper phi X e :
   OccursPositively X phi ->
   Proper ((⊆) ==> (⊆)) (pattern_valuation_fn phi X e).
 Proof.
-  by intros Hpos A B Hincl; revert Hpos; apply pattern_valuation_positive_negative.
+  by intros Hpos A B Hincl; revert Hpos; apply pattern_valuation_positive_negative_proper.
 Qed.
 
-Lemma pattern_valuation_negative phi X e :
+Lemma pattern_valuation_negative_proper phi X e :
   OccursNegatively X phi ->
   Proper ((⊆) --> (⊆)) (pattern_valuation_fn phi X e).
 Proof.
-  by intros Hneg A B Hincl; revert Hneg; apply pattern_valuation_positive_negative.
+  by intros Hneg A B Hincl; revert Hneg; apply pattern_valuation_positive_negative_proper.
+Qed.
+
+Lemma pattern_valuation_mu_unroll phi X e :
+  OccursPositively X phi ->
+  pattern_valuation e (PMu X phi) ≡
+  pattern_valuation (valuation_supdate e X (pattern_valuation e (PMu X phi))) phi.
+Proof.
+  intros Hocc.
+  pose proof (pattern_valuation_positive_proper phi X e Hocc).
+  symmetry; apply (knaster_tarsky_lfp_fix (pattern_valuation_fn phi X e)).
+Qed.
+
+Lemma pattern_valuation_mu_lfp phi X e B :
+  OccursPositively X phi ->
+  pattern_valuation (valuation_supdate e X B) phi ≡ B ->
+  pattern_valuation e (PMu X phi) ⊆ B.
+Proof.
+  intros Hocc Hfix.
+  pose proof (pattern_valuation_positive_proper phi X e Hocc).
+  by apply (knaster_tarsky_lfp_least (pattern_valuation_fn phi X e)).
+Qed.
+
+Lemma pattern_valuation_nu_unroll phi X e :
+  OccursPositively X phi ->
+  pattern_valuation e (pNu X phi) ≡
+  pattern_valuation (valuation_supdate e X (pattern_valuation e (pNu X phi))) phi.
+Proof.
+  intros Hocc.
+  pose proof (pattern_valuation_positive_proper phi X e Hocc).
+  rewrite pattern_valuation_nu_classic at 1.
+  specialize (knaster_tarsky_gfp_fix (pattern_valuation_fn phi X e)) as Hgfp.
+  unfold fixpoint, gfp, pattern_valuation_fn, post_fixpoint in Hgfp; cbn in Hgfp.
+  rewrite <- Hgfp.
+  apply pattern_valuation_proper; [| done].
+  apply valuation_supdate_proper; [done.. |].
+  by rewrite pattern_valuation_nu_classic.
+Qed.
+
+Lemma pattern_valuation_nu_gfp phi X e B :
+  OccursPositively X phi ->
+  pattern_valuation (valuation_supdate e X B) phi ≡ B ->
+  B ⊆ pattern_valuation e (pNu X phi).
+Proof.
+  intros Hocc Hfix.
+  pose proof (pattern_valuation_positive_proper phi X e Hocc).
+  rewrite pattern_valuation_nu_classic.
+  by apply (knaster_tarsky_gfp_greatest (pattern_valuation_fn phi X e)).
 Qed.
 
 End sec_pattern_valuation.

@@ -283,3 +283,78 @@ Proof.
 Qed.
 
 End sec_validity.
+
+Section sec_valid_examples.
+
+Context `{signature}.
+
+Lemma valid_all_impl_free x phi : valid (PImpl (pAll x phi) phi).
+Proof.
+  intros s e.
+  rewrite esatisfies_impl_classic, pattern_valuation_forall_classic; cbn.
+  transitivity (pattern_valuation s (valuation_eupdate e x (eval e x)) phi);
+    [| by rewrite valuation_eupdate_id].
+  by apply (member_of_indexed_intersection ((λ a : idomain, pattern_valuation s (valuation_eupdate e x a) phi))).
+Qed.
+
+Lemma valid_free_impl_ex x phi : valid (PImpl phi (PEx x phi)).
+Proof.
+  intros s e.
+  rewrite esatisfies_impl_classic; cbn.
+  transitivity (pattern_valuation s (valuation_eupdate e x (eval e x)) phi);
+    [by rewrite valuation_eupdate_id |].
+  by apply (member_of_indexed_union ((λ a : idomain, pattern_valuation s (valuation_eupdate e x a) phi))).
+Qed.
+
+Lemma valid_all_impl_ex x phi : valid (PImpl (pAll x phi) (PEx x phi)).
+Proof.
+  eapply valid_impl_tran; [apply valid_all_impl_free | apply valid_free_impl_ex].
+Qed.
+
+Lemma valid_ex_x x : valid (PEx x (PEVar x)).
+Proof.
+  intros s e.
+  apply esatisfies_ex; cbn.
+  apply elem_of_equiv_top; intro x'; apply elem_of_indexed_union.
+  by exists x'; rewrite fn_update_eq.
+Qed.
+
+Lemma valid_all_iff_valid_free x phi :
+  valid (pAll x phi) <-> valid phi.
+Proof.
+  by unfold valid; setoid_rewrite satisfies_all_classic.
+Qed.
+
+Lemma valid_remove_unbound_ex x phi :
+  ~ EVarFree x phi -> valid (pIff (PEx x phi) phi).
+Proof.
+  intros Hnfree s e.
+  apply esatisfies_iff_classic; cbn.
+  intro a; rewrite elem_of_indexed_union.
+  split; [| by exists (eval e x); rewrite valuation_eupdate_id].
+  intros [ax Hax].
+  eapply (pattern_valuation_fv); [| done].
+  split; [cbn | done].
+  intros x' Hx'.
+  by unfold fn_update; case_decide; [subst |].
+Qed.
+
+Lemma valid_remove_unbound_all x phi :
+  ~ EVarFree x phi -> valid (pIff (pAll x phi) phi).
+Proof.
+  intros Hnfree s e.
+  rewrite esatisfies_iff_classic, pattern_valuation_forall_classic; cbn.
+  intro a; rewrite elem_of_indexed_intersection.
+  cut (forall i, pattern_valuation s (valuation_eupdate e x i) phi ≡ pattern_valuation s e phi).
+  {
+    intros Hall; split.
+    - by intro Hall'; apply (Hall inhabitant), Hall'.
+    - by intros Ha i; apply Hall.
+  }
+  intro; apply pattern_valuation_fv.
+  split; [cbn | done].
+  intros x' Hx'.
+  by unfold fn_update; case_decide; [subst |].
+Qed.
+
+End sec_valid_examples.
