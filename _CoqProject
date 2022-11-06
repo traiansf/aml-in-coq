@@ -19,5 +19,8 @@ theories/AML/Semantics/PatternValuation.v
 theories/AML/Semantics/Satisfaction.v
 theories/AML/Semantics/Validity.v
 theories/AML/Semantics/SemanticConsequences.v
+theories/AML/Semantics/SemanticConsequences/GlobalSemanticConsequence.v
+theories/AML/Semantics/SemanticConsequences/LocalSemanticConsequence.v
+theories/AML/Semantics/SemanticConsequences/StrongSemanticConsequence.v
 theories/AML/Semantics/Predicate.v
 theories/AML/Semantics/Tautology.v
