@@ -3,7 +3,8 @@ From stdpp Require Import prelude.
 From AML Require Import Functions Ensemble.
 From AML Require Import Signature Pattern Variables Structure Satisfaction Validity.
 From AML Require Import Valuation PropositionalPatternValuation PatternValuation.
-From AML Require Import GlobalSemanticConsequence.
+From AML Require Import Tautology.
+From AML Require Import StrongSemanticConsequence.
 
 Section sec_local_semantic_consequence.
 
@@ -47,29 +48,26 @@ Proof.
   by split; [rewrite Hl | rewrite Hr].
 Qed.
 
-Lemma local_semantic_consequence_global phi psi :
-  local_semantic_consequence phi psi -> global_semantic_consequence phi psi.
-Proof. by intros Hlocal s Hphi e; apply Hlocal, Hphi. Qed.
-
-Lemma locally_logically_equivalent_global phi psi :
-  locally_logically_equivalent phi psi -> globally_logically_equivalent phi psi.
-Proof.
-  rewrite locally_logically_equivalent_iff, globally_logically_equivalent_iff.
-  by intros []; split; apply local_semantic_consequence_global.
-Qed.
-
 Lemma locally_logically_equivalent_evar x y :
   locally_logically_equivalent (PEVar x) (PEVar y).
 Proof. by intros s e; rewrite !esatisfies_evar. Qed.
 
-Lemma globally_logically_equivalent_evar x y :
-  globally_logically_equivalent (PEVar x) (PEVar y).
+Lemma strong_semantic_consequence_local phi psi :
+  strong_semantic_consequence phi psi -> local_semantic_consequence phi psi.
 Proof.
-  by apply locally_logically_equivalent_global, locally_logically_equivalent_evar.
+  intros Hstrong s e; setoid_rewrite elem_of_equiv_top; intros Hphi a.
+  by apply Hstrong, Hphi.
 Qed.
 
-Lemma globally_logically_equivalent_not_local :
-  exists phi psi, globally_logically_equivalent phi psi /\ ~ local_semantic_consequence phi psi.
+Lemma strongly_logically_equivalent_locally phi psi :
+  strongly_logically_equivalent phi psi -> locally_logically_equivalent phi psi.
+Proof.
+  rewrite strongly_logically_equivalent_iff, locally_logically_equivalent_iff.
+  by intros []; split; apply strong_semantic_consequence_local.
+Qed.
+
+Lemma locally_logically_equivalent_not_strong :
+  exists phi psi, locally_logically_equivalent phi psi /\ ~ strong_semantic_consequence phi psi.
 Proof.
   assert (exists x y : EVar, x <> y) as (x & y & Hxy).
   {
@@ -78,40 +76,35 @@ Proof.
     intro Hx.
     by apply infinite_is_fresh with [x], elem_of_list_singleton.
   }
-  exists (pOr (PEVar x) (PEVar y)), (pAnd (PEVar x) (PEVar y)); split.
-  - intro s; cbn. rewrite satisfies_and_classic; split; cycle 1; unfold satisfies, esatisfies.
-    + intros [Hx Hy] e.
-      rewrite top_pattern_valuation_or_classic by typeclasses eauto.
-      unfold satisfies, esatisfies in Hx. rewrite (Hx e).
-      set_solver.
-    + intro Hor.
-      specialize (Hor (valuation_eupdate inhabitant y (eval inhabitant x))).
-      rewrite top_pattern_valuation_or_classic in Hor by typeclasses eauto.
-      rewrite subseteq_union_1 in Hor
-        by (cbn; unfold fn_update; rewrite decide_False, decide_True; done).
-      cbn in Hor; unfold fn_update in Hor; rewrite decide_True in Hor by done.
-      by split; apply satisfies_evar; eexists.
+  exists (PEVar x), (PEVar y); split.
+  - by apply locally_logically_equivalent_evar.
   - intro Hlocal.
-    pose (s := {| idomain := bool; non_empty := populate true;
+    pose (s := {| idomain := EVar; non_empty := populate x;
                   iapp := fun x y z => False; isigma := fun x y => False |}).
-    specialize (Hlocal s (valuation_eupdate (valuation_eupdate inhabitant x true) y false)).
-    unfold esatisfies in Hlocal.
-    rewrite top_pattern_valuation_and_classic in Hlocal by typeclasses eauto.
-    feed specialize Hlocal.
+    assert (exists (e : Valuation), ¬ pattern_valuation s e (PEVar x) ⊆  pattern_valuation s e (PEVar y))
+      as (e & Hne).
     {
-      rewrite top_pattern_valuation_or_classic by typeclasses eauto.
-      cbn; rewrite fn_update_eq.
-      unfold fn_update at 1; rewrite decide_False by done.
-      rewrite fn_update_eq.
-      intros []; set_solver.
+      unshelve esplit; [split; [exact id | exact (const ∅)] |].
+      cbn; contradict Hxy.
+      pose (@pow_set_semiset idomain).
+      by eapply @elem_of_singleton, Hxy, elem_of_singleton.
     }
-    destruct Hlocal as [Hx Hy].
-    apply esatisfies_evar in Hx as [a Ha].
-    cbn in Ha.
-    cut (true = false); [done |].
-    by transitivity a; [| symmetry];
-      eapply elem_of_singleton; rewrite <- Ha.
-    Unshelve. all: typeclasses eauto.
+    by contradict Hne; apply Hlocal.
+Qed.
+
+Lemma local_semantic_consequence_not_strong :
+  exists phi psi, local_semantic_consequence phi psi /\ ~ strong_semantic_consequence phi psi.
+Proof.
+  destruct locally_logically_equivalent_not_strong as (phi & psi & Heqv & Hncons).
+  by exists phi, psi; split; [apply locally_logically_equivalent_iff in Heqv as [] |].
+Qed.
+
+Lemma locally_logically_equivalent_not_strongly :
+  exists phi psi, locally_logically_equivalent phi psi /\ ~ strongly_logically_equivalent phi psi.
+Proof.
+  destruct locally_logically_equivalent_not_strong as (phi & psi & Heqv & Hncons).
+  exists phi, psi; split; [done |].
+  by contradict Hncons; apply strongly_logically_equivalent_iff in Hncons as [].
 Qed.
 
 Section sec_set_local_semantic_consequence.
@@ -280,20 +273,49 @@ Proof.
   itauto.
 Qed.
 
-Lemma set_local_semantic_consequence_global Gamma phi :
-  set_local_semantic_consequence Gamma phi -> set_global_semantic_consequence Gamma phi.
-Proof. by intros Hlocal s Hphi e; apply Hlocal, Hphi. Qed.
-
-Lemma set_local_semantic_consequence_global_closed_pattern Gamma phi :
-  set_closed_pattern Gamma ->
-    set_local_semantic_consequence Gamma phi
-      <->
-    set_global_semantic_consequence Gamma phi.
+Lemma set_strong_semantic_consequence_local Gamma phi :
+  set_strong_semantic_consequence Gamma phi -> set_local_semantic_consequence Gamma phi.
 Proof.
-  split; [by apply set_local_semantic_consequence_global |].
-  intros Hglobal s e HGamma; apply Hglobal.
-  by eapply set_satistifes_closed_pattern; [| eexists].
+  intros Hstrong s e; rewrite set_esatisfies_set_pattern_valuation; setoid_rewrite elem_of_equiv_top.
+  by intros HGamma a; apply Hstrong, HGamma.
 Qed.
+
+Section sec_rules.
+
+Lemma set_local_mp Gamma phi psi :
+  set_local_semantic_consequence Gamma phi ->
+  set_local_semantic_consequence Gamma (PImpl phi psi) ->
+  set_local_semantic_consequence Gamma psi.
+Proof.
+  intros Hphi Hphipsi A e HGamma.
+  specialize (Hphi A e HGamma).
+  specialize (Hphipsi A e HGamma).
+  by eapply esatisfies_mp_classic.
+Qed.
+
+Lemma set_local_impl_trans Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (PImpl phi psi) ->
+  set_local_semantic_consequence Gamma (PImpl psi chi) ->
+  set_local_semantic_consequence Gamma (PImpl psi chi).
+Proof.
+  intros Hphipsi Hpsichi A e HGamma.
+  specialize (Hphipsi A e HGamma).
+  specialize (Hpsichi A e HGamma).
+  rewrite esatisfies_impl_classic in Hphipsi, Hpsichi |- *.
+  by etransitivity.
+Qed.
+
+Lemma set_local_and_curry Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (PImpl (pAnd phi psi) chi)
+    <->
+  set_local_semantic_consequence Gamma (PImpl phi (PImpl psi chi)).
+Proof.
+  pose proof (Hcurry := tautology_impl_impl_and phi psi chi).
+  apply tautology_valid, strongly_logically_equivalent_valid, strongly_logically_equivalent_locally in Hcurry.
+  by rewrite Hcurry.
+Qed.
+
+End sec_rules.
 
 End sec_set_local_semantic_consequence.
 

@@ -122,6 +122,14 @@ Proof.
   by unfold esatisfies; rewrite pattern_valuation_finite_disjunction_classic by typeclasses eauto.
 Qed.
 
+Lemma esatisfies_mp_classic e phi psi :
+  esatisfies e (PImpl phi psi) -> esatisfies e phi -> esatisfies e psi.
+Proof.
+  rewrite esatisfies_impl_classic.
+  unfold esatisfies; setoid_rewrite elem_of_equiv_top.
+  by intros Hsub Hphi a; apply Hsub, Hphi.
+Qed.
+
 Definition satisfies phi : Prop := forall e, esatisfies e phi.
 
 Lemma satisfies_evar x : satisfies (PEVar x) <-> exists a, top idomain ≡ {[a]}.
@@ -157,9 +165,8 @@ Qed.
 Lemma satisfies_mp_classic phi psi :
   satisfies (PImpl phi psi) -> satisfies phi -> satisfies psi.
 Proof.
-  unfold satisfies; setoid_rewrite esatisfies_impl_classic.
-  unfold esatisfies; setoid_rewrite elem_of_equiv_top.
-  by intros Hsub Hphi e a; apply Hsub, Hphi.
+  intros Hphipsi Hphi e.
+  eapply esatisfies_mp_classic; [apply Hphipsi | apply Hphi].
 Qed.
 
 Lemma satisfies_iff_alt_classic phi psi :

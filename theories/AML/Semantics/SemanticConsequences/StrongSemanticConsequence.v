@@ -3,7 +3,7 @@ From stdpp Require Import prelude.
 From AML Require Import Functions Ensemble.
 From AML Require Import Signature Pattern Variables Structure Satisfaction Validity.
 From AML Require Import Valuation PropositionalPatternValuation PatternValuation.
-From AML Require Import LocalSemanticConsequence.
+From AML Require Import Tautology.
 
 Section sec_strong_semantic_consequence.
 
@@ -14,6 +14,26 @@ Definition strong_semantic_consequence (phi psi : Pattern) : Prop :=
 
 Definition strongly_logically_equivalent (phi psi : Pattern) : Prop :=
   forall s e, pattern_valuation s e phi ≡ pattern_valuation s e psi.
+
+#[export] Instance strongly_logically_equivalent_refl :
+  Reflexive strongly_logically_equivalent.
+Proof. done. Qed.
+
+#[export] Instance strongly_logically_equivalent_trans :
+  Transitive strongly_logically_equivalent.
+Proof.
+  intros phi psi chi Hphipsi Hpsichi A e.
+  specialize (Hphipsi A e).
+  specialize (Hpsichi A e).
+  by etransitivity.
+Qed.
+
+#[export] Instance strongly_logically_equivalent_sym :
+  Symmetric strongly_logically_equivalent.
+Proof.
+  intros phi psi Hphipsi A e.
+  by symmetry; apply Hphipsi.
+Qed.
 
 Lemma strongly_logically_equivalent_iff phi psi :
   strongly_logically_equivalent phi psi
@@ -50,61 +70,6 @@ Qed.
 Proof.
   intros phi psi; rewrite strongly_logically_equivalent_iff; intros [Hl Hr].
   by split; [rewrite Hl | rewrite Hr].
-Qed.
-
-Lemma strong_semantic_consequence_local phi psi :
-  strong_semantic_consequence phi psi -> local_semantic_consequence phi psi.
-Proof.
-  intros Hstrong s e; setoid_rewrite elem_of_equiv_top; intros Hphi a.
-  by apply Hstrong, Hphi.
-Qed.
-
-Lemma strongly_logically_equivalent_locally phi psi :
-  strongly_logically_equivalent phi psi -> locally_logically_equivalent phi psi.
-Proof.
-  rewrite strongly_logically_equivalent_iff, locally_logically_equivalent_iff.
-  by intros []; split; apply strong_semantic_consequence_local.
-Qed.
-
-Lemma locally_logically_equivalent_not_strong :
-  exists phi psi, locally_logically_equivalent phi psi /\ ~ strong_semantic_consequence phi psi.
-Proof.
-  assert (exists x y : EVar, x <> y) as (x & y & Hxy).
-  {
-    pose (x := fresh [] : EVar ).
-    exists x, (fresh [x]).
-    intro Hx.
-    by apply infinite_is_fresh with [x], elem_of_list_singleton.
-  }
-  exists (PEVar x), (PEVar y); split.
-  - by apply locally_logically_equivalent_evar.
-  - intro Hlocal.
-    pose (s := {| idomain := EVar; non_empty := populate x;
-                  iapp := fun x y z => False; isigma := fun x y => False |}).
-    assert (exists (e : Valuation), ¬ pattern_valuation s e (PEVar x) ⊆  pattern_valuation s e (PEVar y))
-      as (e & Hne).
-    {
-      unshelve esplit; [split; [exact id | exact (const ∅)] |].
-      cbn; contradict Hxy.
-      pose (@pow_set_semiset idomain).
-      by eapply @elem_of_singleton, Hxy, elem_of_singleton.
-    }
-    by contradict Hne; apply Hlocal.
-Qed.
-
-Lemma local_semantic_consequence_not_strong :
-  exists phi psi, local_semantic_consequence phi psi /\ ~ strong_semantic_consequence phi psi.
-Proof.
-  destruct locally_logically_equivalent_not_strong as (phi & psi & Heqv & Hncons).
-  by exists phi, psi; split; [apply locally_logically_equivalent_iff in Heqv as [] |].
-Qed.
-
-Lemma locally_logically_equivalent_not_strongly :
-  exists phi psi, locally_logically_equivalent phi psi /\ ~ strongly_logically_equivalent phi psi.
-Proof.
-  destruct locally_logically_equivalent_not_strong as (phi & psi & Heqv & Hncons).
-  exists phi, psi; split; [done |].
-  by contradict Hncons; apply strongly_logically_equivalent_iff in Hncons as [].
 Qed.
 
 Section sec_set_strong_semantic_consequence.
@@ -278,12 +243,44 @@ Proof.
   - by intros Hall phi Hphi; apply Hall; eexists.
 Qed.
 
-Lemma set_strong_semantic_consequence_local Gamma phi :
-  set_strong_semantic_consequence Gamma phi -> set_local_semantic_consequence Gamma phi.
+Section sec_rules.
+
+Lemma set_strong_mp Gamma phi psi :
+  set_strong_semantic_consequence Gamma phi ->
+  set_strong_semantic_consequence Gamma (PImpl phi psi) ->
+  set_strong_semantic_consequence Gamma psi.
 Proof.
-  intros Hstrong s e; rewrite set_esatisfies_set_pattern_valuation; setoid_rewrite elem_of_equiv_top.
-  by intros HGamma a; apply Hstrong, HGamma.
+  intros Hphi Hphipsi A e.
+  transitivity (pattern_valuation A e phi ∩ pattern_valuation A e (PImpl phi psi));
+    [specialize (Hphi A e); specialize (Hphipsi A e); set_solver |].
+  rewrite pattern_valuation_impl_alt_classic by typeclasses eauto.
+  intro a; rewrite elem_of_intersection, elem_of_union, elem_of_complement.
+  by set_solver.
 Qed.
+
+Lemma set_strong_impl_trans Gamma phi psi chi :
+  set_strong_semantic_consequence Gamma (PImpl phi psi) ->
+  set_strong_semantic_consequence Gamma (PImpl psi chi) ->
+  set_strong_semantic_consequence Gamma (PImpl psi chi).
+Proof.
+  intros Hphipsi Hpsichi A e.
+  transitivity (pattern_valuation A e (PImpl phi psi) ∩ pattern_valuation A e (PImpl psi chi));
+    [specialize (Hphipsi A e); specialize (Hpsichi A e); set_solver |].
+  rewrite !pattern_valuation_impl_alt_classic by typeclasses eauto.
+  by set_solver.
+Qed.
+
+Lemma set_strong_and_curry Gamma phi psi chi :
+  set_strong_semantic_consequence Gamma (PImpl (pAnd phi psi) chi)
+    <->
+  set_strong_semantic_consequence Gamma (PImpl phi (PImpl psi chi)).
+Proof.
+  pose proof (Hcurry := tautology_impl_impl_and phi psi chi).
+  apply tautology_valid, strongly_logically_equivalent_valid in Hcurry.
+  by rewrite Hcurry.
+Qed.
+
+End sec_rules.
 
 End sec_set_strong_semantic_consequence.
 
