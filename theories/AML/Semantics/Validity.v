@@ -11,30 +11,6 @@ Context `{signature}.
 
 Definition valid phi : Prop := forall (s : Structure), satisfies s phi.
 
-Lemma valid_top : valid pTop.
-Proof. by intro; apply satisfies_top. Qed.
-
-Lemma valid_and_classic phi psi :
-  valid (pAnd phi psi) <-> valid phi /\ valid psi.
-Proof.
-  unfold valid; setoid_rewrite satisfies_and_classic.
-  by split; [| itauto]; intros He; split; intro; apply He.
-Qed.
-
-Lemma valid_iff_alt_classic phi psi :
-  valid (pIff phi psi) <-> valid (PImpl phi psi) /\ valid (PImpl psi phi).
-Proof.
-  unfold valid; setoid_rewrite satisfies_iff_alt_classic.
-  by split; [| itauto]; intros He; split; intro; apply He.
-Qed.
-
-Lemma valid_mp_classic phi psi :
-  valid (PImpl phi psi) -> valid phi -> valid psi.
-Proof.
-  intros Himpl Hphi s.
-  eapply satisfies_mp_classic; [apply Himpl | apply Hphi].
-Qed.
-
 Definition valid_impl : relation Pattern := fun phi psi => valid (PImpl phi psi).
 
 #[export] Instance valid_impl_refl : Reflexive valid_impl.
@@ -46,18 +22,6 @@ Proof.
   transitivity (pattern_valuation s e psi); apply esatisfies_impl_classic.
   - by apply Hphi.
   - by apply Hpsi.
-Qed.
-
-Lemma valid_iff_classic phi psi :
-  valid (pIff phi psi) -> (valid phi <-> valid psi).
-Proof.
-  rewrite valid_iff_alt_classic; intros [Himpl Himpl'].
-  by split; apply valid_mp_classic.
-Qed.
-
-Lemma valid_phi_iff_phi phi :  valid (pIff phi phi).
-Proof.
-  by intros s e; apply top_pattern_valuation_iff_classic; [typeclasses eauto |].
 Qed.
 
 Definition valid_iff : relation Pattern := fun phi psi => valid (pIff phi psi).
@@ -79,6 +43,37 @@ Proof.
   symmetry; apply esatisfies_iff_classic, Hphi.
 Qed.
 
+Lemma valid_top : valid pTop.
+Proof. by intro; apply satisfies_top. Qed.
+
+Lemma valid_and_classic phi psi :
+  valid (pAnd phi psi) <-> valid phi /\ valid psi.
+Proof.
+  unfold valid; setoid_rewrite satisfies_and_classic.
+  by split; [| itauto]; intros He; split; intro; apply He.
+Qed.
+
+Lemma valid_iff_alt_classic phi psi :
+  valid_iff phi psi <-> valid_impl phi psi /\ valid_impl psi phi.
+Proof.
+  unfold valid_iff, valid; setoid_rewrite satisfies_iff_alt_classic.
+  by split; [| itauto]; intros He; split; intro; apply He.
+Qed.
+
+Lemma valid_mp_classic phi psi :
+  valid_impl phi psi -> valid phi -> valid psi.
+Proof.
+  intros Himpl Hphi s.
+  eapply satisfies_mp_classic; [apply Himpl | apply Hphi].
+Qed.
+
+Lemma valid_iff_classic phi psi :
+  valid_iff phi psi -> (valid phi <-> valid psi).
+Proof.
+  rewrite valid_iff_alt_classic; intros [Himpl Himpl'].
+  by split; apply valid_mp_classic.
+Qed.
+
 Lemma valid_finite_conjunction_classic phis :
   valid (finite_conjunction phis) <-> Forall valid phis.
 Proof.
@@ -89,7 +84,7 @@ Qed.
 
 Lemma valid_evar_sub0_rename_ex x y phi :
   EFreeFor x (PEVar y) phi ->
-  valid (PImpl (evar_sub0 x (PEVar y) phi) (PEx x phi)).
+  valid_impl (evar_sub0 x (PEVar y) phi) (PEx x phi).
 Proof.
   intros ? ? ?; apply esatisfies_impl_classic.
   rewrite pattern_valuation_evar_sub0_evar by done; cbn.
@@ -98,7 +93,7 @@ Qed.
 
 Lemma valid_evar_sub0_rename_all x y phi :
   EFreeFor x (PEVar y) phi ->
-  valid (PImpl (pAll x phi) (evar_sub0 x (PEVar y) phi)).
+  valid_impl (pAll x phi) (evar_sub0 x (PEVar y) phi).
 Proof.
   intros ? ? ?; rewrite esatisfies_impl_classic, pattern_valuation_forall_classic.
   rewrite pattern_valuation_evar_sub0_evar by done; cbn.
@@ -108,11 +103,11 @@ Qed.
 Lemma valid_evar_rename x y phi :
   ~ EOccurs y phi ->
   EFreeFor x (PEVar y) phi ->
-  valid (pIff phi (evar_rename x y phi)).
+  valid_iff phi (evar_rename x y phi).
 Proof.
   intros Hy Hfree_for.
   destruct (decide (x = y));
-    [by subst; rewrite evar_rename_id; apply valid_phi_iff_phi |].
+    [by subst; rewrite evar_rename_id |].
   intros s e.
   apply esatisfies_iff_classic.
   revert e; induction phi; intro. 1-2, 7: done.
@@ -141,7 +136,7 @@ Proof.
 Qed.
 
 Lemma valid_esubst_ex x y phi :
-  valid (PImpl (esubst phi x (PEVar y)) (PEx x phi)).
+  valid_impl (esubst phi x (PEVar y)) (PEx x phi).
 Proof.
   unfold esubst, SV, EV; cbn.
   replace (elements (BSV phi ∩ _)) with (@nil SVar)
@@ -194,7 +189,7 @@ Proof.
 Qed.
     
 Lemma valid_esubst_all x y phi :
-  valid (PImpl (pAll x phi) (esubst phi x (PEVar y))).
+  valid_impl (pAll x phi) (esubst phi x (PEVar y)).
 Proof.
   unfold esubst, SV, EV; cbn.
   replace (elements (BSV phi ∩ _)) with (@nil SVar)
@@ -249,11 +244,11 @@ Qed.
  
 Lemma valid_svar_rename x y phi :
   ~ SOccurs y phi ->
-  valid (pIff phi (svar_rename x y phi)).
+  valid_iff phi (svar_rename x y phi).
 Proof.
   intros Hy.
   destruct (decide (x = y));
-    [by subst; rewrite svar_rename_id; apply valid_phi_iff_phi |].
+    [by subst; rewrite svar_rename_id |].
   intros s e.
   apply esatisfies_iff_classic.
   revert e; induction phi; intro. 1-2, 7: done.
@@ -284,11 +279,14 @@ Qed.
 
 End sec_validity.
 
+Notation "A `valid_impl` B" := (valid_impl A B) (at level 90).
+Notation "A `valid_iff` B" := (valid_iff A B) (at level 90).
+
 Section sec_valid_examples.
 
 Context `{signature}.
 
-Lemma valid_all_impl_free x phi : valid (PImpl (pAll x phi) phi).
+Lemma valid_all_impl_free x phi : pAll x phi `valid_impl` phi.
 Proof.
   intros s e.
   rewrite esatisfies_impl_classic, pattern_valuation_forall_classic; cbn.
@@ -297,7 +295,7 @@ Proof.
   by apply (member_of_indexed_intersection ((λ a : idomain, pattern_valuation s (valuation_eupdate e x a) phi))).
 Qed.
 
-Lemma valid_free_impl_ex x phi : valid (PImpl phi (PEx x phi)).
+Lemma valid_free_impl_ex x phi : phi `valid_impl` PEx x phi.
 Proof.
   intros s e.
   rewrite esatisfies_impl_classic; cbn.
@@ -306,7 +304,7 @@ Proof.
   by apply (member_of_indexed_union ((λ a : idomain, pattern_valuation s (valuation_eupdate e x a) phi))).
 Qed.
 
-Lemma valid_all_impl_ex x phi : valid (PImpl (pAll x phi) (PEx x phi)).
+Lemma valid_all_impl_ex x phi : pAll x phi `valid_impl` PEx x phi.
 Proof.
   eapply valid_impl_tran; [apply valid_all_impl_free | apply valid_free_impl_ex].
 Qed.
@@ -326,7 +324,7 @@ Proof.
 Qed.
 
 Lemma valid_remove_unbound_ex x phi :
-  ~ EVarFree x phi -> valid (pIff (PEx x phi) phi).
+  ~ EVarFree x phi -> PEx x phi `valid_iff` phi.
 Proof.
   intros Hnfree s e.
   apply esatisfies_iff_classic; cbn.
@@ -340,7 +338,7 @@ Proof.
 Qed.
 
 Lemma valid_remove_unbound_all x phi :
-  ~ EVarFree x phi -> valid (pIff (pAll x phi) phi).
+  ~ EVarFree x phi -> pAll x phi `valid_iff` phi.
 Proof.
   intros Hnfree s e.
   rewrite esatisfies_iff_classic, pattern_valuation_forall_classic; cbn.
@@ -358,3 +356,118 @@ Proof.
 Qed.
 
 End sec_valid_examples.
+
+Section sec_application.
+
+Context
+  `{signature}.
+
+Lemma valid_iff_app_nil_r phi :  PApp phi pBot `valid_iff` pBot.
+Proof.
+  intros A e; apply esatisfies_iff_classic.
+  rewrite pattern_valuation_app, !pattern_valuation_bot.
+  by apply ext_iapp_empty_r.
+Qed.
+
+Lemma valid_iff_app_nil_l phi :  PApp pBot phi`valid_iff` pBot.
+Proof.
+  intros A e; apply esatisfies_iff_classic.
+  rewrite pattern_valuation_app, !pattern_valuation_bot.
+  by apply ext_iapp_empty_l.
+Qed.
+
+Lemma valid_iff_app_or_l phi psi chi :
+  PApp (pOr phi psi) chi `valid_iff` pOr (PApp phi chi) (PApp psi chi).
+Proof.
+  intros A e; apply esatisfies_iff_classic.
+  rewrite pattern_valuation_app, !pattern_valuation_or_classic, pattern_valuation_app
+    by typeclasses eauto.
+  by apply ext_iapp_union_l.
+Qed.
+
+Lemma valid_iff_app_or_r phi psi chi :
+  PApp chi (pOr phi psi) `valid_iff` pOr (PApp chi phi) (PApp chi psi).
+Proof.
+  intros A e; apply esatisfies_iff_classic.
+  rewrite pattern_valuation_app, !pattern_valuation_or_classic, pattern_valuation_app
+    by typeclasses eauto.
+  by apply ext_iapp_union_r.
+Qed.
+
+Lemma valid_iff_app_ex_l x phi psi :
+  ~ x ∈ FEV psi ->
+  PApp (PEx x phi) psi `valid_iff` PEx x (PApp phi psi).
+Proof.
+  intros Hx A e; apply esatisfies_iff_classic.
+  cbn; rewrite ext_iapp_indexed_union_l.
+  intro a; rewrite !elem_of_indexed_union.
+  apply exist_proper; intro b; revert a; apply ext_iapp_Proper; [done |].
+  apply pattern_valuation_fv.
+  split; [| done].
+  intro x'; rewrite EVarFree_FEV; cbn.
+  by unfold fn_update; case_decide; [subst |].
+Qed.
+
+Lemma valid_iff_app_ex_r x phi psi :
+  ~ x ∈ FEV psi ->
+  PApp psi (PEx x phi) `valid_iff` PEx x (PApp psi phi).
+Proof.
+  intros Hx A e; apply esatisfies_iff_classic.
+  cbn; rewrite ext_iapp_indexed_union_r.
+  intro a; rewrite !elem_of_indexed_union.
+  apply exist_proper; intro b; revert a; apply ext_iapp_Proper; [| done].
+  apply pattern_valuation_fv.
+  split; [| done].
+  intro x'; rewrite EVarFree_FEV; cbn.
+  by unfold fn_update; case_decide; [subst |].
+Qed.
+
+Lemma valid_impl_app_and_l phi psi chi :
+  PApp (pAnd phi psi) chi `valid_impl` pAnd (PApp phi chi) (PApp psi chi).
+Proof.
+  intros A e; apply esatisfies_impl_classic.
+  rewrite pattern_valuation_app, !pattern_valuation_and_classic, !pattern_valuation_app
+    by typeclasses eauto.
+  by apply ext_iapp_intersection_l.
+Qed.
+
+Lemma valid_impl_app_and_r phi psi chi :
+  PApp chi (pAnd phi psi) `valid_impl` pAnd (PApp chi phi) (PApp chi psi).
+Proof.
+  intros A e; apply esatisfies_impl_classic.
+  rewrite pattern_valuation_app, !pattern_valuation_and_classic, !pattern_valuation_app
+    by typeclasses eauto.
+  by apply ext_iapp_intersection_r.
+Qed.
+
+Lemma valid_impl_app_all_l x phi psi :
+  ~ x ∈ FEV psi ->
+  PApp (pAll x phi) psi `valid_impl` pAll x (PApp phi psi).
+Proof.
+  intros Hx A e; apply esatisfies_impl_classic.
+  rewrite pattern_valuation_app, !pattern_valuation_forall_classic. 
+  cbn; rewrite ext_iapp_indexed_intersection_l.
+  intro a; rewrite !elem_of_indexed_intersection.
+  apply forall_proper; intro b; revert a; apply ext_iapp_Proper; [done |].
+  apply pattern_valuation_fv.
+  split; [| done].
+  intro x'; rewrite EVarFree_FEV; cbn.
+  by unfold fn_update; case_decide; [subst |].
+Qed.
+
+Lemma valid_impl_app_all_r x phi psi :
+  ~ x ∈ FEV psi ->
+  PApp psi (pAll x phi) `valid_impl` pAll x (PApp psi phi).
+Proof.
+  intros Hx A e; apply esatisfies_impl_classic.
+  rewrite pattern_valuation_app, !pattern_valuation_forall_classic. 
+  cbn; rewrite ext_iapp_indexed_intersection_r.
+  intro a; rewrite !elem_of_indexed_intersection.
+  apply forall_proper; intro b; revert a; apply ext_iapp_Proper; [| done].
+  apply pattern_valuation_fv.
+  split; [| done].
+  intro x'; rewrite EVarFree_FEV; cbn.
+  by unfold fn_update; case_decide; [subst |].
+Qed.
+
+End sec_application.

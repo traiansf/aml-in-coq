@@ -46,13 +46,13 @@ Proof.
 Qed.
 
 Lemma strong_semantic_consequence_valid phi psi :
-  strong_semantic_consequence phi psi <-> valid (PImpl phi psi).
+  strong_semantic_consequence phi psi <-> phi `valid_impl` psi.
 Proof.
-  by unfold valid, satisfies; setoid_rewrite esatisfies_impl_classic.
+  by unfold valid_impl, valid, satisfies; setoid_rewrite esatisfies_impl_classic.
 Qed.
 
 Lemma strongly_logically_equivalent_valid phi psi :
-  strongly_logically_equivalent phi psi <-> valid (pIff phi psi).
+  strongly_logically_equivalent phi psi <-> phi `valid_iff` psi.
 Proof.
   rewrite valid_iff_alt_classic, <- !strong_semantic_consequence_valid.
   apply strongly_logically_equivalent_iff.

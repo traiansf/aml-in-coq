@@ -13,8 +13,32 @@ Section sec_local_semantic_consequence.
 Definition local_semantic_consequence (phi psi : Pattern) : Prop :=
   forall s e, esatisfies s e phi -> esatisfies s e psi.
 
+#[export] Instance local_semantic_consequence_refl : Reflexive local_semantic_consequence.
+Proof. by intros ? ?. Qed.
+
+#[export] Instance local_semantic_consequence_trans : Transitive local_semantic_consequence.
+Proof.
+  intros phi psi chi Hpsi Hchi s e Hphi.
+  by apply Hchi, Hpsi.
+Qed.
+
 Definition locally_logically_equivalent (phi psi : Pattern) : Prop :=
   forall s e, esatisfies s e phi <-> esatisfies s e psi.
+
+#[export] Instance locally_logically_equivalent_refl : Reflexive locally_logically_equivalent.
+Proof. by intros ? ?. Qed.
+
+#[export] Instance locally_logically_equivalent_trans : Transitive locally_logically_equivalent.
+Proof.
+  intros phi psi chi Hpsi Hchi s e.
+  by etransitivity; [apply Hpsi | apply Hchi].
+Qed.
+
+#[export] Instance locally_logically_equivalent_sym : Symmetric locally_logically_equivalent.
+Proof.
+  intros phi psi Hpsi s e.
+  by symmetry.
+Qed.
 
 Lemma locally_logically_equivalent_iff phi psi :
   locally_logically_equivalent phi psi
@@ -316,6 +340,146 @@ Proof.
 Qed.
 
 End sec_rules.
+
+Section sec_application.
+
+Lemma local_semantic_consequence_impl_app_r phi psi chi :
+  local_semantic_consequence (PImpl phi psi) (PImpl (PApp chi phi) (PApp chi psi)).
+Proof.
+  intros A e; rewrite !esatisfies_impl_classic; cbn.
+  by intros Hincl; rewrite Hincl.
+Qed.
+
+Lemma local_semantic_consequence_impl_app_l phi psi chi :
+  local_semantic_consequence (PImpl phi psi) (PImpl (PApp phi chi) (PApp psi chi)).
+Proof.
+  intros A e; rewrite !esatisfies_impl_classic; cbn.
+  by intros Hincl; rewrite Hincl.
+Qed.
+
+Lemma local_semantic_consequence_iff_app_r phi psi chi :
+  local_semantic_consequence (pIff phi psi) (pIff (PApp chi phi) (PApp chi psi)).
+Proof.
+  intros A e; rewrite !esatisfies_iff_classic; cbn.
+  by intros Hincl; rewrite Hincl.
+Qed.
+
+Lemma local_semantic_consequence_iff_app_l phi psi chi :
+  local_semantic_consequence (pIff phi psi) (pIff (PApp phi chi) (PApp psi chi)).
+Proof.
+  intros A e; rewrite !esatisfies_iff_classic; cbn.
+  by intros Hincl; rewrite Hincl.
+Qed.
+
+Lemma local_semantic_consequence_impl_neg phi psi :
+  local_semantic_consequence (PImpl phi psi) (PImpl (pNeg psi) (pNeg phi)).
+Proof.
+  intros A e; rewrite !esatisfies_impl_classic, !pattern_valuation_neg_classic
+    by typeclasses eauto.
+  by apply complement_subseteq_proper.
+Qed.
+
+Lemma local_semantic_consequence_iff_neg phi psi :
+  local_semantic_consequence (pIff phi psi) (pIff (pNeg phi) (pNeg psi)).
+Proof.
+  intros A e; rewrite !esatisfies_iff_classic, !pattern_valuation_neg_classic
+    by typeclasses eauto.
+  by apply complement_equiv_proper.
+Qed.
+
+Lemma local_semantic_consequence_impl_app_neg_l phi psi chi :
+  local_semantic_consequence (PImpl phi psi) (PImpl (PApp (pNeg psi) chi) (PApp (pNeg phi) chi)).
+Proof.
+  etransitivity; [by apply local_semantic_consequence_impl_neg |].
+  apply local_semantic_consequence_impl_app_l.
+Qed.
+
+Lemma local_semantic_consequence_impl_app_neg_r phi psi chi :
+  local_semantic_consequence (PImpl phi psi) (PImpl (PApp chi (pNeg psi)) (PApp chi (pNeg phi))).
+Proof.
+  etransitivity; [by apply local_semantic_consequence_impl_neg |].
+  apply local_semantic_consequence_impl_app_r.
+Qed.
+
+Lemma local_semantic_consequence_iff_app_neg_l phi psi chi :
+  local_semantic_consequence (pIff phi psi) (pIff (PApp (pNeg phi) chi) (PApp (pNeg psi) chi)).
+Proof.
+  etransitivity; [by apply local_semantic_consequence_iff_neg |].
+  apply local_semantic_consequence_iff_app_l.
+Qed.
+
+Lemma local_semantic_consequence_iff_app_neg_r phi psi chi :
+  local_semantic_consequence (pIff phi psi) (pIff (PApp chi (pNeg phi)) (PApp chi (pNeg psi))).
+Proof.
+  etransitivity; [by apply local_semantic_consequence_iff_neg |].
+  apply local_semantic_consequence_iff_app_r.
+Qed.
+
+Lemma set_local_semantic_consequence_impl_app_elim_l Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (PImpl phi psi) ->
+  set_local_semantic_consequence Gamma (PImpl (PApp phi chi) (PApp psi chi)).
+Proof.
+  apply local_semantic_consequence_set_consequence,
+    local_semantic_consequence_impl_app_l.
+Qed.
+
+Lemma set_local_semantic_consequence_impl_app_elim_r Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (PImpl phi psi) ->
+  set_local_semantic_consequence Gamma (PImpl (PApp chi phi) (PApp chi psi)).
+Proof.
+  apply local_semantic_consequence_set_consequence,
+    local_semantic_consequence_impl_app_r.
+Qed.
+
+Lemma set_local_semantic_consequence_iff_app_elim_r Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (pIff phi psi) ->
+  set_local_semantic_consequence Gamma (pIff (PApp chi phi) (PApp chi psi)).
+Proof.
+  apply local_semantic_consequence_set_consequence,
+    local_semantic_consequence_iff_app_r.
+Qed.
+
+Lemma set_local_semantic_consequence_iff_app_elim_l Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (pIff phi psi) ->
+  set_local_semantic_consequence Gamma (pIff (PApp phi chi) (PApp psi chi)).
+Proof.
+  apply local_semantic_consequence_set_consequence,
+    local_semantic_consequence_iff_app_l.
+Qed.
+
+Lemma set_local_semantic_consequence_impl_app_neg_elim_l Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (PImpl phi psi) ->
+  set_local_semantic_consequence Gamma (PImpl (PApp (pNeg psi) chi) (PApp (pNeg phi) chi)).
+Proof.
+  apply local_semantic_consequence_set_consequence,
+    local_semantic_consequence_impl_app_neg_l.
+Qed.
+
+Lemma set_local_semantic_consequence_impl_app_neg_elim_r Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (PImpl phi psi) ->
+  set_local_semantic_consequence Gamma (PImpl (PApp chi (pNeg psi)) (PApp chi (pNeg phi))).
+Proof.
+  apply local_semantic_consequence_set_consequence,
+    local_semantic_consequence_impl_app_neg_r.
+Qed.
+
+Lemma set_local_semantic_consequence_iff_app_neg_elim_r Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (pIff phi psi) ->
+  set_local_semantic_consequence Gamma (pIff (PApp chi (pNeg phi)) (PApp chi (pNeg psi))).
+Proof.
+  apply local_semantic_consequence_set_consequence,
+    local_semantic_consequence_iff_app_neg_r.
+Qed.
+
+Lemma set_local_semantic_consequence_iff_app_neg_elim_l Gamma phi psi chi :
+  set_local_semantic_consequence Gamma (pIff phi psi) ->
+  set_local_semantic_consequence Gamma (pIff (PApp (pNeg phi) chi) (PApp (pNeg psi) chi)).
+Proof.
+  apply local_semantic_consequence_set_consequence,
+    local_semantic_consequence_iff_app_neg_l.
+Qed.
+
+End sec_application.
 
 End sec_set_local_semantic_consequence.
 

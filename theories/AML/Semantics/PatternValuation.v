@@ -25,6 +25,12 @@ Fixpoint pattern_valuation (e : Valuation) (p : Pattern) : Ensemble idomain :=
   | PMu X phi => filtered_intersection (fun B => pattern_valuation (valuation_supdate e X B) phi ⊆ B) id
   end.
 
+Lemma pattern_valuation_app e phi psi :
+  pattern_valuation e (PApp phi psi)
+    =
+  ext_iapp (pattern_valuation e phi) (pattern_valuation e psi).
+Proof. done. Qed.
+
 Lemma pattern_valuation_ex e x phi :
   pattern_valuation e (PEx x phi)
     =

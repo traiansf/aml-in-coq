@@ -13,8 +13,32 @@ Section sec_global_semantic_consequence.
 Definition global_semantic_consequence (phi psi : Pattern) : Prop :=
   forall (s : Structure), satisfies s phi -> satisfies s psi.
 
+#[export] Instance global_semantic_consequence_refl : Reflexive global_semantic_consequence.
+Proof. by intros ? ?. Qed.
+
+#[export] Instance global_semantic_consequence_trans : Transitive global_semantic_consequence.
+Proof.
+  intros phi psi chi Hpsi Hchi s Hphi.
+  by apply Hchi, Hpsi.
+Qed.
+
 Definition globally_logically_equivalent (phi psi : Pattern) : Prop :=
   forall (s : Structure), satisfies s phi <-> satisfies s psi.
+
+#[export] Instance globally_logically_equivalent_refl : Reflexive globally_logically_equivalent.
+Proof. by intros ? ?. Qed.
+
+#[export] Instance globally_logically_equivalent_trans : Transitive globally_logically_equivalent.
+Proof.
+  intros phi psi chi Hpsi Hchi s.
+  by etransitivity; [apply Hpsi | apply Hchi].
+Qed.
+
+#[export] Instance globally_logically_equivalent_sym : Symmetric globally_logically_equivalent.
+Proof.
+  intros phi psi Hpsi s.
+  by symmetry.
+Qed.
 
 Lemma globally_logically_equivalent_iff phi psi :
   globally_logically_equivalent phi psi
@@ -345,9 +369,147 @@ Proof.
   by unfold fn_update; case_decide; [subst |].
 Qed.
 
-
-
 End sec_rules.
+
+Section sec_application.
+
+Lemma global_semantic_consequence_impl_app_r phi psi chi :
+  global_semantic_consequence (PImpl phi psi) (PImpl (PApp chi phi) (PApp chi psi)).
+Proof.
+  intros A; unfold satisfies; setoid_rewrite esatisfies_impl_classic; cbn.
+  by intros Hincl e; rewrite Hincl.
+Qed.
+
+Lemma global_semantic_consequence_impl_app_l phi psi chi :
+  global_semantic_consequence (PImpl phi psi) (PImpl (PApp phi chi) (PApp psi chi)).
+Proof.
+  intros A; unfold satisfies; setoid_rewrite esatisfies_impl_classic; cbn.
+  by intros Hincl e; rewrite Hincl.
+Qed.
+
+Lemma global_semantic_consequence_iff_app_r phi psi chi :
+  global_semantic_consequence (pIff phi psi) (pIff (PApp chi phi) (PApp chi psi)).
+Proof.
+  intros A; unfold satisfies; setoid_rewrite esatisfies_iff_classic; cbn.
+  by intros Hincl e; rewrite Hincl.
+Qed.
+
+Lemma global_semantic_consequence_iff_app_l phi psi chi :
+  global_semantic_consequence (pIff phi psi) (pIff (PApp phi chi) (PApp psi chi)).
+Proof.
+  intros A; unfold satisfies; setoid_rewrite esatisfies_iff_classic; cbn.
+  by intros Hincl e; rewrite Hincl.
+Qed.
+
+Lemma global_semantic_consequence_impl_neg phi psi :
+  global_semantic_consequence (PImpl phi psi) (PImpl (pNeg psi) (pNeg phi)).
+Proof.
+  intros A; unfold satisfies; setoid_rewrite esatisfies_impl_classic; setoid_rewrite pattern_valuation_neg_classic;
+    [| typeclasses eauto..].
+  by intros Hincl e; apply complement_subseteq_proper, Hincl.
+Qed.
+
+Lemma global_semantic_consequence_iff_neg phi psi :
+  global_semantic_consequence (pIff phi psi) (pIff (pNeg phi) (pNeg psi)).
+Proof.
+  intros A; unfold satisfies; setoid_rewrite esatisfies_iff_classic; setoid_rewrite pattern_valuation_neg_classic;
+    [| typeclasses eauto..].
+  by intros Hincl e; apply complement_equiv_proper, Hincl.
+Qed.
+
+Lemma global_semantic_consequence_impl_app_neg_l phi psi chi :
+  global_semantic_consequence (PImpl phi psi) (PImpl (PApp (pNeg psi) chi) (PApp (pNeg phi) chi)).
+Proof.
+  etransitivity; [by apply global_semantic_consequence_impl_neg |].
+  apply global_semantic_consequence_impl_app_l.
+Qed.
+
+Lemma global_semantic_consequence_impl_app_neg_r phi psi chi :
+  global_semantic_consequence (PImpl phi psi) (PImpl (PApp chi (pNeg psi)) (PApp chi (pNeg phi))).
+Proof.
+  etransitivity; [by apply global_semantic_consequence_impl_neg |].
+  apply global_semantic_consequence_impl_app_r.
+Qed.
+
+Lemma global_semantic_consequence_iff_app_neg_l phi psi chi :
+  global_semantic_consequence (pIff phi psi) (pIff (PApp (pNeg phi) chi) (PApp (pNeg psi) chi)).
+Proof.
+  etransitivity; [by apply global_semantic_consequence_iff_neg |].
+  apply global_semantic_consequence_iff_app_l.
+Qed.
+
+Lemma global_semantic_consequence_iff_app_neg_r phi psi chi :
+  global_semantic_consequence (pIff phi psi) (pIff (PApp chi (pNeg phi)) (PApp chi (pNeg psi))).
+Proof.
+  etransitivity; [by apply global_semantic_consequence_iff_neg |].
+  apply global_semantic_consequence_iff_app_r.
+Qed.
+
+Lemma set_global_semantic_consequence_impl_app_elim_l Gamma phi psi chi :
+  set_global_semantic_consequence Gamma (PImpl phi psi) ->
+  set_global_semantic_consequence Gamma (PImpl (PApp phi chi) (PApp psi chi)).
+Proof.
+  apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_impl_app_l.
+Qed.
+
+Lemma set_global_semantic_consequence_impl_app_elim_r Gamma phi psi chi :
+  set_global_semantic_consequence Gamma (PImpl phi psi) ->
+  set_global_semantic_consequence Gamma (PImpl (PApp chi phi) (PApp chi psi)).
+Proof.
+  apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_impl_app_r.
+Qed.
+
+Lemma set_global_semantic_consequence_iff_app_elim_r Gamma phi psi chi :
+  set_global_semantic_consequence Gamma (pIff phi psi) ->
+  set_global_semantic_consequence Gamma (pIff (PApp chi phi) (PApp chi psi)).
+Proof.
+  apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_iff_app_r.
+Qed.
+
+Lemma set_global_semantic_consequence_iff_app_elim_l Gamma phi psi chi :
+  set_global_semantic_consequence Gamma (pIff phi psi) ->
+  set_global_semantic_consequence Gamma (pIff (PApp phi chi) (PApp psi chi)).
+Proof.
+  apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_iff_app_l.
+Qed.
+
+Lemma set_global_semantic_consequence_impl_app_neg_elim_l Gamma phi psi chi :
+  set_global_semantic_consequence Gamma (PImpl phi psi) ->
+  set_global_semantic_consequence Gamma (PImpl (PApp (pNeg psi) chi) (PApp (pNeg phi) chi)).
+Proof.
+  apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_impl_app_neg_l.
+Qed.
+
+Lemma set_global_semantic_consequence_impl_app_neg_elim_r Gamma phi psi chi :
+  set_global_semantic_consequence Gamma (PImpl phi psi) ->
+  set_global_semantic_consequence Gamma (PImpl (PApp chi (pNeg psi)) (PApp chi (pNeg phi))).
+Proof.
+  apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_impl_app_neg_r.
+Qed.
+
+Lemma set_global_semantic_consequence_iff_app_neg_elim_r Gamma phi psi chi :
+  set_global_semantic_consequence Gamma (pIff phi psi) ->
+  set_global_semantic_consequence Gamma (pIff (PApp chi (pNeg phi)) (PApp chi (pNeg psi))).
+Proof.
+  apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_iff_app_neg_r.
+Qed.
+
+Lemma set_global_semantic_consequence_iff_app_neg_elim_l Gamma phi psi chi :
+  set_global_semantic_consequence Gamma (pIff phi psi) ->
+  set_global_semantic_consequence Gamma (pIff (PApp (pNeg phi) chi) (PApp (pNeg psi) chi)).
+Proof.
+  apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_iff_app_neg_l.
+Qed.
+
+End sec_application.
 
 End sec_set_global_semantic_consequence.
 
