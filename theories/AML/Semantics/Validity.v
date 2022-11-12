@@ -540,4 +540,19 @@ End sec_application.
 
 Section sec_mu.
 
+Context
+  `{signature}.
+
+Lemma valid_iff_svar_sub0_mu X phi :
+  OccursPositively X phi ->
+  SFreeFor X (PMu X phi) phi ->
+  svar_sub0 X (PMu X phi) phi `valid_iff` PMu X phi.
+Proof.
+  intros ? ? A e.
+  apply esatisfies_iff_classic.
+  etransitivity.
+  - by apply pattern_valuation_svar_sub0.
+  - by symmetry; apply pattern_valuation_mu_unroll.
+Qed.
+
 End sec_mu.

@@ -693,6 +693,31 @@ Qed.
 
 End sec_set_variables.
 
+Section sec_mu.
+
+Lemma global_semantic_consequence_knaster_tarski phi psi X :
+  SFreeFor X psi phi ->
+  global_semantic_consequence
+    (PImpl (svar_sub0 X psi phi) psi)
+    (PImpl (PMu X phi) psi).
+Proof.
+  intro.
+  by apply local_semantic_consequence_global,
+    local_semantic_consequence_knaster_tarski.
+Qed.
+
+Lemma set_global_semantic_consequence_knaster_tarski Gamma phi psi X :
+  SFreeFor X psi phi ->
+  set_global_semantic_consequence Gamma (PImpl (svar_sub0 X psi phi) psi) ->
+  set_global_semantic_consequence Gamma (PImpl (PMu X phi) psi).
+Proof.
+  intro.
+  by apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_knaster_tarski.
+Qed.
+
+End sec_mu.
+
 End sec_set_global_semantic_consequence.
 
 End sec_global_semantic_consequence.

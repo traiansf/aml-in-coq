@@ -1,7 +1,8 @@
 From Cdcl Require Import Itauto. #[local] Tactic Notation "itauto" := itauto auto.
 From stdpp Require Import prelude.
 From AML Require Import Functions Ensemble.
-From AML Require Import Signature Pattern Variables Structure Satisfaction Validity.
+From AML Require Import Signature Pattern Variables Substitution.
+From AML Require Import Structure Satisfaction Validity.
 From AML Require Import Valuation PropositionalPatternValuation PatternValuation.
 From AML Require Import Tautology.
 From AML Require Import StrongSemanticConsequence.
@@ -516,6 +517,33 @@ Proof.
 Qed.
 
 End sec_contexts.
+
+Section sec_mu.
+
+Lemma local_semantic_consequence_knaster_tarski phi psi X :
+  SFreeFor X psi phi ->
+  local_semantic_consequence
+    (PImpl (svar_sub0 X psi phi) psi)
+    (PImpl (PMu X phi) psi).
+Proof.
+  intros ? A e; rewrite !esatisfies_impl_classic.
+  rewrite pattern_valuation_svar_sub0 by done.
+  intros Hincl; cbn.
+  apply (member_of_filtered_intersection (λ B : Ensemble idomain,
+  pattern_valuation A (valuation_supdate e X B) phi ⊆ B) id _ Hincl).
+Qed.
+
+Lemma set_local_semantic_consequence_knaster_tarski Gamma phi psi X :
+  SFreeFor X psi phi ->
+  set_local_semantic_consequence Gamma (PImpl (svar_sub0 X psi phi) psi) ->
+  set_local_semantic_consequence Gamma (PImpl (PMu X phi) psi).
+Proof.
+  intro.
+  by apply local_semantic_consequence_set_consequence,
+    local_semantic_consequence_knaster_tarski.
+Qed.
+
+End sec_mu.
 
 End sec_set_local_semantic_consequence.
 
