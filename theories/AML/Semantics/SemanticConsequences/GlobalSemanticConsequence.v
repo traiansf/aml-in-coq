@@ -1,7 +1,9 @@
 From Cdcl Require Import Itauto. #[local] Tactic Notation "itauto" := itauto auto.
 From stdpp Require Import prelude.
+From Coq Require Import Classical.
 From AML Require Import Functions Ensemble.
-From AML Require Import Signature Pattern Variables Structure Satisfaction Validity.
+From AML Require Import Signature Pattern Variables Substitution.
+From AML Require Import Structure Satisfaction Validity.
 From AML Require Import Valuation PropositionalPatternValuation PatternValuation.
 From AML Require Import Tautology.
 From AML Require Import StrongSemanticConsequence LocalSemanticConsequence.
@@ -510,6 +512,186 @@ Proof.
 Qed.
 
 End sec_application.
+
+Section sec_contexts.
+
+Lemma valid_iff_context_bot c :
+  csubst c pBot `valid_iff` pBot.
+Proof.
+  induction c; cbn; [done |..].
+  - etransitivity; [| apply valid_iff_app_bot_l].
+    eapply global_semantic_consequence_valid; [| done].
+    by apply global_semantic_consequence_iff_app_l.
+  - etransitivity; [| apply valid_iff_app_bot_r].
+    eapply global_semantic_consequence_valid; [| done].
+    by apply global_semantic_consequence_iff_app_r.
+Qed.
+
+Lemma valid_iff_context_or c phi psi:
+  csubst c (pOr phi psi) `valid_iff` pOr (csubst c phi) (csubst c psi).
+Proof.
+  induction c; cbn; [done |..].
+  - etransitivity; [| apply valid_iff_app_or_l].
+    eapply global_semantic_consequence_valid; [| done].
+    by apply global_semantic_consequence_iff_app_l.
+  - etransitivity; [| apply valid_iff_app_or_r].
+    eapply global_semantic_consequence_valid; [| done].
+    by apply global_semantic_consequence_iff_app_r.
+Qed.
+
+Lemma valid_iff_context_ex c x phi :
+  ~ x ∈ CFEV c ->
+  csubst c (PEx x phi) `valid_iff` PEx x (csubst c phi).
+Proof.
+  intros Hx; induction c; cbn; [done |..].
+  - rewrite <- CEVarFree_CFEV in Hx.
+    etransitivity;
+      [| by apply valid_iff_app_ex_l; contradict Hx; apply cevf_lr, EVarFree_FEV].
+    eapply global_semantic_consequence_valid;
+      [| by apply IHc; contradict Hx; apply cevf_ll, CEVarFree_CFEV].
+    by apply global_semantic_consequence_iff_app_l.
+  - rewrite <- CEVarFree_CFEV in Hx.
+    etransitivity;
+      [| by apply valid_iff_app_ex_r; contradict Hx; apply cevf_rl, EVarFree_FEV].
+    eapply global_semantic_consequence_valid;
+      [| by apply IHc; contradict Hx; apply cevf_rr, CEVarFree_CFEV].
+    by apply global_semantic_consequence_iff_app_r.
+Qed.
+
+Lemma valid_impl_context_and c phi psi:
+  csubst c (pAnd phi psi) `valid_impl` pAnd (csubst c phi) (csubst c psi).
+Proof.
+  induction c; cbn; [done |..].
+  - etransitivity; [| apply valid_impl_app_and_l].
+    eapply global_semantic_consequence_valid; [| done].
+    by apply global_semantic_consequence_impl_app_l.
+  - etransitivity; [| apply valid_impl_app_and_r].
+    eapply global_semantic_consequence_valid; [| done].
+    by apply global_semantic_consequence_impl_app_r.
+Qed.
+
+Lemma valid_impl_context_all c x phi :
+  ~ x ∈ CFEV c ->
+  csubst c (pAll x phi) `valid_impl` pAll x (csubst c phi).
+Proof.
+  intros Hx; induction c; cbn; [done |..].
+  - rewrite <- CEVarFree_CFEV in Hx.
+    etransitivity;
+      [| by apply valid_impl_app_all_l; contradict Hx; apply cevf_lr, EVarFree_FEV].
+    eapply global_semantic_consequence_valid;
+      [| by apply IHc; contradict Hx; apply cevf_ll, CEVarFree_CFEV].
+    by apply global_semantic_consequence_impl_app_l.
+  - rewrite <- CEVarFree_CFEV in Hx.
+    etransitivity;
+      [| by apply valid_impl_app_all_r; contradict Hx; apply cevf_rl, EVarFree_FEV].
+    eapply global_semantic_consequence_valid;
+      [| by apply IHc; contradict Hx; apply cevf_rr, CEVarFree_CFEV].
+    by apply global_semantic_consequence_impl_app_r.
+Qed.
+
+End sec_contexts.
+
+Section sec_singleton_variables.
+
+Lemma pattern_valuation_context_empty A e c phi :
+  pattern_valuation A e phi ≡ ∅ ->
+  pattern_valuation A e (csubst c phi) ≡ ∅.
+Proof.
+  intros Hphi.
+  assert (Hphi' : esatisfies A e (pIff phi pBot)).
+  {
+    apply esatisfies_iff_classic.
+    by rewrite Hphi, pattern_valuation_bot.
+  }
+  apply local_semantic_consequence_context_iff with (c := c),
+    esatisfies_iff_classic in Hphi'.
+  rewrite Hphi'.
+  transitivity (pattern_valuation A e pBot);
+    [| by apply pattern_valuation_bot].
+  by apply esatisfies_iff_classic, valid_iff_context_bot.
+Qed.
+
+Lemma singleton_valiable_rule c1 c2 x phi :
+  valid (pNeg (pAnd (csubst c1 (pAnd (PEVar x) phi))
+    (csubst c2 (pAnd (PEVar x) (pNeg phi))))).
+Proof.
+  intros A e.
+  apply top_pattern_valuation_neg_classic; [typeclasses eauto |].
+  rewrite pattern_valuation_and_classic by typeclasses eauto.
+  destruct (classic (eval e x ∈ pattern_valuation A e phi)).
+  - rewrite pattern_valuation_context_empty with (c := c2); [set_solver |].
+    rewrite pattern_valuation_and_classic, pattern_valuation_neg_classic
+      by typeclasses eauto.
+    apply elem_of_equiv_empty; intro a.
+    rewrite elem_of_intersection, elem_of_complement; set_solver.
+  - rewrite pattern_valuation_context_empty with (c := c1); [set_solver |].
+    rewrite pattern_valuation_and_classic by typeclasses eauto.
+    by cbn; set_solver.
+Qed.
+
+End sec_singleton_variables.
+
+Section sec_set_variables.
+
+Lemma global_semantic_consequence_svar_sub0 phi psi X :
+  SFreeFor X psi phi ->
+  global_semantic_consequence phi (svar_sub0 X psi phi).
+Proof.
+  intros Hfree A Hphi e.
+  unfold esatisfies; rewrite pattern_valuation_svar_sub0 by done.
+  by apply Hphi.
+Qed.
+
+Lemma set_global_semantic_consequence_svar_sub0 Gamma phi psi X :
+  SFreeFor X psi phi ->
+  set_global_semantic_consequence Gamma phi ->
+  set_global_semantic_consequence Gamma (svar_sub0 X psi phi).
+Proof.
+  by intro; apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_svar_sub0.
+Qed.
+
+Lemma global_semantic_consequence_ssubst phi psi X :
+  global_semantic_consequence phi (ssubst phi X psi).
+Proof.
+  unfold ssubst.
+  remember (svar_rename_iter _ _ _) as theta.
+  etransitivity; [| apply global_semantic_consequence_svar_sub0].
+  - apply globally_logically_equivalent_iff,
+      locally_logically_equivalent_global,
+      strongly_logically_equivalent_locally,
+      strongly_logically_equivalent_valid.
+    subst.
+    etransitivity;
+      [apply valid_svar_rename_iter_fresh | apply valid_evar_rename_iter_fresh];
+      [rewrite evar_rename_iter_BSV | rewrite evar_rename_iter_SV |..]; by set_solver.
+  - apply SFreeFor_x_theta_if_not_bound.
+    + intro y; rewrite EVarFree_FEV, EVarBound_BEV; intro Hy.
+      subst.
+      rewrite svar_rename_iter_BEV.
+      destruct (classic (y ∈ (BEV phi ∩ EV psi))) as [HOcc | Hnocc].
+      * apply evar_rename_iter_fresh_not_bound_to_rename; [by set_solver | done].
+      * rewrite elem_of_intersection in Hnocc.
+        apply not_and_or in Hnocc as [Hnocc | Hnocc];
+          [| contradict Hnocc; apply elem_of_union; left; done].
+        by apply evar_rename_iter_fresh_not_bound_to_avoid; set_solver.
+    + intro y; rewrite SVarFree_FSV, SVarBound_BSV; intros Hy Hny.
+      subst.
+      destruct (classic (y ∈ (BSV phi ∩ SV psi))) as [HOcc | Hnocc];
+        [by apply svar_rename_iter_fresh_not_bound_to_rename; set_solver |].
+      apply svar_rename_iter_fresh_not_bound_to_avoid; [| by set_solver].
+      by rewrite evar_rename_iter_BSV; set_solver.
+Qed.
+
+Lemma set_global_semantic_consequence_ssubst Gamma phi psi X :
+  set_global_semantic_consequence Gamma phi ->
+  set_global_semantic_consequence Gamma (ssubst phi X psi).
+Proof.
+  by apply global_semantic_consequence_set_consequence,
+    global_semantic_consequence_ssubst.
+Qed.
+
+End sec_set_variables.
 
 End sec_set_global_semantic_consequence.
 

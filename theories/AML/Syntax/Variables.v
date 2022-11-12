@@ -644,4 +644,42 @@ Lemma ClosedPattern_elim phi :
   FEV phi ≡ ∅ -> FSV phi ≡ ∅ -> ClosedPattern phi.
 Proof. by intros; apply ClosedPattern_iff. Qed.
 
+Definition CFEV (c : AppContext) : EVarSet := FEV (csubst c pBot).
+
+Lemma elem_of_CFEV x c : x ∈ CFEV c <-> forall phi, x ∈ FEV (csubst c phi).
+Proof.
+  split; [| by intros Hphi; apply Hphi].
+  induction c; cbn; [intros Hx; contradict Hx; apply not_elem_of_empty |..];
+    setoid_rewrite elem_of_union; intros [] phi.
+  - by left; apply IHc.
+  - by right.
+  - by left.
+  - by right; apply IHc.
+Qed.
+
+Inductive CEVarFree (x : EVar) : AppContext -> Prop :=
+| cevf_ll : forall c p, CEVarFree x c -> CEVarFree x (LApp c p)
+| cevf_lr : forall c p, EVarFree x p -> CEVarFree x (LApp c p)
+| cevf_rr : forall c p, CEVarFree x c -> CEVarFree x (RApp p c)
+| cevf_rl : forall c p, EVarFree x p -> CEVarFree x (RApp p c)
+.
+
+Lemma CEVarFree_CFEV x c : CEVarFree x c <-> x ∈ CFEV c.
+Proof.
+  induction c; cbn.
+  - by split; [inversion 1 | intros Hx; contradict Hx; apply not_elem_of_empty].
+  - rewrite elem_of_union, <- IHc.
+    split; [inversion 1 | intros []]; subst.
+    + by left.
+    + by right; apply EVarFree_FEV.
+    + by apply cevf_ll.
+    + by apply cevf_lr; apply EVarFree_FEV.
+  - rewrite elem_of_union, <- IHc.
+    split; [inversion 1 | intros []]; subst.
+    + by right.
+    + by left; apply EVarFree_FEV.
+    + by apply cevf_rl; apply EVarFree_FEV.
+    + by apply cevf_rr.
+Qed.
+
 End sec_variables.

@@ -26,6 +26,9 @@ Qed.
 
 Definition valid_iff : relation Pattern := fun phi psi => valid (pIff phi psi).
 
+Local Notation "A `valid_impl` B" := (valid_impl A B) (at level 90).
+Local Notation "A `valid_iff` B" := (valid_iff A B) (at level 90).
+
 #[export] Instance valid_iff_refl : Reflexive valid_iff.
 Proof. by intros phi s e; apply esatisfies_iff_classic. Qed.
 
@@ -54,21 +57,21 @@ Proof.
 Qed.
 
 Lemma valid_iff_alt_classic phi psi :
-  valid_iff phi psi <-> valid_impl phi psi /\ valid_impl psi phi.
+  (phi `valid_iff` psi) <-> (phi `valid_impl` psi) /\ (psi `valid_impl` phi).
 Proof.
   unfold valid_iff, valid; setoid_rewrite satisfies_iff_alt_classic.
   by split; [| itauto]; intros He; split; intro; apply He.
 Qed.
 
 Lemma valid_mp_classic phi psi :
-  valid_impl phi psi -> valid phi -> valid psi.
+  phi `valid_impl` psi -> valid phi -> valid psi.
 Proof.
   intros Himpl Hphi s.
   eapply satisfies_mp_classic; [apply Himpl | apply Hphi].
 Qed.
 
 Lemma valid_iff_classic phi psi :
-  valid_iff phi psi -> (valid phi <-> valid psi).
+  phi `valid_iff` psi -> (valid phi <-> valid psi).
 Proof.
   rewrite valid_iff_alt_classic; intros [Himpl Himpl'].
   by split; apply valid_mp_classic.
@@ -84,7 +87,7 @@ Qed.
 
 Lemma valid_evar_sub0_rename_ex x y phi :
   EFreeFor x (PEVar y) phi ->
-  valid_impl (evar_sub0 x (PEVar y) phi) (PEx x phi).
+  evar_sub0 x (PEVar y) phi `valid_impl` PEx x phi.
 Proof.
   intros ? ? ?; apply esatisfies_impl_classic.
   rewrite pattern_valuation_evar_sub0_evar by done; cbn.
@@ -93,7 +96,7 @@ Qed.
 
 Lemma valid_evar_sub0_rename_all x y phi :
   EFreeFor x (PEVar y) phi ->
-  valid_impl (pAll x phi) (evar_sub0 x (PEVar y) phi).
+  pAll x phi `valid_impl` evar_sub0 x (PEVar y) phi.
 Proof.
   intros ? ? ?; rewrite esatisfies_impl_classic, pattern_valuation_forall_classic.
   rewrite pattern_valuation_evar_sub0_evar by done; cbn.
@@ -102,10 +105,13 @@ Qed.
 
 Lemma valid_evar_rename x y phi :
   ~ EOccurs y phi ->
-  EFreeFor x (PEVar y) phi ->
-  valid_iff phi (evar_rename x y phi).
+  phi `valid_iff` evar_rename x y phi.
 Proof.
-  intros Hy Hfree_for.
+  intros Hy.
+  assert (Hfree_for : EFreeFor x (PEVar y) phi).
+  {
+    apply EFreeFor_x_y_if_not_bound; contradict Hy; right; done.
+  }
   destruct (decide (x = y));
     [by subst; rewrite evar_rename_id |].
   intros s e.
@@ -136,7 +142,7 @@ Proof.
 Qed.
 
 Lemma valid_esubst_ex x y phi :
-  valid_impl (esubst phi x (PEVar y)) (PEx x phi).
+  esubst phi x (PEVar y) `valid_impl` PEx x phi.
 Proof.
   unfold esubst, SV, EV; cbn.
   replace (elements (BSV phi ∩ _)) with (@nil SVar)
@@ -176,8 +182,7 @@ Proof.
       by (apply valid_evar_sub0_rename_ex; done).
     assert (Htheta_phi : valid (pIff theta phi)).
     {
-      symmetry; subst theta; apply valid_evar_rename; [done |].
-      by apply EFreeFor_x_y_if_not_bound; contradict Hnoccurs; right.
+      symmetry; subst theta; apply valid_evar_rename; done.
     }
     intros s v; apply esatisfies_impl_classic; cbn.
     specialize (Htheta_ex s v); apply esatisfies_impl_classic in Htheta_ex; cbn in Htheta_ex.
@@ -189,7 +194,7 @@ Proof.
 Qed.
     
 Lemma valid_esubst_all x y phi :
-  valid_impl (pAll x phi) (esubst phi x (PEVar y)).
+  pAll x phi `valid_impl` esubst phi x (PEVar y).
 Proof.
   unfold esubst, SV, EV; cbn.
   replace (elements (BSV phi ∩ _)) with (@nil SVar)
@@ -229,8 +234,7 @@ Proof.
       by (apply valid_evar_sub0_rename_all; done).
     assert (Htheta_phi : valid (pIff theta phi)).
     {
-      symmetry; subst theta; apply valid_evar_rename; [done |].
-      by apply EFreeFor_x_y_if_not_bound; contradict Hnoccurs; right.
+      symmetry; subst theta; apply valid_evar_rename; done.
     }
     intros s v; apply esatisfies_impl_classic; rewrite pattern_valuation_forall_classic.
     specialize (Htheta_all s v); apply esatisfies_impl_classic in Htheta_all.
@@ -244,7 +248,7 @@ Qed.
  
 Lemma valid_svar_rename x y phi :
   ~ SOccurs y phi ->
-  valid_iff phi (svar_rename x y phi).
+  phi `valid_iff` svar_rename x y phi.
 Proof.
   intros Hy.
   destruct (decide (x = y));
@@ -275,6 +279,68 @@ Proof.
     by contradict Hy; left.
   - rewrite SOccurs_app in Hy by done; apply not_or_and in Hy as [].
     by cbn; rewrite IHphi1, IHphi2.
+Qed.
+
+Lemma valid_svar_rename_iter_fresh rename_vars avoid_vars phi :
+  rename_vars ⊆ BSV phi -> SV phi ⊆ avoid_vars ->
+  let refreshed_phi := 
+        svar_rename_iter
+          (elements rename_vars)
+          (fresh_list (length (elements rename_vars)) avoid_vars)
+          phi
+  in (refreshed_phi `valid_iff` phi).
+Proof.
+  remember (elements rename_vars) as l_rename_vars.
+  intros H_incl.
+  assert (Hincl : Forall (fun x => x ∈ BSV phi) l_rename_vars).
+  {
+    apply Forall_forall; intros; apply H_incl, elem_of_elements; subst; done.
+  }
+  clear H_incl rename_vars Heql_rename_vars.
+  revert phi Hincl avoid_vars.
+  induction l_rename_vars; intros phi Hincl avoid_vars Havoid; cbn; [done |].
+  apply Forall_cons in Hincl as [Ha Hincl].
+  assert (Havoid' : SV phi ⊆ {[fresh avoid_vars]} ∪ avoid_vars)
+    by (apply union_subseteq_r'; done).
+  specialize (IHl_rename_vars _ Hincl _ Havoid').
+  symmetry; etransitivity; [by symmetry; apply IHl_rename_vars|].
+  apply valid_svar_rename, svar_rename_iter_fresh_not_occurs.
+  - rewrite SV_Soccurs.
+    intros Hfresh; apply Havoid in Hfresh.
+    contradict Hfresh; apply is_fresh; done.
+  - intros Hfresh; apply fresh_list_is_fresh in Hfresh.
+    contradict Hfresh; rewrite elem_of_union, elem_of_singleton; left; done.
+Qed.
+
+Lemma valid_evar_rename_iter_fresh rename_vars avoid_vars phi :
+  rename_vars ⊆ BEV phi -> EV phi ⊆ avoid_vars ->
+  let refreshed_phi := 
+        evar_rename_iter
+          (elements rename_vars)
+          (fresh_list (length (elements rename_vars)) avoid_vars)
+          phi
+  in (refreshed_phi `valid_iff` phi).
+Proof.
+  remember (elements rename_vars) as l_rename_vars.
+  intros H_incl.
+  assert (Hincl : Forall (fun x => x ∈ BEV phi) l_rename_vars).
+  {
+    apply Forall_forall; intros; apply H_incl, elem_of_elements; subst; done.
+  }
+  clear H_incl rename_vars Heql_rename_vars.
+  revert phi Hincl avoid_vars.
+  induction l_rename_vars; intros phi Hincl avoid_vars Havoid; cbn; [done |].
+  apply Forall_cons in Hincl as [Ha Hincl].
+  assert (Havoid' : EV phi ⊆ {[fresh avoid_vars]} ∪ avoid_vars)
+    by (apply union_subseteq_r'; done).
+  specialize (IHl_rename_vars _ Hincl _ Havoid').
+  symmetry; etransitivity; [by symmetry; apply IHl_rename_vars|].
+  apply valid_evar_rename, evar_rename_iter_fresh_not_occurs.
+  - rewrite EV_Eoccurs.
+    intros Hfresh; apply Havoid in Hfresh.
+    contradict Hfresh; apply is_fresh; done.
+  - intros Hfresh; apply fresh_list_is_fresh in Hfresh.
+    contradict Hfresh; rewrite elem_of_union, elem_of_singleton; left; done.
 Qed.
 
 End sec_validity.
@@ -362,14 +428,14 @@ Section sec_application.
 Context
   `{signature}.
 
-Lemma valid_iff_app_nil_r phi :  PApp phi pBot `valid_iff` pBot.
+Lemma valid_iff_app_bot_r phi :  PApp phi pBot `valid_iff` pBot.
 Proof.
   intros A e; apply esatisfies_iff_classic.
   rewrite pattern_valuation_app, !pattern_valuation_bot.
   by apply ext_iapp_empty_r.
 Qed.
 
-Lemma valid_iff_app_nil_l phi :  PApp pBot phi`valid_iff` pBot.
+Lemma valid_iff_app_bot_l phi :  PApp pBot phi`valid_iff` pBot.
 Proof.
   intros A e; apply esatisfies_iff_classic.
   rewrite pattern_valuation_app, !pattern_valuation_bot.
@@ -471,3 +537,7 @@ Proof.
 Qed.
 
 End sec_application.
+
+Section sec_mu.
+
+End sec_mu.

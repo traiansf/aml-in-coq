@@ -481,6 +481,42 @@ Qed.
 
 End sec_application.
 
+Section sec_contexts.
+
+Lemma local_semantic_consequence_context_impl c phi psi :
+  local_semantic_consequence (PImpl phi psi) (PImpl (csubst c phi) (csubst c psi)).
+Proof.
+  intros A e; induction c; cbn; [done |..]; intros Himpl.
+  - by apply local_semantic_consequence_impl_app_l, IHc.
+  - by apply local_semantic_consequence_impl_app_r, IHc.
+Qed.
+
+Lemma local_semantic_consequence_context_iff c phi psi :
+  local_semantic_consequence (pIff phi psi) (pIff (csubst c phi) (csubst c psi)).
+Proof.
+  intros A e; induction c; cbn; [done |..]; intros Himpl.
+  - by apply local_semantic_consequence_iff_app_l, IHc.
+  - by apply local_semantic_consequence_iff_app_r, IHc.
+Qed.
+
+Lemma set_local_semantic_consequence_context_impl Gamma c phi psi :
+  set_local_semantic_consequence Gamma (PImpl phi psi) ->
+  set_local_semantic_consequence Gamma (PImpl (csubst c phi) (csubst c psi)).
+Proof.
+  intros Himpl A e HGamma.
+  by apply local_semantic_consequence_context_impl, Himpl.
+Qed.
+
+Lemma set_local_semantic_consequence_context_iff Gamma c phi psi :
+  set_local_semantic_consequence Gamma (pIff phi psi) ->
+  set_local_semantic_consequence Gamma (pIff (csubst c phi) (csubst c psi)).
+Proof.
+  intros Hiff A e HGamma.
+  by apply local_semantic_consequence_context_iff, Hiff.
+Qed.
+
+End sec_contexts.
+
 End sec_set_local_semantic_consequence.
 
 End sec_local_semantic_consequence.

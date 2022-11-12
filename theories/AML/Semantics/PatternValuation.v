@@ -698,4 +698,20 @@ Proof.
   by apply (knaster_tarsky_gfp_greatest (pattern_valuation_fn phi X e)).
 Qed.
 
+Lemma pattern_valuation_context_hole e phi :
+  pattern_valuation e (csubst Hole phi) = pattern_valuation e phi.
+Proof. done. Qed.
+
+Lemma pattern_valuation_context_l e c phi psi :
+  pattern_valuation e (csubst (LApp c psi) phi)
+   =
+  ext_iapp (pattern_valuation e (csubst c phi)) (pattern_valuation e psi).
+Proof. done. Qed.
+
+Lemma pattern_valuation_context_r e c phi psi :
+  pattern_valuation e (csubst (RApp psi c) phi)
+   =
+  ext_iapp (pattern_valuation e psi) (pattern_valuation e (csubst c phi)).
+Proof. done. Qed.
+
 End sec_pattern_valuation.
