@@ -24,3 +24,7 @@ theories/AML/Semantics/SemanticConsequences/LocalSemanticConsequence.v
 theories/AML/Semantics/SemanticConsequences/StrongSemanticConsequence.v
 theories/AML/Semantics/Predicate.v
 theories/AML/Semantics/Tautology.v
+
+theories/AML/Proofs/ProofSystem.v
+theories/AML/Proofs/Theorems.v
+theories/AML/Proofs/Proof.v
