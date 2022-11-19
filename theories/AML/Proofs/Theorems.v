@@ -1,6 +1,6 @@
 From stdpp Require Import prelude.
 From AML Require Import Signature Pattern Variables Substitution.
-From AML.Proofs Require Import ProofSystem.
+From AML.Proofs Require Import TautologicalProof ProofSystem.
 From AML.Lib Require Import Ensemble.
 
 Section sec_theorems.

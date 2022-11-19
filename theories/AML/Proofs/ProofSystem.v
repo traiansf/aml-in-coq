@@ -1,40 +1,10 @@
 From stdpp Require Import prelude.
 From AML Require Import Signature Pattern Variables Substitution.
+From AML.Proofs Require Import TautologicalProof.
 
 Section sec_proof_system.
 
 Context `{signature}.
-
-Inductive MLPropAxiom : Pattern -> Prop :=
-| ax_p1 : forall phi psi,
-    ClosedPattern phi ->
-    ClosedPattern psi ->
-    MLPropAxiom (PImpl phi (PImpl psi phi))
-| ax_p2 : forall phi psi chi,
-    ClosedPattern phi ->
-    ClosedPattern psi ->
-    ClosedPattern chi ->
-    MLPropAxiom (PImpl
-        (PImpl phi (PImpl psi chi))
-        (PImpl (PImpl phi psi) (PImpl phi chi)))
-| ax_p3 : forall phi psi,
-    ClosedPattern phi ->
-    ClosedPattern psi ->
-    MLPropAxiom (PImpl
-        (PImpl (pNeg phi) (pNeg psi))
-        (PImpl psi phi))
-.
-
-Inductive MLModusPonens : Pattern -> Pattern -> Pattern -> Type :=
-| rule_modus_ponens : forall phi psi,
-    MLModusPonens phi (PImpl phi psi) psi.
-
-Inductive MLTautology : Pattern -> Prop :=
-| ml_tauto_ax : forall phi, MLPropAxiom phi -> MLTautology phi
-| ml_tauto_modus_ponens : forall phi psi chi,
-  MLTautology phi -> MLTautology psi ->
-  MLModusPonens phi psi chi ->
-  MLTautology psi.
 
 Inductive MLAxiom : Pattern -> Prop :=
 | ax_ex_quantifier : forall x y phi,
