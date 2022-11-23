@@ -12,40 +12,40 @@ Section sec_global_semantic_consequence.
 
   Context `{signature}.
 
-Definition global_semantic_consequence (phi psi : Pattern) : Prop :=
-  forall (s : Structure), satisfies s phi -> satisfies s psi.
+Definition global_semantic_consequence (ϕ ψ : Pattern) : Prop :=
+  forall (s : Structure), satisfies s ϕ -> satisfies s ψ.
 
 #[export] Instance global_semantic_consequence_refl : Reflexive global_semantic_consequence.
 Proof. by intros ? ?. Qed.
 
 #[export] Instance global_semantic_consequence_trans : Transitive global_semantic_consequence.
 Proof.
-  intros phi psi chi Hpsi Hchi s Hphi.
-  by apply Hchi, Hpsi.
+  intros ϕ ψ χ Hψ Hchi s Hϕ.
+  by apply Hchi, Hψ.
 Qed.
 
-Definition globally_logically_equivalent (phi psi : Pattern) : Prop :=
-  forall (s : Structure), satisfies s phi <-> satisfies s psi.
+Definition globally_logically_equivalent (ϕ ψ : Pattern) : Prop :=
+  forall (s : Structure), satisfies s ϕ <-> satisfies s ψ.
 
 #[export] Instance globally_logically_equivalent_refl : Reflexive globally_logically_equivalent.
 Proof. by intros ? ?. Qed.
 
 #[export] Instance globally_logically_equivalent_trans : Transitive globally_logically_equivalent.
 Proof.
-  intros phi psi chi Hpsi Hchi s.
-  by etransitivity; [apply Hpsi | apply Hchi].
+  intros ϕ ψ χ Hψ Hchi s.
+  by etransitivity; [apply Hψ | apply Hchi].
 Qed.
 
 #[export] Instance globally_logically_equivalent_sym : Symmetric globally_logically_equivalent.
 Proof.
-  intros phi psi Hpsi s.
+  intros ϕ ψ Hψ s.
   by symmetry.
 Qed.
 
-Lemma globally_logically_equivalent_iff phi psi :
-  globally_logically_equivalent phi psi
+Lemma globally_logically_equivalent_iff ϕ ψ :
+  globally_logically_equivalent ϕ ψ
     <->
-  global_semantic_consequence phi psi /\ global_semantic_consequence psi phi.
+  global_semantic_consequence ϕ ψ /\ global_semantic_consequence ψ ϕ.
 Proof.
   split; [intro Heqv; split | intros [Hcns Hcns']]; intro; [by apply Heqv..| split].
   - by apply Hcns.
@@ -54,29 +54,29 @@ Qed.
 
 #[export] Instance global_semantic_consequence_satisfies s :
   Proper (global_semantic_consequence ==> Basics.impl) (satisfies s).
-Proof. by intros phi psi Hcns Hphi; apply Hcns, Hphi. Qed.
+Proof. by intros ϕ ψ Hcns Hϕ; apply Hcns, Hϕ. Qed.
 
 #[export] Instance global_semantic_consequence_valid :
   Proper (global_semantic_consequence ==> Basics.impl) valid.
-Proof. intros phi psi Hcns Hphi s; rewrite <- Hcns; apply Hphi. Qed.
+Proof. intros ϕ ψ Hcns Hϕ s; rewrite <- Hcns; apply Hϕ. Qed.
 
 #[export] Instance globally_logically_equivalent_satisfies s :
   Proper (globally_logically_equivalent ==> iff) (satisfies s).
 Proof.
-  intros phi psi; rewrite globally_logically_equivalent_iff; intros [Hl Hr].
+  intros ϕ ψ; rewrite globally_logically_equivalent_iff; intros [Hl Hr].
   by split; [rewrite Hl | rewrite Hr].
 Qed.
 
 #[export] Instance globally_logically_equivalent_valid :
   Proper (globally_logically_equivalent ==> iff) valid.
-Proof. by intros phi psi Heqv; unfold valid, Validity.valid; setoid_rewrite Heqv. Qed.
+Proof. by intros ϕ ψ Heqv; unfold valid, Validity.valid; setoid_rewrite Heqv. Qed.
 
-Lemma local_semantic_consequence_global phi psi :
-  local_semantic_consequence phi psi -> global_semantic_consequence phi psi.
-Proof. by intros Hlocal s Hphi e; apply Hlocal, Hphi. Qed.
+Lemma local_semantic_consequence_global ϕ ψ :
+  local_semantic_consequence ϕ ψ -> global_semantic_consequence ϕ ψ.
+Proof. by intros Hlocal s Hϕ e; apply Hlocal, Hϕ. Qed.
 
-Lemma locally_logically_equivalent_global phi psi :
-  locally_logically_equivalent phi psi -> globally_logically_equivalent phi psi.
+Lemma locally_logically_equivalent_global ϕ ψ :
+  locally_logically_equivalent ϕ ψ -> globally_logically_equivalent ϕ ψ.
 Proof.
   rewrite locally_logically_equivalent_iff, globally_logically_equivalent_iff.
   by intros []; split; apply local_semantic_consequence_global.
@@ -89,7 +89,7 @@ Proof.
 Qed.
 
 Lemma globally_logically_equivalent_not_local :
-  exists phi psi, globally_logically_equivalent phi psi /\ ~ local_semantic_consequence phi psi.
+  exists ϕ ψ, globally_logically_equivalent ϕ ψ /\ ~ local_semantic_consequence ϕ ψ.
 Proof.
   assert (exists x y : EVar, x <> y) as (x & y & Hxy).
   {
@@ -139,51 +139,51 @@ Section sec_set_global_semantic_consequence.
 Context
   `{Set_ Pattern PatternSet}.
 
-Definition set_global_semantic_consequence (Gamma : PatternSet) (phi : Pattern) :=
-  forall s, set_satisfies s Gamma -> satisfies s phi.
+Definition set_global_semantic_consequence (Gamma : PatternSet) (ϕ : Pattern) :=
+  forall s, set_satisfies s Gamma -> satisfies s ϕ.
 
 #[export] Instance set_global_semantic_consequence_proper :
   Proper ((≡) ==> (=) ==> (iff)) set_global_semantic_consequence.
 Proof.
-  intros Gamma Gamma' Heqv _phi phi ->.
+  intros Gamma Gamma' Heqv _ϕ ϕ ->.
   by unfold set_global_semantic_consequence; setoid_rewrite Heqv.
 Qed.
 
 #[export] Instance set_global_semantic_consequence_proper_subseteq :
   Proper ((⊆) ==> (=) --> Basics.impl) set_global_semantic_consequence.
 Proof.
-  intros Gamma Gamma' Hsub _phi phi -> HGamma' s HGamma.
+  intros Gamma Gamma' Hsub _ϕ ϕ -> HGamma' s HGamma.
   by apply HGamma'; rewrite Hsub.
 Qed.
 
-Lemma set_global_semantic_consequence_singleton phi psi :
-  set_global_semantic_consequence {[phi]} psi <-> global_semantic_consequence phi psi.
+Lemma set_global_semantic_consequence_singleton ϕ ψ :
+  set_global_semantic_consequence {[ϕ]} ψ <-> global_semantic_consequence ϕ ψ.
 Proof.
   unfold set_global_semantic_consequence, global_semantic_consequence.
   by setoid_rewrite set_satisfies_singleton.
 Qed.
 
-Lemma set_global_semantic_consequence_empty_valid phi :
-  set_global_semantic_consequence ∅ phi <-> valid phi.
+Lemma set_global_semantic_consequence_empty_valid ϕ :
+  set_global_semantic_consequence ∅ ϕ <-> valid ϕ.
 Proof.
   unfold set_global_semantic_consequence, valid.
   apply forall_proper; intro s; split; [| done].
-  intro Hempty; apply Hempty; intros e _phi H_phi.
-  contradict H_phi; apply not_elem_of_empty.
+  intro Hempty; apply Hempty; intros e _ϕ H_ϕ.
+  contradict H_ϕ; apply not_elem_of_empty.
 Qed.
 
-Lemma set_global_semantic_consequence_union_left Gamma Gamma' phi :
-  set_global_semantic_consequence Gamma phi ->
-  set_global_semantic_consequence (Gamma ∪ Gamma') phi.
+Lemma set_global_semantic_consequence_union_left Gamma Gamma' ϕ :
+  set_global_semantic_consequence Gamma ϕ ->
+  set_global_semantic_consequence (Gamma ∪ Gamma') ϕ.
 Proof. by intros HGamma; rewrite <- (union_subseteq_l Gamma Gamma'). Qed.
 
-Lemma set_global_semantic_consequence_union_right Gamma Gamma' phi :
-  set_global_semantic_consequence Gamma' phi ->
-  set_global_semantic_consequence (Gamma ∪ Gamma') phi.
+Lemma set_global_semantic_consequence_union_right Gamma Gamma' ϕ :
+  set_global_semantic_consequence Gamma' ϕ ->
+  set_global_semantic_consequence (Gamma ∪ Gamma') ϕ.
 Proof. by intros HGamma; rewrite <- (union_subseteq_r Gamma Gamma'). Qed.
 
-Lemma valid_set_global_semantic_consequence_any phi Gamma :
-  valid phi -> set_global_semantic_consequence Gamma phi.
+Lemma valid_set_global_semantic_consequence_any ϕ Gamma :
+  valid ϕ -> set_global_semantic_consequence Gamma ϕ.
 Proof.
   intro; rewrite <- (empty_subseteq Gamma).
   by apply set_global_semantic_consequence_empty_valid.
@@ -191,31 +191,31 @@ Qed.
 
 #[export] Instance global_semantic_consequence_set_consequence Gamma :
   Proper (global_semantic_consequence ==> Basics.impl) (set_global_semantic_consequence Gamma).
-Proof. by intros phi psi Hcns Hphi s HGamma; apply Hcns, Hphi. Qed.
+Proof. by intros ϕ ψ Hcns Hϕ s HGamma; apply Hcns, Hϕ. Qed.
 
 #[export] Instance globally_logically_equivalent_set_consequence Gamma :
   Proper (globally_logically_equivalent ==> iff) (set_global_semantic_consequence Gamma).
 Proof.
-  intros phi psi; rewrite globally_logically_equivalent_iff; intros [Hl Hr].
+  intros ϕ ψ; rewrite globally_logically_equivalent_iff; intros [Hl Hr].
   by split; [rewrite Hl | rewrite Hr].
 Qed.
 
-Lemma set_global_semantic_consequence_and Gamma phi psi :
-  set_global_semantic_consequence Gamma (pAnd phi psi)
+Lemma set_global_semantic_consequence_and Gamma ϕ ψ :
+  set_global_semantic_consequence Gamma (pAnd ϕ ψ)
     <->
-  set_global_semantic_consequence Gamma phi /\ set_global_semantic_consequence Gamma psi.
+  set_global_semantic_consequence Gamma ϕ /\ set_global_semantic_consequence Gamma ψ.
 Proof.
   unfold set_global_semantic_consequence.
   setoid_rewrite satisfies_and_classic.
   by split; [intro Hand; split; intros; apply Hand | intros []; split; itauto].
 Qed.
 
-Lemma set_global_semantic_consequence_iff Gamma phi psi :
-  set_global_semantic_consequence Gamma (pIff phi psi)
+Lemma set_global_semantic_consequence_iff Gamma ϕ ψ :
+  set_global_semantic_consequence Gamma (pIff ϕ ψ)
     <->
-  set_global_semantic_consequence Gamma (PImpl phi psi)
+  set_global_semantic_consequence Gamma (PImpl ϕ ψ)
     /\
-  set_global_semantic_consequence Gamma (PImpl psi phi).
+  set_global_semantic_consequence Gamma (PImpl ψ ϕ).
 Proof.
   unfold set_global_semantic_consequence; setoid_rewrite satisfies_iff_alt_classic.
   by split; [intro Hand; split; intros; apply Hand | intros []; split; itauto].
@@ -276,15 +276,15 @@ Qed.
   Proper (set_global_semantic_consequence_set --> globally_logically_equivalent ==> Basics.impl)
     set_global_semantic_consequence.
 Proof.
-  intros Delta Gamma HDelta phi psi Hphipsi Hphi s HGamma.
-  by rewrite <- Hphipsi; apply Hphi; rewrite HDelta.
+  intros Delta Gamma HDelta ϕ ψ Hϕψ Hϕ s HGamma.
+  by rewrite <- Hϕψ; apply Hϕ; rewrite HDelta.
 Qed.
 
 #[export] Instance set_globally_logically_equivalent_set_consequence_proper :
   Proper (set_globally_logically_equivalent_set ==> globally_logically_equivalent ==> iff)
     set_global_semantic_consequence.
 Proof.
-  intros Gamma Delta Hset_eqv phi psi Heqv; unfold set_global_semantic_consequence.
+  intros Gamma Delta Hset_eqv ϕ ψ Heqv; unfold set_global_semantic_consequence.
   by setoid_rewrite Hset_eqv; setoid_rewrite Heqv.
 Qed.
 
@@ -299,15 +299,15 @@ Proof.
   itauto.
 Qed.
 
-Lemma set_local_semantic_consequence_global Gamma phi :
-  set_local_semantic_consequence Gamma phi -> set_global_semantic_consequence Gamma phi.
-Proof. by intros Hlocal s Hphi e; apply Hlocal, Hphi. Qed.
+Lemma set_local_semantic_consequence_global Gamma ϕ :
+  set_local_semantic_consequence Gamma ϕ -> set_global_semantic_consequence Gamma ϕ.
+Proof. by intros Hlocal s Hϕ e; apply Hlocal, Hϕ. Qed.
 
-Lemma set_local_semantic_consequence_global_closed_pattern Gamma phi :
+Lemma set_local_semantic_consequence_global_closed_pattern Gamma ϕ :
   set_closed_pattern Gamma ->
-    set_local_semantic_consequence Gamma phi
+    set_local_semantic_consequence Gamma ϕ
       <->
-    set_global_semantic_consequence Gamma phi.
+    set_global_semantic_consequence Gamma ϕ.
 Proof.
   split; [by apply set_local_semantic_consequence_global |].
   intros Hglobal s e HGamma; apply Hglobal.
@@ -316,53 +316,53 @@ Qed.
 
 Section sec_rules.
 
-Lemma set_global_mp Gamma phi psi :
-  set_global_semantic_consequence Gamma phi ->
-  set_global_semantic_consequence Gamma (PImpl phi psi) ->
-  set_global_semantic_consequence Gamma psi.
+Lemma set_global_mp Gamma ϕ ψ :
+  set_global_semantic_consequence Gamma ϕ ->
+  set_global_semantic_consequence Gamma (PImpl ϕ ψ) ->
+  set_global_semantic_consequence Gamma ψ.
 Proof.
-  intros Hphi Hphipsi A HGamma e.
-  specialize (Hphi A HGamma e).
-  specialize (Hphipsi A HGamma e).
+  intros Hϕ Hϕψ A HGamma e.
+  specialize (Hϕ A HGamma e).
+  specialize (Hϕψ A HGamma e).
   by eapply esatisfies_mp_classic.
 Qed.
 
-Lemma set_global_impl_trans Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (PImpl phi psi) ->
-  set_global_semantic_consequence Gamma (PImpl psi chi) ->
-  set_global_semantic_consequence Gamma (PImpl psi chi).
+Lemma set_global_impl_trans Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (PImpl ϕ ψ) ->
+  set_global_semantic_consequence Gamma (PImpl ψ χ) ->
+  set_global_semantic_consequence Gamma (PImpl ψ χ).
 Proof.
-  intros Hphipsi Hpsichi A HGamma e.
-  specialize (Hphipsi A HGamma e).
-  specialize (Hpsichi A HGamma e).
-  rewrite esatisfies_impl_classic in Hphipsi, Hpsichi |- *.
+  intros Hϕψ Hψchi A HGamma e.
+  specialize (Hϕψ A HGamma e).
+  specialize (Hψchi A HGamma e).
+  rewrite esatisfies_impl_classic in Hϕψ, Hψchi |- *.
   by etransitivity.
 Qed.
 
-Lemma set_global_and_curry Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (PImpl (pAnd phi psi) chi)
+Lemma set_global_and_curry Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (PImpl (pAnd ϕ ψ) χ)
     <->
-  set_global_semantic_consequence Gamma (PImpl phi (PImpl psi chi)).
+  set_global_semantic_consequence Gamma (PImpl ϕ (PImpl ψ χ)).
 Proof.
-  pose proof (Hcurry := tautology_impl_impl_and phi psi chi).
+  pose proof (Hcurry := tautology_impl_impl_and ϕ ψ χ).
   apply tautology_valid, strongly_logically_equivalent_valid,
     strongly_logically_equivalent_locally, locally_logically_equivalent_global in Hcurry.
   by rewrite Hcurry.
 Qed.
 
-Lemma set_global_impl_ex_elim Gamma phi psi x :
-  set_global_semantic_consequence Gamma (PImpl phi psi) ->
-  x ∉ FEV psi ->
-  set_global_semantic_consequence Gamma (PImpl (PEx x phi) psi).
+Lemma set_global_impl_ex_elim Gamma ϕ ψ x :
+  set_global_semantic_consequence Gamma (PImpl ϕ ψ) ->
+  x ∉ FEV ψ ->
+  set_global_semantic_consequence Gamma (PImpl (PEx x ϕ) ψ).
 Proof.
-  intros Hphipsi Hx A HGamma e.
-  specialize (Hphipsi A HGamma).
+  intros Hϕψ Hx A HGamma e.
+  specialize (Hϕψ A HGamma).
   apply esatisfies_impl_classic; cbn.
-  unfold satisfies in Hphipsi; setoid_rewrite esatisfies_impl_classic in Hphipsi.
+  unfold satisfies in Hϕψ; setoid_rewrite esatisfies_impl_classic in Hϕψ.
   intro a; rewrite elem_of_indexed_union.
   intros [xa Hxa].
-  apply Hphipsi in Hxa.
-  cut (pattern_valuation A (valuation_eupdate e x xa) psi ≡ pattern_valuation A e psi);
+  apply Hϕψ in Hxa.
+  cut (pattern_valuation A (valuation_eupdate e x xa) ψ ≡ pattern_valuation A e ψ);
     [by set_solver |].
   apply pattern_valuation_fv.
   split; [| done].
@@ -375,137 +375,137 @@ End sec_rules.
 
 Section sec_application.
 
-Lemma global_semantic_consequence_impl_app_r phi psi chi :
-  global_semantic_consequence (PImpl phi psi) (PImpl (PApp chi phi) (PApp chi psi)).
+Lemma global_semantic_consequence_impl_app_r ϕ ψ χ :
+  global_semantic_consequence (PImpl ϕ ψ) (PImpl (PApp χ ϕ) (PApp χ ψ)).
 Proof.
   intros A; unfold satisfies; setoid_rewrite esatisfies_impl_classic; cbn.
   by intros Hincl e; rewrite Hincl.
 Qed.
 
-Lemma global_semantic_consequence_impl_app_l phi psi chi :
-  global_semantic_consequence (PImpl phi psi) (PImpl (PApp phi chi) (PApp psi chi)).
+Lemma global_semantic_consequence_impl_app_l ϕ ψ χ :
+  global_semantic_consequence (PImpl ϕ ψ) (PImpl (PApp ϕ χ) (PApp ψ χ)).
 Proof.
   intros A; unfold satisfies; setoid_rewrite esatisfies_impl_classic; cbn.
   by intros Hincl e; rewrite Hincl.
 Qed.
 
-Lemma global_semantic_consequence_iff_app_r phi psi chi :
-  global_semantic_consequence (pIff phi psi) (pIff (PApp chi phi) (PApp chi psi)).
+Lemma global_semantic_consequence_iff_app_r ϕ ψ χ :
+  global_semantic_consequence (pIff ϕ ψ) (pIff (PApp χ ϕ) (PApp χ ψ)).
 Proof.
   intros A; unfold satisfies; setoid_rewrite esatisfies_iff_classic; cbn.
   by intros Hincl e; rewrite Hincl.
 Qed.
 
-Lemma global_semantic_consequence_iff_app_l phi psi chi :
-  global_semantic_consequence (pIff phi psi) (pIff (PApp phi chi) (PApp psi chi)).
+Lemma global_semantic_consequence_iff_app_l ϕ ψ χ :
+  global_semantic_consequence (pIff ϕ ψ) (pIff (PApp ϕ χ) (PApp ψ χ)).
 Proof.
   intros A; unfold satisfies; setoid_rewrite esatisfies_iff_classic; cbn.
   by intros Hincl e; rewrite Hincl.
 Qed.
 
-Lemma global_semantic_consequence_impl_neg phi psi :
-  global_semantic_consequence (PImpl phi psi) (PImpl (pNeg psi) (pNeg phi)).
+Lemma global_semantic_consequence_impl_neg ϕ ψ :
+  global_semantic_consequence (PImpl ϕ ψ) (PImpl (pNeg ψ) (pNeg ϕ)).
 Proof.
   intros A; unfold satisfies; setoid_rewrite esatisfies_impl_classic; setoid_rewrite pattern_valuation_neg_classic;
     [| typeclasses eauto..].
   by intros Hincl e; apply complement_subseteq_proper, Hincl.
 Qed.
 
-Lemma global_semantic_consequence_iff_neg phi psi :
-  global_semantic_consequence (pIff phi psi) (pIff (pNeg phi) (pNeg psi)).
+Lemma global_semantic_consequence_iff_neg ϕ ψ :
+  global_semantic_consequence (pIff ϕ ψ) (pIff (pNeg ϕ) (pNeg ψ)).
 Proof.
   intros A; unfold satisfies; setoid_rewrite esatisfies_iff_classic; setoid_rewrite pattern_valuation_neg_classic;
     [| typeclasses eauto..].
   by intros Hincl e; apply complement_equiv_proper, Hincl.
 Qed.
 
-Lemma global_semantic_consequence_impl_app_neg_l phi psi chi :
-  global_semantic_consequence (PImpl phi psi) (PImpl (PApp (pNeg psi) chi) (PApp (pNeg phi) chi)).
+Lemma global_semantic_consequence_impl_app_neg_l ϕ ψ χ :
+  global_semantic_consequence (PImpl ϕ ψ) (PImpl (PApp (pNeg ψ) χ) (PApp (pNeg ϕ) χ)).
 Proof.
   etransitivity; [by apply global_semantic_consequence_impl_neg |].
   apply global_semantic_consequence_impl_app_l.
 Qed.
 
-Lemma global_semantic_consequence_impl_app_neg_r phi psi chi :
-  global_semantic_consequence (PImpl phi psi) (PImpl (PApp chi (pNeg psi)) (PApp chi (pNeg phi))).
+Lemma global_semantic_consequence_impl_app_neg_r ϕ ψ χ :
+  global_semantic_consequence (PImpl ϕ ψ) (PImpl (PApp χ (pNeg ψ)) (PApp χ (pNeg ϕ))).
 Proof.
   etransitivity; [by apply global_semantic_consequence_impl_neg |].
   apply global_semantic_consequence_impl_app_r.
 Qed.
 
-Lemma global_semantic_consequence_iff_app_neg_l phi psi chi :
-  global_semantic_consequence (pIff phi psi) (pIff (PApp (pNeg phi) chi) (PApp (pNeg psi) chi)).
+Lemma global_semantic_consequence_iff_app_neg_l ϕ ψ χ :
+  global_semantic_consequence (pIff ϕ ψ) (pIff (PApp (pNeg ϕ) χ) (PApp (pNeg ψ) χ)).
 Proof.
   etransitivity; [by apply global_semantic_consequence_iff_neg |].
   apply global_semantic_consequence_iff_app_l.
 Qed.
 
-Lemma global_semantic_consequence_iff_app_neg_r phi psi chi :
-  global_semantic_consequence (pIff phi psi) (pIff (PApp chi (pNeg phi)) (PApp chi (pNeg psi))).
+Lemma global_semantic_consequence_iff_app_neg_r ϕ ψ χ :
+  global_semantic_consequence (pIff ϕ ψ) (pIff (PApp χ (pNeg ϕ)) (PApp χ (pNeg ψ))).
 Proof.
   etransitivity; [by apply global_semantic_consequence_iff_neg |].
   apply global_semantic_consequence_iff_app_r.
 Qed.
 
-Lemma set_global_semantic_consequence_impl_app_elim_l Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (PImpl phi psi) ->
-  set_global_semantic_consequence Gamma (PImpl (PApp phi chi) (PApp psi chi)).
+Lemma set_global_semantic_consequence_impl_app_elim_l Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (PImpl ϕ ψ) ->
+  set_global_semantic_consequence Gamma (PImpl (PApp ϕ χ) (PApp ψ χ)).
 Proof.
   apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_impl_app_l.
 Qed.
 
-Lemma set_global_semantic_consequence_impl_app_elim_r Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (PImpl phi psi) ->
-  set_global_semantic_consequence Gamma (PImpl (PApp chi phi) (PApp chi psi)).
+Lemma set_global_semantic_consequence_impl_app_elim_r Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (PImpl ϕ ψ) ->
+  set_global_semantic_consequence Gamma (PImpl (PApp χ ϕ) (PApp χ ψ)).
 Proof.
   apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_impl_app_r.
 Qed.
 
-Lemma set_global_semantic_consequence_iff_app_elim_r Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (pIff phi psi) ->
-  set_global_semantic_consequence Gamma (pIff (PApp chi phi) (PApp chi psi)).
+Lemma set_global_semantic_consequence_iff_app_elim_r Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (pIff ϕ ψ) ->
+  set_global_semantic_consequence Gamma (pIff (PApp χ ϕ) (PApp χ ψ)).
 Proof.
   apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_iff_app_r.
 Qed.
 
-Lemma set_global_semantic_consequence_iff_app_elim_l Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (pIff phi psi) ->
-  set_global_semantic_consequence Gamma (pIff (PApp phi chi) (PApp psi chi)).
+Lemma set_global_semantic_consequence_iff_app_elim_l Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (pIff ϕ ψ) ->
+  set_global_semantic_consequence Gamma (pIff (PApp ϕ χ) (PApp ψ χ)).
 Proof.
   apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_iff_app_l.
 Qed.
 
-Lemma set_global_semantic_consequence_impl_app_neg_elim_l Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (PImpl phi psi) ->
-  set_global_semantic_consequence Gamma (PImpl (PApp (pNeg psi) chi) (PApp (pNeg phi) chi)).
+Lemma set_global_semantic_consequence_impl_app_neg_elim_l Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (PImpl ϕ ψ) ->
+  set_global_semantic_consequence Gamma (PImpl (PApp (pNeg ψ) χ) (PApp (pNeg ϕ) χ)).
 Proof.
   apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_impl_app_neg_l.
 Qed.
 
-Lemma set_global_semantic_consequence_impl_app_neg_elim_r Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (PImpl phi psi) ->
-  set_global_semantic_consequence Gamma (PImpl (PApp chi (pNeg psi)) (PApp chi (pNeg phi))).
+Lemma set_global_semantic_consequence_impl_app_neg_elim_r Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (PImpl ϕ ψ) ->
+  set_global_semantic_consequence Gamma (PImpl (PApp χ (pNeg ψ)) (PApp χ (pNeg ϕ))).
 Proof.
   apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_impl_app_neg_r.
 Qed.
 
-Lemma set_global_semantic_consequence_iff_app_neg_elim_r Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (pIff phi psi) ->
-  set_global_semantic_consequence Gamma (pIff (PApp chi (pNeg phi)) (PApp chi (pNeg psi))).
+Lemma set_global_semantic_consequence_iff_app_neg_elim_r Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (pIff ϕ ψ) ->
+  set_global_semantic_consequence Gamma (pIff (PApp χ (pNeg ϕ)) (PApp χ (pNeg ψ))).
 Proof.
   apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_iff_app_neg_r.
 Qed.
 
-Lemma set_global_semantic_consequence_iff_app_neg_elim_l Gamma phi psi chi :
-  set_global_semantic_consequence Gamma (pIff phi psi) ->
-  set_global_semantic_consequence Gamma (pIff (PApp (pNeg phi) chi) (PApp (pNeg psi) chi)).
+Lemma set_global_semantic_consequence_iff_app_neg_elim_l Gamma ϕ ψ χ :
+  set_global_semantic_consequence Gamma (pIff ϕ ψ) ->
+  set_global_semantic_consequence Gamma (pIff (PApp (pNeg ϕ) χ) (PApp (pNeg ψ) χ)).
 Proof.
   apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_iff_app_neg_l.
@@ -527,8 +527,8 @@ Proof.
     by apply global_semantic_consequence_iff_app_r.
 Qed.
 
-Lemma valid_iff_context_or c phi psi:
-  csubst c (pOr phi psi) `valid_iff` pOr (csubst c phi) (csubst c psi).
+Lemma valid_iff_context_or c ϕ ψ:
+  csubst c (pOr ϕ ψ) `valid_iff` pOr (csubst c ϕ) (csubst c ψ).
 Proof.
   induction c; cbn; [done |..].
   - etransitivity; [| apply valid_iff_app_or_l].
@@ -539,9 +539,9 @@ Proof.
     by apply global_semantic_consequence_iff_app_r.
 Qed.
 
-Lemma valid_iff_context_ex c x phi :
+Lemma valid_iff_context_ex c x ϕ :
   ~ x ∈ CFEV c ->
-  csubst c (PEx x phi) `valid_iff` PEx x (csubst c phi).
+  csubst c (PEx x ϕ) `valid_iff` PEx x (csubst c ϕ).
 Proof.
   intros Hx; induction c; cbn; [done |..].
   - rewrite <- CEVarFree_CFEV in Hx.
@@ -558,8 +558,8 @@ Proof.
     by apply global_semantic_consequence_iff_app_r.
 Qed.
 
-Lemma valid_impl_context_and c phi psi:
-  csubst c (pAnd phi psi) `valid_impl` pAnd (csubst c phi) (csubst c psi).
+Lemma valid_impl_context_and c ϕ ψ:
+  csubst c (pAnd ϕ ψ) `valid_impl` pAnd (csubst c ϕ) (csubst c ψ).
 Proof.
   induction c; cbn; [done |..].
   - etransitivity; [| apply valid_impl_app_and_l].
@@ -570,9 +570,9 @@ Proof.
     by apply global_semantic_consequence_impl_app_r.
 Qed.
 
-Lemma valid_impl_context_all c x phi :
+Lemma valid_impl_context_all c x ϕ :
   ~ x ∈ CFEV c ->
-  csubst c (pAll x phi) `valid_impl` pAll x (csubst c phi).
+  csubst c (pAll x ϕ) `valid_impl` pAll x (csubst c ϕ).
 Proof.
   intros Hx; induction c; cbn; [done |..].
   - rewrite <- CEVarFree_CFEV in Hx.
@@ -593,32 +593,32 @@ End sec_contexts.
 
 Section sec_singleton_variables.
 
-Lemma pattern_valuation_context_empty A e c phi :
-  pattern_valuation A e phi ≡ ∅ ->
-  pattern_valuation A e (csubst c phi) ≡ ∅.
+Lemma pattern_valuation_context_empty A e c ϕ :
+  pattern_valuation A e ϕ ≡ ∅ ->
+  pattern_valuation A e (csubst c ϕ) ≡ ∅.
 Proof.
-  intros Hphi.
-  assert (Hphi' : esatisfies A e (pIff phi pBot)).
+  intros Hϕ.
+  assert (Hϕ' : esatisfies A e (pIff ϕ pBot)).
   {
     apply esatisfies_iff_classic.
-    by rewrite Hphi, pattern_valuation_bot.
+    by rewrite Hϕ, pattern_valuation_bot.
   }
   apply local_semantic_consequence_context_iff with (c := c),
-    esatisfies_iff_classic in Hphi'.
-  rewrite Hphi'.
+    esatisfies_iff_classic in Hϕ'.
+  rewrite Hϕ'.
   transitivity (pattern_valuation A e pBot);
     [| by apply pattern_valuation_bot].
   by apply esatisfies_iff_classic, valid_iff_context_bot.
 Qed.
 
-Lemma singleton_valiable_rule c1 c2 x phi :
-  valid (pNeg (pAnd (csubst c1 (pAnd (PEVar x) phi))
-    (csubst c2 (pAnd (PEVar x) (pNeg phi))))).
+Lemma singleton_valiable_rule c1 c2 x ϕ :
+  valid (pNeg (pAnd (csubst c1 (pAnd (PEVar x) ϕ))
+    (csubst c2 (pAnd (PEVar x) (pNeg ϕ))))).
 Proof.
   intros A e.
   apply top_pattern_valuation_neg_classic; [typeclasses eauto |].
   rewrite pattern_valuation_and_classic by typeclasses eauto.
-  destruct (classic (eval e x ∈ pattern_valuation A e phi)).
+  destruct (classic (eval e x ∈ pattern_valuation A e ϕ)).
   - rewrite pattern_valuation_context_empty with (c := c2); [set_solver |].
     rewrite pattern_valuation_and_classic, pattern_valuation_neg_classic
       by typeclasses eauto.
@@ -633,26 +633,26 @@ End sec_singleton_variables.
 
 Section sec_set_variables.
 
-Lemma global_semantic_consequence_svar_sub0 phi psi X :
-  SFreeFor X psi phi ->
-  global_semantic_consequence phi (svar_sub0 X psi phi).
+Lemma global_semantic_consequence_svar_sub0 ϕ ψ X :
+  SFreeFor X ψ ϕ ->
+  global_semantic_consequence ϕ (svar_sub0 X ψ ϕ).
 Proof.
-  intros Hfree A Hphi e.
+  intros Hfree A Hϕ e.
   unfold esatisfies; rewrite pattern_valuation_svar_sub0 by done.
-  by apply Hphi.
+  by apply Hϕ.
 Qed.
 
-Lemma set_global_semantic_consequence_svar_sub0 Gamma phi psi X :
-  SFreeFor X psi phi ->
-  set_global_semantic_consequence Gamma phi ->
-  set_global_semantic_consequence Gamma (svar_sub0 X psi phi).
+Lemma set_global_semantic_consequence_svar_sub0 Gamma ϕ ψ X :
+  SFreeFor X ψ ϕ ->
+  set_global_semantic_consequence Gamma ϕ ->
+  set_global_semantic_consequence Gamma (svar_sub0 X ψ ϕ).
 Proof.
   by intro; apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_svar_sub0.
 Qed.
 
-Lemma global_semantic_consequence_ssubst phi psi X :
-  global_semantic_consequence phi (ssubst phi X psi).
+Lemma global_semantic_consequence_ssubst ϕ ψ X :
+  global_semantic_consequence ϕ (ssubst ϕ X ψ).
 Proof.
   unfold ssubst.
   remember (svar_rename_iter _ _ _) as theta.
@@ -669,7 +669,7 @@ Proof.
     + intro y; rewrite EVarFree_FEV, EVarBound_BEV; intro Hy.
       subst.
       rewrite svar_rename_iter_BEV.
-      destruct (classic (y ∈ (BEV phi ∩ EV psi))) as [HOcc | Hnocc].
+      destruct (classic (y ∈ (BEV ϕ ∩ EV ψ))) as [HOcc | Hnocc].
       * apply evar_rename_iter_fresh_not_bound_to_rename; [by set_solver | done].
       * rewrite elem_of_intersection in Hnocc.
         apply not_and_or in Hnocc as [Hnocc | Hnocc];
@@ -677,15 +677,15 @@ Proof.
         by apply evar_rename_iter_fresh_not_bound_to_avoid; set_solver.
     + intro y; rewrite SVarFree_FSV, SVarBound_BSV; intros Hy Hny.
       subst.
-      destruct (classic (y ∈ (BSV phi ∩ SV psi))) as [HOcc | Hnocc];
+      destruct (classic (y ∈ (BSV ϕ ∩ SV ψ))) as [HOcc | Hnocc];
         [by apply svar_rename_iter_fresh_not_bound_to_rename; set_solver |].
       apply svar_rename_iter_fresh_not_bound_to_avoid; [| by set_solver].
       by rewrite evar_rename_iter_BSV; set_solver.
 Qed.
 
-Lemma set_global_semantic_consequence_ssubst Gamma phi psi X :
-  set_global_semantic_consequence Gamma phi ->
-  set_global_semantic_consequence Gamma (ssubst phi X psi).
+Lemma set_global_semantic_consequence_ssubst Gamma ϕ ψ X :
+  set_global_semantic_consequence Gamma ϕ ->
+  set_global_semantic_consequence Gamma (ssubst ϕ X ψ).
 Proof.
   by apply global_semantic_consequence_set_consequence,
     global_semantic_consequence_ssubst.
@@ -695,21 +695,21 @@ End sec_set_variables.
 
 Section sec_mu.
 
-Lemma global_semantic_consequence_knaster_tarski phi psi X :
-  SFreeFor X psi phi ->
+Lemma global_semantic_consequence_knaster_tarski ϕ ψ X :
+  SFreeFor X ψ ϕ ->
   global_semantic_consequence
-    (PImpl (svar_sub0 X psi phi) psi)
-    (PImpl (PMu X phi) psi).
+    (PImpl (svar_sub0 X ψ ϕ) ψ)
+    (PImpl (μₚ X ϕ) ψ).
 Proof.
   intro.
   by apply local_semantic_consequence_global,
     local_semantic_consequence_knaster_tarski.
 Qed.
 
-Lemma set_global_semantic_consequence_knaster_tarski Gamma phi psi X :
-  SFreeFor X psi phi ->
-  set_global_semantic_consequence Gamma (PImpl (svar_sub0 X psi phi) psi) ->
-  set_global_semantic_consequence Gamma (PImpl (PMu X phi) psi).
+Lemma set_global_semantic_consequence_knaster_tarski Gamma ϕ ψ X :
+  SFreeFor X ψ ϕ ->
+  set_global_semantic_consequence Gamma (PImpl (svar_sub0 X ψ ϕ) ψ) ->
+  set_global_semantic_consequence Gamma (PImpl (μₚ X ϕ) ψ).
 Proof.
   intro.
   by apply global_semantic_consequence_set_consequence,

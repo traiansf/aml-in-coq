@@ -24,14 +24,14 @@ Inductive AtomicPattern : Expression -> Type :=
 
 Inductive is_pattern : Expression -> Type :=
 | pattern_atomic : forall e, AtomicPattern e -> is_pattern e
-| pattern_app : forall phi psi, is_pattern phi -> is_pattern psi ->
-    is_pattern ([app] ++ phi ++ psi)
-| pattern_impl : forall phi psi, is_pattern phi -> is_pattern psi ->
-    is_pattern ([impl] ++ phi ++ psi)
-| pattern_ex : forall (x : EVar) phi, is_pattern phi ->
-    is_pattern ([ex] ++ [evar x] ++ phi)
-| pattern_mu : forall (X : SVar) phi, is_pattern phi ->
-    is_pattern ([mu] ++ [svar X] ++ phi).
+| pattern_app : forall ϕ ψ, is_pattern ϕ -> is_pattern ψ ->
+    is_pattern ([app] ++ ϕ ++ ψ)
+| pattern_impl : forall ϕ ψ, is_pattern ϕ -> is_pattern ψ ->
+    is_pattern ([impl] ++ ϕ ++ ψ)
+| pattern_ex : forall (x : EVar) ϕ, is_pattern ϕ ->
+    is_pattern ([ex] ++ [evar x] ++ ϕ)
+| pattern_mu : forall (X : SVar) ϕ, is_pattern ϕ ->
+    is_pattern ([mu] ++ [svar X] ++ ϕ).
 
 Lemma empty_is_not_pattern : is_pattern [] -> False.
 Proof. by inversion 1 as [a Ha | | | |]; inversion Ha. Qed.
@@ -40,11 +40,11 @@ Lemma singleton_is_pattern_atomic : forall a,
   is_pattern [a] -> AtomicPattern [a].
 Proof.
   inversion 1 as
-    [ p Hp | phi psi Hphi Hpsi | phi psi Hphi Hpsi
+    [ p Hp | ϕ ψ Hϕ Hψ | ϕ ψ Hϕ Hψ
     | |
     ]; subst; [done |..];
-    contradict Hpsi;
-    replace psi with (@nil Symbols) by (symmetry; eapply app_nil; done);
+    contradict Hψ;
+    replace ψ with (@nil Symbols) by (symmetry; eapply app_nil; done);
     apply empty_is_not_pattern.
 Qed.
 
@@ -71,23 +71,23 @@ Proof.
     [by destruct p; inversion X|..]; subst; inversion Hp; subst.
   - by subst; inversion X1.
   - simplify_list_eq.
-    apply app_eq_app in Heq_app as [suf' Hpsi]; (destruct suf'; simplify_list_eq; cycle 1);
-      [destruct Hpsi as [[-> Hpsi] | [-> Hpsi]] |].
+    apply app_eq_app in Heq_app as [suf' Hψ]; (destruct suf'; simplify_list_eq; cycle 1);
+      [destruct Hψ as [[-> Hψ] | [-> Hψ]] |].
     + contradict X1; eapply IHn; cycle 2; [exact X | split |  | done].
       * by eexists.
       * intros [suf'' Heq]; simplify_list_eq.
         apply f_equal with (f := length) in Heq.
         by rewrite app_length in Heq; cbn in Heq; lia.
-      * by rewrite Hpsi, !app_length; cbn; rewrite app_length; cbn; lia.
+      * by rewrite Hψ, !app_length; cbn; rewrite app_length; cbn; lia.
     + contradict X; eapply IHn; cycle 2; [exact X1 | split |  | done].
       * by eexists.
       * intros [suf'' Heq]; simplify_list_eq.
         apply f_equal with (f := length) in Heq.
         by rewrite app_length in Heq; cbn in Heq; lia.
       * by rewrite !app_length; lia.
-    + assert (phi = phi0 /\ psi = psi0 ++ s :: suf) as []
-        by (destruct Hpsi; destruct_and!; done).
-      clear Hpsi; subst.
+    + assert (ϕ = ϕ0 /\ ψ = ψ0 ++ s :: suf) as []
+        by (destruct Hψ; destruct_and!; done).
+      clear Hψ; subst.
       contradict X2; eapply IHn; cycle 2; [exact X0 | split |  | done].
       * by eexists.
       * intros [suf'' Heq]; simplify_list_eq.
@@ -96,23 +96,23 @@ Proof.
       * by rewrite !app_length; lia.
   - by inversion X1.
   - simplify_list_eq.
-    apply app_eq_app in Heq_app as [suf' Hpsi]; (destruct suf'; simplify_list_eq; cycle 1);
-      [destruct Hpsi as [[-> Hpsi] | [-> Hpsi]] |].
+    apply app_eq_app in Heq_app as [suf' Hψ]; (destruct suf'; simplify_list_eq; cycle 1);
+      [destruct Hψ as [[-> Hψ] | [-> Hψ]] |].
     + contradict X1; eapply IHn; cycle 2; [exact X | split |  | done].
       * by eexists.
       * intros [suf'' Heq]; simplify_list_eq.
         apply f_equal with (f := length) in Heq.
         by rewrite app_length in Heq; cbn in Heq; lia.
-      * by rewrite Hpsi, !app_length; cbn; rewrite app_length; cbn; lia.
+      * by rewrite Hψ, !app_length; cbn; rewrite app_length; cbn; lia.
     + contradict X; eapply IHn; cycle 2; [exact X1 | split |  | done].
       * by eexists.
       * intros [suf'' Heq]; simplify_list_eq.
         apply f_equal with (f := length) in Heq.
         by rewrite app_length in Heq; cbn in Heq; lia.
       * by rewrite !app_length; lia.
-    + assert (phi = phi0 /\ psi = psi0 ++ s :: suf) as []
-        by (destruct Hpsi; destruct_and!; done).
-      clear Hpsi; subst.
+    + assert (ϕ = ϕ0 /\ ψ = ψ0 ++ s :: suf) as []
+        by (destruct Hψ; destruct_and!; done).
+      clear Hψ; subst.
       contradict X2; eapply IHn; cycle 2; [exact X0 | split |  | done].
       * by eexists.
       * intros [suf'' Heq]; simplify_list_eq.
@@ -147,8 +147,8 @@ Proof.
   intros e He1 .
   induction He1; intro He2; dependent destruction He2; try (by inversion a).
   - by rewrite (proof_irrel a a0).
-  - apply app_eq_app in x0 as [suf' Hpsi]; (destruct suf'; simplify_list_eq; cycle 1);
-      [destruct Hpsi as [[-> Hpsi] | [-> Hpsi]] |].
+  - apply app_eq_app in x0 as [suf' Hψ]; (destruct suf'; simplify_list_eq; cycle 1);
+      [destruct Hψ as [[-> Hψ] | [-> Hψ]] |].
     + exfalso.
       eapply unique_readibility_initial_segment;
         [exact He2_1 | split; [by eexists |] | exact He1_1].
@@ -161,11 +161,11 @@ Proof.
       intros [suf'' Heq]; simplify_list_eq.
       apply f_equal with (f := length) in Heq.
       by rewrite app_length in Heq; cbn in Heq; lia.
-    + assert (phi0 = phi /\ psi0 = psi) as [-> ->]
-        by (destruct Hpsi; destruct_and!; done).
+    + assert (ϕ0 = ϕ /\ ψ0 = ψ) as [-> ->]
+        by (destruct Hψ; destruct_and!; done).
       by rewrite (IHHe1_1 He2_1), (IHHe1_2 He2_2), x.
-  - apply app_eq_app in x0 as [suf' Hpsi]; (destruct suf'; simplify_list_eq; cycle 1);
-      [destruct Hpsi as [[-> Hpsi] | [-> Hpsi]] |].
+  - apply app_eq_app in x0 as [suf' Hψ]; (destruct suf'; simplify_list_eq; cycle 1);
+      [destruct Hψ as [[-> Hψ] | [-> Hψ]] |].
     + exfalso.
       eapply unique_readibility_initial_segment;
         [exact He2_1 | split; [by eexists |] | exact He1_1].
@@ -178,8 +178,8 @@ Proof.
       intros [suf'' Heq]; simplify_list_eq.
       apply f_equal with (f := length) in Heq.
       by rewrite app_length in Heq; cbn in Heq; lia.
-    + assert (phi0 = phi /\ psi0 = psi) as [-> ->]
-        by (destruct Hpsi; destruct_and!; done).
+    + assert (ϕ0 = ϕ /\ ψ0 = ψ) as [-> ->]
+        by (destruct Hψ; destruct_and!; done).
       by rewrite (IHHe1_1 He2_1), (IHHe1_2 He2_2), x.
   - by rewrite (IHHe1 He2).
   - by rewrite (IHHe1 He2).

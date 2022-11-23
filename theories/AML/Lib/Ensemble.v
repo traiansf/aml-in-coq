@@ -413,6 +413,13 @@ Proof.
     by apply Proper0 in Hincl; apply Hincl.
 Qed.
 
+Lemma knaster_tarsky_lfp_fix_sub A : A ⊆ lfp -> F A ⊆ lfp.
+Proof.
+  intro Hincl.
+  transitivity (F lfp); [by apply Proper0 |].
+  by apply set_equiv_subseteq; symmetry; apply knaster_tarsky_lfp_fix.
+Qed.
+
 Definition gfp : Ensemble idomain := filtered_union post_fixpoint id.
 
 Lemma elem_of_gfp x : x ∈ gfp <-> exists A, post_fixpoint A /\ x ∈ A.
@@ -442,6 +449,13 @@ Proof.
     assert (Hincl : A ⊆ gfp)
       by (apply knaster_tarsky_greatest_post_fixpoint; done).
     by apply Proper0 in Hincl; apply Hincl, HA.
+Qed.
+
+Lemma knaster_tarsky_gfp_fix_sub A : gfp ⊆ A -> gfp ⊆ F A.
+Proof.
+  intro Hincl.
+  transitivity (F gfp); [| by apply Proper0].
+  by apply set_equiv_subseteq; apply knaster_tarsky_gfp_fix.
 Qed.
 
 End SecKnasterTarski.
@@ -513,6 +527,35 @@ Proof.
   by apply Proper0, member_of_klfp.
 Qed.
 
+Lemma pow_compose_F_n_empty_subseteq_pre_fixpoint
+  A (HA : pre_fixpoint F A) n :
+  pow_compose F n ∅ ⊆ A.
+Proof.
+  induction n; cbn; [by set_solver |].
+  by transitivity (F A); [apply Proper0 |].
+Qed.
+
+Lemma kleene_least_pre_fixpoint A : pre_fixpoint F A -> klfp ⊆ A.
+Proof.
+  intros HA a; rewrite elem_of_klfp.
+  intros [n Ha].
+  by eapply pow_compose_F_n_empty_subseteq_pre_fixpoint.
+Qed.
+
+Lemma klfp_subseteq_lfp : klfp ⊆ lfp F.
+Proof.
+  intros x Hx; apply elem_of_lfp.
+  by intros A HA; apply kleene_least_pre_fixpoint.
+Qed.
+
+Lemma kleene_lfp_least A :
+  fixpoint F A -> klfp ⊆ A.
+Proof.
+  intro HA; etransitivity.
+  - by apply klfp_subseteq_lfp.
+  - by apply knaster_tarsky_lfp_least.
+Qed.
+
 Lemma klfp_fixpoint_elim :
   pre_fixpoint F klfp -> fixpoint F klfp.
 Proof.
@@ -526,32 +569,12 @@ Proof.
   by apply omega_continuous, kleene_ascending_chain.
 Qed.
 
-Lemma kleene_least_pre_fixpoint A : pre_fixpoint F A -> klfp ⊆ A.
-Proof.
-  intros HA.
-  cut (forall n, pow_compose F n ∅ ⊆ A).
-  {
-    intros Hall a; rewrite elem_of_klfp.
-    by intros [n Ha]; eapply Hall.
-  }
-  induction n; [by set_solver | cbn].
-  transitivity (F A); [| done].
-  by apply Proper0.
-Qed.
-
-Lemma kleene_lfp_least A :
-  fixpoint F A -> klfp ⊆ A.
-Proof.
-  intro HA; apply set_equiv_subseteq in HA as [HA _].
-  by apply kleene_least_pre_fixpoint.
-Qed.
-
 Lemma kleene_knaster_tarsky_lfp_equiv :
   fixpoint F klfp -> lfp F ≡ klfp.
 Proof.
   intro Hfix; apply set_equiv_subseteq; split.
-  - apply knaster_tarsky_lfp_least, Hfix.
-  - by apply kleene_lfp_least, knaster_tarsky_lfp_fix.
+  - by apply knaster_tarsky_lfp_least, Hfix.
+  - by apply klfp_subseteq_lfp.
 Qed.
 
 Definition kgfp : Ensemble idomain :=

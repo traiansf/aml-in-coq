@@ -7,24 +7,23 @@ Section sec_theorems.
 
 Context `{signature} `{Set_ Pattern PatternSet}.
 
-
 Inductive MLGammaTheorem (Gamma : PatternSet) : Pattern -> Prop :=
-| ml_thm_assumption : forall phi, phi ∈ Gamma -> MLGammaTheorem Gamma phi
-| ml_thm_tautology : forall phi, MLTautology phi -> MLGammaTheorem Gamma phi
-| ml_thm_axiom : forall phi, MLAxiom phi -> MLGammaTheorem Gamma phi
-| ml_thm_modus_ponens : forall phi psi chi,
-    MLModusPonens phi psi chi ->
-    MLGammaTheorem Gamma phi ->
-    MLGammaTheorem Gamma psi ->
-    MLGammaTheorem Gamma chi
-| ml_thm_single_premise : forall phi psi,
-    MLSinglePremiseRule phi psi ->
-    MLGammaTheorem Gamma phi ->
-    MLGammaTheorem Gamma psi
+| ml_thm_assumption : forall ϕ, ϕ ∈ Gamma -> MLGammaTheorem Gamma ϕ
+| ml_thm_tautology : forall ϕ, MLTautology ϕ -> MLGammaTheorem Gamma ϕ
+| ml_thm_axiom : forall ϕ, MLAxiom ϕ -> MLGammaTheorem Gamma ϕ
+| ml_thm_modus_ponens : forall ϕ ψ χ,
+    MLModusPonens ϕ ψ χ ->
+    MLGammaTheorem Gamma ϕ ->
+    MLGammaTheorem Gamma ψ ->
+    MLGammaTheorem Gamma χ
+| ml_thm_single_premise : forall ϕ ψ,
+    MLSinglePremiseRule ϕ ψ ->
+    MLGammaTheorem Gamma ϕ ->
+    MLGammaTheorem Gamma ψ
 .
 
 Definition set_deduction (Gamma Delta : PatternSet) : Prop :=
-  forall phi, phi ∈ Delta -> MLGammaTheorem Gamma phi.
+  forall ϕ, ϕ ∈ Delta -> MLGammaTheorem Gamma ϕ.
 
 End sec_theorems.
 
@@ -37,14 +36,14 @@ Context
   `{signature}
   `{Set_ Pattern PatternSet}.
 
-Definition MLTheorem (phi : Pattern) : Prop :=
-  MLGammaTheorem (PatternSet := PatternSet) ∅ phi.
+Definition MLTheorem (ϕ : Pattern) : Prop :=
+  MLGammaTheorem (PatternSet := PatternSet) ∅ ϕ.
 
 Lemma gamma_theorem_subsumption :
   forall (Gamma Delta : PatternSet), Delta ⊆ Gamma ->
-  forall phi, Delta ⊢ phi -> Gamma ⊢ phi.
+  forall ϕ, Delta ⊢ ϕ -> Gamma ⊢ ϕ.
 Proof.
-  intros * Hincl phi HDelta.
+  intros * Hincl ϕ HDelta.
   induction HDelta.
   - by apply ml_thm_assumption, Hincl.
   - by apply ml_thm_tautology.
@@ -54,8 +53,8 @@ Proof.
 Qed.
 
 Lemma theorem_subsumption :
-  forall (Gamma : PatternSet) (phi : Pattern),
-  MLTheorem phi -> Gamma ⊢ phi.
+  forall (Gamma : PatternSet) (ϕ : Pattern),
+  MLTheorem ϕ -> Gamma ⊢ ϕ.
 Proof.
   intro Gamma.
   apply gamma_theorem_subsumption.
@@ -64,9 +63,9 @@ Qed.
 
 Lemma set_deduction_subsumption :
   forall (Gamma Delta : PatternSet), Gamma ⊢ₛ Delta ->
-  forall phi, Delta ⊢ phi -> Gamma ⊢ phi.
+  forall ϕ, Delta ⊢ ϕ -> Gamma ⊢ ϕ.
 Proof.
-  intros * Hincl phi HDelta.
+  intros * Hincl ϕ HDelta.
   induction HDelta.
   - by apply Hincl.
   - by apply ml_thm_tautology.
@@ -82,14 +81,14 @@ Section sec_theorem_ensemble.
 Context `{signature}.
 
 Definition set_of_gamma_theorems (Gamma : Ensemble Pattern) : Ensemble Pattern :=
-  fun phi => Gamma ⊢ phi.
+  fun ϕ => Gamma ⊢ ϕ.
 
 Lemma set_of_gamma_theorems_idem (Gamma : Ensemble Pattern) :
   set_of_gamma_theorems (set_of_gamma_theorems Gamma)
     ≡
   set_of_gamma_theorems Gamma.
 Proof.
-  intro phi; split.
+  intro ϕ; split.
   - by apply set_deduction_subsumption; intro.
   - apply gamma_theorem_subsumption.
     by intros ? ?; apply ml_thm_assumption.

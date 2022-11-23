@@ -9,42 +9,42 @@ Context
 
 Inductive EVarFree (x : EVar) : Pattern -> Prop :=
 | ef_evar : EVarFree x (PEVar x)
-| ef_impl_left : forall phi psi, EVarFree x phi -> EVarFree x (PImpl phi psi)
-| ef_impl_right : forall phi psi, EVarFree x psi -> EVarFree x (PImpl phi psi)
-| ef_app_left : forall phi psi, EVarFree x phi -> EVarFree x (PApp phi psi)
-| ef_app_right : forall phi psi, EVarFree x psi -> EVarFree x (PApp phi psi)
-| ef_mu : forall X phi, EVarFree x phi -> EVarFree x (PMu X phi)
-| ef_ex : forall y phi, EVarFree x phi -> y <> x -> EVarFree x (PEx y phi)
+| ef_impl_left : forall ϕ ψ, EVarFree x ϕ -> EVarFree x (PImpl ϕ ψ)
+| ef_impl_right : forall ϕ ψ, EVarFree x ψ -> EVarFree x (PImpl ϕ ψ)
+| ef_app_left : forall ϕ ψ, EVarFree x ϕ -> EVarFree x (PApp ϕ ψ)
+| ef_app_right : forall ϕ ψ, EVarFree x ψ -> EVarFree x (PApp ϕ ψ)
+| ef_mu : forall X ϕ, EVarFree x ϕ -> EVarFree x (μₚ X ϕ)
+| ef_ex : forall y ϕ, EVarFree x ϕ -> y <> x -> EVarFree x (PEx y ϕ)
 .
 
 Inductive EVarBound (x : EVar) : Pattern -> Prop :=
-| eb_impl_left : forall phi psi, EVarBound x phi -> EVarBound x (PImpl phi psi)
-| eb_impl_right : forall phi psi, EVarBound x psi -> EVarBound x (PImpl phi psi)
-| eb_app_left : forall phi psi, EVarBound x phi -> EVarBound x (PApp phi psi)
-| eb_app_right : forall phi psi, EVarBound x psi -> EVarBound x (PApp phi psi)
-| eb_mu : forall X phi, EVarBound x phi -> EVarBound x (PMu X phi)
-| eb_ex_eq : forall phi, EVarBound x (PEx x phi)
-| eb_ex_neq : forall y phi, EVarBound x phi -> EVarBound x (PEx y phi)
+| eb_impl_left : forall ϕ ψ, EVarBound x ϕ -> EVarBound x (PImpl ϕ ψ)
+| eb_impl_right : forall ϕ ψ, EVarBound x ψ -> EVarBound x (PImpl ϕ ψ)
+| eb_app_left : forall ϕ ψ, EVarBound x ϕ -> EVarBound x (PApp ϕ ψ)
+| eb_app_right : forall ϕ ψ, EVarBound x ψ -> EVarBound x (PApp ϕ ψ)
+| eb_mu : forall X ϕ, EVarBound x ϕ -> EVarBound x (μₚ X ϕ)
+| eb_ex_eq : forall ϕ, EVarBound x (PEx x ϕ)
+| eb_ex_neq : forall y ϕ, EVarBound x ϕ -> EVarBound x (PEx y ϕ)
 .
 
 Inductive SVarFree (x : SVar) : Pattern -> Prop :=
 | sf_svar : SVarFree x (PSVar x)
-| sf_impl_left : forall phi psi, SVarFree x phi -> SVarFree x (PImpl phi psi)
-| sf_impl_right : forall phi psi, SVarFree x psi -> SVarFree x (PImpl phi psi)
-| sf_app_left : forall phi psi, SVarFree x phi -> SVarFree x (PApp phi psi)
-| sf_app_right : forall phi psi, SVarFree x psi -> SVarFree x (PApp phi psi)
-| sf_ex : forall X phi, SVarFree x phi -> SVarFree x (PEx X phi)
-| sf_mu : forall y phi, SVarFree x phi -> y <> x -> SVarFree x (PMu y phi)
+| sf_impl_left : forall ϕ ψ, SVarFree x ϕ -> SVarFree x (PImpl ϕ ψ)
+| sf_impl_right : forall ϕ ψ, SVarFree x ψ -> SVarFree x (PImpl ϕ ψ)
+| sf_app_left : forall ϕ ψ, SVarFree x ϕ -> SVarFree x (PApp ϕ ψ)
+| sf_app_right : forall ϕ ψ, SVarFree x ψ -> SVarFree x (PApp ϕ ψ)
+| sf_ex : forall X ϕ, SVarFree x ϕ -> SVarFree x (PEx X ϕ)
+| sf_mu : forall y ϕ, SVarFree x ϕ -> y <> x -> SVarFree x (μₚ y ϕ)
 .
 
 Inductive SVarBound (x : SVar) : Pattern -> Prop :=
-| sb_impl_left : forall phi psi, SVarBound x phi -> SVarBound x (PImpl phi psi)
-| sb_impl_right : forall phi psi, SVarBound x psi -> SVarBound x (PImpl phi psi)
-| sb_app_left : forall phi psi, SVarBound x phi -> SVarBound x (PApp phi psi)
-| sb_app_right : forall phi psi, SVarBound x psi -> SVarBound x (PApp phi psi)
-| sb_ex : forall X phi, SVarBound x phi -> SVarBound x (PEx X phi)
-| sb_mu_eq : forall phi, SVarBound x (PMu x phi)
-| sb_mu_neq : forall y phi, SVarBound x phi -> SVarBound x (PMu y phi)
+| sb_impl_left : forall ϕ ψ, SVarBound x ϕ -> SVarBound x (PImpl ϕ ψ)
+| sb_impl_right : forall ϕ ψ, SVarBound x ψ -> SVarBound x (PImpl ϕ ψ)
+| sb_app_left : forall ϕ ψ, SVarBound x ϕ -> SVarBound x (PApp ϕ ψ)
+| sb_app_right : forall ϕ ψ, SVarBound x ψ -> SVarBound x (PApp ϕ ψ)
+| sb_ex : forall X ϕ, SVarBound x ϕ -> SVarBound x (PEx X ϕ)
+| sb_mu_eq : forall ϕ, SVarBound x (μₚ x ϕ)
+| sb_mu_neq : forall y ϕ, SVarBound x ϕ -> SVarBound x (μₚ y ϕ)
 .
 
 Fixpoint FEV (p : Pattern) : EVarSet :=
@@ -52,10 +52,10 @@ match p with
 | PEVar x => {[x]}
 | PSVar X => ∅
 | POp _ => ∅
-| PImpl phi psi => FEV phi ∪ FEV psi
-| PApp phi psi => FEV phi ∪ FEV psi
-| PEx x phi => FEV phi ∖ {[x]}
-| PMu X phi => FEV phi
+| PImpl ϕ ψ => FEV ϕ ∪ FEV ψ
+| PApp ϕ ψ => FEV ϕ ∪ FEV ψ
+| PEx x ϕ => FEV ϕ ∖ {[x]}
+| μₚ X ϕ => FEV ϕ
 end.
 
 Lemma EVarFree_FEV : forall x p,
@@ -86,10 +86,10 @@ match p with
 | PSVar x => {[x]}
 | PEVar X => ∅
 | POp _ => ∅
-| PImpl phi psi => FSV phi ∪ FSV psi
-| PApp phi psi => FSV phi ∪ FSV psi
-| PMu x phi => FSV phi ∖ {[x]}
-| PEx X phi => FSV phi
+| PImpl ϕ ψ => FSV ϕ ∪ FSV ψ
+| PApp ϕ ψ => FSV ϕ ∪ FSV ψ
+| μₚ x ϕ => FSV ϕ ∖ {[x]}
+| PEx X ϕ => FSV ϕ
 end.
 
 Lemma SVarFree_FSV : forall x p,
@@ -120,10 +120,10 @@ match p with
 | PEVar _ => ∅
 | PSVar _ => ∅
 | POp _ => ∅
-| PImpl phi psi => BEV phi ∪ BEV psi
-| PApp phi psi => BEV phi ∪ BEV psi
-| PEx x phi => BEV phi ∪ {[x]}
-| PMu X phi => BEV phi
+| PImpl ϕ ψ => BEV ϕ ∪ BEV ψ
+| PApp ϕ ψ => BEV ϕ ∪ BEV ψ
+| PEx x ϕ => BEV ϕ ∪ {[x]}
+| μₚ X ϕ => BEV ϕ
 end.
 
 Lemma EVarBound_BEV : forall x p,
@@ -159,24 +159,24 @@ Proof.
 by intros; unfold EV; rewrite elem_of_union, <- EVarFree_FEV, <- EVarBound_BEV.
 Qed.
 
-Lemma EOccurs_impl x phi1 phi2 :
-EOccurs x (PImpl phi1 phi2) <-> EOccurs x phi1 \/ EOccurs x phi2.
+Lemma EOccurs_impl x ϕ1 ϕ2 :
+EOccurs x (PImpl ϕ1 ϕ2) <-> EOccurs x ϕ1 \/ EOccurs x ϕ2.
 Proof.
 rewrite EV_Eoccurs; unfold EV; cbn; rewrite! elem_of_union; unfold EOccurs.
 rewrite !EVarFree_FEV, !EVarBound_BEV.
 itauto.
 Qed.
 
-Lemma EOccurs_app x phi1 phi2 :
-EOccurs x (PApp phi1 phi2) <-> EOccurs x phi1 \/ EOccurs x phi2.
+Lemma EOccurs_app x ϕ1 ϕ2 :
+EOccurs x (PApp ϕ1 ϕ2) <-> EOccurs x ϕ1 \/ EOccurs x ϕ2.
 Proof.
 rewrite EV_Eoccurs; unfold EV; cbn; rewrite! elem_of_union.
 unfold EOccurs; rewrite !EVarFree_FEV, !EVarBound_BEV.
 itauto.
 Qed.
 
-Lemma EOccurs_ex x y phi :
-EOccurs x (PEx y phi) <-> x = y \/ EOccurs x phi.
+Lemma EOccurs_ex x y ϕ :
+EOccurs x (PEx y ϕ) <-> x = y \/ EOccurs x ϕ.
 Proof.
 rewrite EV_Eoccurs; unfold EV; cbn.
 rewrite! elem_of_union, elem_of_difference, elem_of_singleton.
@@ -184,8 +184,8 @@ unfold EOccurs; rewrite !EVarFree_FEV, !EVarBound_BEV.
 destruct (decide (x = y)); itauto.
 Qed.
 
-Lemma EOccurs_mu x Y phi :
-EOccurs x (PMu Y phi) <-> EOccurs x phi.
+Lemma EOccurs_mu x Y ϕ :
+EOccurs x (μₚ Y ϕ) <-> EOccurs x ϕ.
 Proof.
 rewrite EV_Eoccurs; unfold EV; cbn.
 rewrite! elem_of_union.
@@ -195,27 +195,27 @@ Qed.
 
 Inductive EOccursInd (x : EVar) : Pattern -> Prop :=
 | eo_evar : EOccursInd x (PEVar x)
-| eo_impl_left : forall phi1 phi2, EOccursInd x phi1 -> EOccursInd x (PImpl phi1 phi2)
-| eo_impl_right : forall phi1 phi2, EOccursInd x phi2 -> EOccursInd x (PImpl phi1 phi2)
-| eo_app_left : forall phi1 phi2, EOccursInd x phi1 -> EOccursInd x (PApp phi1 phi2)
-| eo_app_right : forall phi1 phi2, EOccursInd x phi2 -> EOccursInd x (PApp phi1 phi2)
-| eo_mu : forall Y phi, EOccursInd x phi -> EOccursInd x (PMu Y phi)
-| eo_ex_eq : forall phi, EOccursInd x (PEx x phi)
-| eo_ex_neq : forall y phi, EOccursInd x phi -> EOccursInd x (PEx y phi).
+| eo_impl_left : forall ϕ1 ϕ2, EOccursInd x ϕ1 -> EOccursInd x (PImpl ϕ1 ϕ2)
+| eo_impl_right : forall ϕ1 ϕ2, EOccursInd x ϕ2 -> EOccursInd x (PImpl ϕ1 ϕ2)
+| eo_app_left : forall ϕ1 ϕ2, EOccursInd x ϕ1 -> EOccursInd x (PApp ϕ1 ϕ2)
+| eo_app_right : forall ϕ1 ϕ2, EOccursInd x ϕ2 -> EOccursInd x (PApp ϕ1 ϕ2)
+| eo_mu : forall Y ϕ, EOccursInd x ϕ -> EOccursInd x (μₚ Y ϕ)
+| eo_ex_eq : forall ϕ, EOccursInd x (PEx x ϕ)
+| eo_ex_neq : forall y ϕ, EOccursInd x ϕ -> EOccursInd x (PEx y ϕ).
 
-Lemma EOccursInd_iff x phi : EOccurs x phi <-> EOccursInd x phi.
+Lemma EOccursInd_iff x ϕ : EOccurs x ϕ <-> EOccursInd x ϕ.
 Proof.
-induction phi.
+induction ϕ.
 2,7: by split; [intros [Hx | Hx]; inversion Hx | inversion 1].
 - by split; [intros [Hx | Hx]; inversion Hx | inversion 1; left ]; constructor.
-- rewrite EOccurs_impl, IHphi1, IHphi2.
+- rewrite EOccurs_impl, IHϕ1, IHϕ2.
   by split; [intros []; constructor | inversion 1]; itauto.
-- rewrite EOccurs_ex, IHphi.
+- rewrite EOccurs_ex, IHϕ.
   split; [intros []; [subst; apply eo_ex_eq | apply eo_ex_neq] | inversion 1];
     itauto.
-- rewrite EOccurs_mu, IHphi.
+- rewrite EOccurs_mu, IHϕ.
   by split; [constructor | inversion 1].
-- rewrite EOccurs_app, IHphi1, IHphi2.
+- rewrite EOccurs_app, IHϕ1, IHϕ2.
   by split; [intros []; constructor | inversion 1]; itauto.
 Qed.
 
@@ -224,10 +224,10 @@ match p with
 | PEVar _ => ∅
 | PSVar _ => ∅
 | POp _ => ∅
-| PImpl phi psi => BSV phi ∪ BSV psi
-| PApp phi psi => BSV phi ∪ BSV psi
-| PMu x phi => BSV phi ∪ {[x]}
-| PEx X phi => BSV phi
+| PImpl ϕ ψ => BSV ϕ ∪ BSV ψ
+| PApp ϕ ψ => BSV ϕ ∪ BSV ψ
+| μₚ x ϕ => BSV ϕ ∪ {[x]}
+| PEx X ϕ => BSV ϕ
 end.
 
 Lemma SVarBound_BSV : forall x p,
@@ -263,24 +263,24 @@ Proof.
 by intros; unfold SV; rewrite elem_of_union, <- SVarFree_FSV, <- SVarBound_BSV.
 Qed.
 
-Lemma SOccurs_impl x phi1 phi2 :
-SOccurs x (PImpl phi1 phi2) <-> SOccurs x phi1 \/ SOccurs x phi2.
+Lemma SOccurs_impl x ϕ1 ϕ2 :
+SOccurs x (PImpl ϕ1 ϕ2) <-> SOccurs x ϕ1 \/ SOccurs x ϕ2.
 Proof.
 rewrite SV_Soccurs; unfold SV; cbn; rewrite! elem_of_union; unfold SOccurs.
 rewrite !SVarFree_FSV, !SVarBound_BSV.
 itauto.
 Qed.
 
-Lemma SOccurs_app x phi1 phi2 :
-SOccurs x (PApp phi1 phi2) <-> SOccurs x phi1 \/ SOccurs x phi2.
+Lemma SOccurs_app x ϕ1 ϕ2 :
+SOccurs x (PApp ϕ1 ϕ2) <-> SOccurs x ϕ1 \/ SOccurs x ϕ2.
 Proof.
 rewrite SV_Soccurs; unfold SV; cbn; rewrite! elem_of_union.
 unfold SOccurs; rewrite !SVarFree_FSV, !SVarBound_BSV.
 itauto.
 Qed.
 
-Lemma SOccurs_mu x y phi :
-SOccurs x (PMu y phi) <-> x = y \/ SOccurs x phi.
+Lemma SOccurs_mu x y ϕ :
+SOccurs x (μₚ y ϕ) <-> x = y \/ SOccurs x ϕ.
 Proof.
 rewrite SV_Soccurs; unfold SV; cbn.
 rewrite! elem_of_union, elem_of_difference, elem_of_singleton.
@@ -288,8 +288,8 @@ unfold SOccurs; rewrite !SVarFree_FSV, !SVarBound_BSV.
 destruct (decide (x = y)); itauto.
 Qed.
 
-Lemma SOccurs_ex x Y phi :
-SOccurs x (PEx Y phi) <-> SOccurs x phi.
+Lemma SOccurs_ex x Y ϕ :
+SOccurs x (PEx Y ϕ) <-> SOccurs x ϕ.
 Proof.
 rewrite SV_Soccurs; unfold SV; cbn.
 rewrite! elem_of_union.
@@ -299,31 +299,31 @@ Qed.
 
 Inductive SOccursInd (x : SVar) : Pattern -> Prop :=
 | so_svar : SOccursInd x (PSVar x)
-| so_impl_left : forall phi1 phi2, SOccursInd x phi1 -> SOccursInd x (PImpl phi1 phi2)
-| so_impl_right : forall phi1 phi2, SOccursInd x phi2 -> SOccursInd x (PImpl phi1 phi2)
-| so_app_left : forall phi1 phi2, SOccursInd x phi1 -> SOccursInd x (PApp phi1 phi2)
-| so_app_right : forall phi1 phi2, SOccursInd x phi2 -> SOccursInd x (PApp phi1 phi2)
-| so_ex : forall Y phi, SOccursInd x phi -> SOccursInd x (PEx Y phi)
-| so_mu_eq : forall phi, SOccursInd x (PMu x phi)
-| so_mu_neq : forall y phi, SOccursInd x phi -> SOccursInd x (PMu y phi).
+| so_impl_left : forall ϕ1 ϕ2, SOccursInd x ϕ1 -> SOccursInd x (PImpl ϕ1 ϕ2)
+| so_impl_right : forall ϕ1 ϕ2, SOccursInd x ϕ2 -> SOccursInd x (PImpl ϕ1 ϕ2)
+| so_app_left : forall ϕ1 ϕ2, SOccursInd x ϕ1 -> SOccursInd x (PApp ϕ1 ϕ2)
+| so_app_right : forall ϕ1 ϕ2, SOccursInd x ϕ2 -> SOccursInd x (PApp ϕ1 ϕ2)
+| so_ex : forall Y ϕ, SOccursInd x ϕ -> SOccursInd x (PEx Y ϕ)
+| so_mu_eq : forall ϕ, SOccursInd x (μₚ x ϕ)
+| so_mu_neq : forall y ϕ, SOccursInd x ϕ -> SOccursInd x (μₚ y ϕ).
 
-Lemma SOccursInd_iff x phi : SOccurs x phi <-> SOccursInd x phi.
+Lemma SOccursInd_iff x ϕ : SOccurs x ϕ <-> SOccursInd x ϕ.
 Proof.
-induction phi.
+induction ϕ.
 1,7: by split; [intros [Hx | Hx]; inversion Hx | inversion 1].
 - by split; [intros [Hx | Hx]; inversion Hx | inversion 1; left ]; constructor.
-- rewrite SOccurs_impl, IHphi1, IHphi2.
+- rewrite SOccurs_impl, IHϕ1, IHϕ2.
   by split; [intros []; constructor | inversion 1]; itauto.
-- rewrite SOccurs_ex, IHphi.
+- rewrite SOccurs_ex, IHϕ.
   by split; [constructor | inversion 1].
-- rewrite SOccurs_mu, IHphi.
+- rewrite SOccurs_mu, IHϕ.
   split; [intros []; [subst; apply so_mu_eq | apply so_mu_neq] | inversion 1];
     itauto.
-- rewrite SOccurs_app, IHphi1, IHphi2.
+- rewrite SOccurs_app, IHϕ1, IHϕ2.
   by split; [intros []; constructor | inversion 1]; itauto.
 Qed.
 
-Lemma SubPatternExBound z theta phi : SubPattern (PEx z theta) phi -> z ∈ BEV phi.
+Lemma SubPatternExBound z theta ϕ : SubPattern (PEx z theta) ϕ -> z ∈ BEV ϕ.
 Proof.
   induction 1; cbn.
   - by cbn; rewrite elem_of_union, elem_of_singleton; right.
@@ -335,7 +335,7 @@ Proof.
   - done.
 Qed.
 
-Lemma SubPatternMuBound z theta phi : SubPattern (PMu z theta) phi -> z ∈ BSV phi.
+Lemma SubPatternMuBound z theta ϕ : SubPattern (μₚ z theta) ϕ -> z ∈ BSV ϕ.
 Proof.
   induction 1; cbn.
   - by cbn; rewrite elem_of_union, elem_of_singleton; right.
@@ -347,19 +347,19 @@ Proof.
   - by apply elem_of_union; left.
 Qed.
 
-Record EFreeFor (x : EVar) (delta phi : Pattern) :=
+Record EFreeFor (x : EVar) (delta ϕ : Pattern) :=
 {
   eff_evar : forall z, EVarFree z delta -> z <> x ->
-    forall theta, SubPattern (PEx z theta) phi -> ~ EVarFree x theta;
+    forall theta, SubPattern (PEx z theta) ϕ -> ~ EVarFree x theta;
   eff_svar : forall z, SVarFree z delta ->
-    forall theta, SubPattern (PMu z theta) phi -> ~ EVarFree x theta
+    forall theta, SubPattern (μₚ z theta) ϕ -> ~ EVarFree x theta
 }.
 
 Lemma EFreeForAtomic x delta a : PatternAtomic a -> EFreeFor x delta a.
 Proof. by inversion 1; (split; [inversion 3 | inversion 2]). Qed.
 
-Lemma EFreeForImpl x delta phi1 phi2 :
-  EFreeFor x delta (PImpl phi1 phi2) <-> EFreeFor x delta phi1 /\ EFreeFor x delta phi2.
+Lemma EFreeForImpl x delta ϕ1 ϕ2 :
+  EFreeFor x delta (PImpl ϕ1 ϕ2) <-> EFreeFor x delta ϕ1 /\ EFreeFor x delta ϕ2.
 Proof.
   split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]];
     [split |]; (split; intros z Hz; [intros Hxz|]; intros theta Hsub).
@@ -371,8 +371,8 @@ Proof.
   - by inversion_clear Hsub; [eapply Hs1 | eapply Hs2].
 Qed.
 
-Lemma EFreeForApp x delta phi1 phi2 :
-  EFreeFor x delta (PApp phi1 phi2) <-> EFreeFor x delta phi1 /\ EFreeFor x delta phi2.
+Lemma EFreeForApp x delta ϕ1 ϕ2 :
+  EFreeFor x delta (PApp ϕ1 ϕ2) <-> EFreeFor x delta ϕ1 /\ EFreeFor x delta ϕ2.
 Proof.
   split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]];
     [split |]; (split; intros z Hz; [intros Hxz|]; intros theta Hsub).
@@ -384,8 +384,8 @@ Proof.
   - by inversion_clear Hsub; [eapply Hs1 | eapply Hs2].
 Qed.
 
-Lemma EFreeForEx x delta y phi :
-  EFreeFor x delta (PEx y phi) <-> EFreeFor x delta phi /\ (EVarFree y delta -> x <> y -> ~ EVarFree x phi).
+Lemma EFreeForEx x delta y ϕ :
+  EFreeFor x delta (PEx y ϕ) <-> EFreeFor x delta ϕ /\ (EVarFree y delta -> x <> y -> ~ EVarFree x ϕ).
 Proof.
   split; [intros [He Hs] | intros [[He Hs] Hy]]; repeat split.
   - by intros; eapply He; [..| apply sp_ex].
@@ -395,8 +395,8 @@ Proof.
   - by inversion 2; subst; eapply Hs.
 Qed.
 
-Lemma EFreeForMu x delta y phi :
-  EFreeFor x delta (PMu y phi) <-> EFreeFor x delta phi /\ (SVarFree y delta -> ~ EVarFree x phi).
+Lemma EFreeForMu x delta y ϕ :
+  EFreeFor x delta (μₚ y ϕ) <-> EFreeFor x delta ϕ /\ (SVarFree y delta -> ~ EVarFree x ϕ).
 Proof.
   split; [intros [He Hs] | intros [[He Hs] Hy]]; repeat split.
   - by intros; eapply He; [..| apply sp_mu].
@@ -410,78 +410,78 @@ Inductive EFreeForInd (x : EVar) (delta : Pattern) : Pattern -> Prop :=
 | effi_evar : forall y, EFreeForInd x delta (PEVar y)
 | effi_svar : forall Y, EFreeForInd x delta (PSVar Y)
 | effi_op : forall o, EFreeForInd x delta (POp o)
-| effi_impl : forall phi1 phi2, EFreeForInd x delta phi1 -> EFreeForInd x delta phi2 ->
-    EFreeForInd x delta (PImpl phi1 phi2)
-| effi_app : forall phi1 phi2, EFreeForInd x delta phi1 -> EFreeForInd x delta phi2 ->
-    EFreeForInd x delta (PApp phi1 phi2)
-| effi_ex : forall y phi, EFreeForInd x delta phi -> (EVarFree y delta -> x <> y -> ~ EVarFree x phi) ->
-    EFreeForInd x delta (PEx y phi)
-| effi_mu : forall Y phi, EFreeForInd x delta phi -> (SVarFree Y delta -> ~ EVarFree x phi) ->
-    EFreeForInd x delta (PMu Y phi).
+| effi_impl : forall ϕ1 ϕ2, EFreeForInd x delta ϕ1 -> EFreeForInd x delta ϕ2 ->
+    EFreeForInd x delta (PImpl ϕ1 ϕ2)
+| effi_app : forall ϕ1 ϕ2, EFreeForInd x delta ϕ1 -> EFreeForInd x delta ϕ2 ->
+    EFreeForInd x delta (PApp ϕ1 ϕ2)
+| effi_ex : forall y ϕ, EFreeForInd x delta ϕ -> (EVarFree y delta -> x <> y -> ~ EVarFree x ϕ) ->
+    EFreeForInd x delta (PEx y ϕ)
+| effi_mu : forall Y ϕ, EFreeForInd x delta ϕ -> (SVarFree Y delta -> ~ EVarFree x ϕ) ->
+    EFreeForInd x delta (μₚ Y ϕ).
 
-Lemma EFreeForInd_iff x delta phi : EFreeFor x delta phi <-> EFreeForInd x delta phi.
+Lemma EFreeForInd_iff x delta ϕ : EFreeFor x delta ϕ <-> EFreeForInd x delta ϕ.
 Proof.
-  induction phi.
+  induction ϕ.
   1-2,7: by split; [constructor |split; [inversion 3 | inversion 2]].
-  - rewrite EFreeForImpl, IHphi1, IHphi2.
+  - rewrite EFreeForImpl, IHϕ1, IHϕ2.
     by split; [by intros []; constructor | inversion 1].
-  - rewrite EFreeForEx, IHphi.
+  - rewrite EFreeForEx, IHϕ.
     by split; [by intros []; constructor | inversion 1].
-  - rewrite EFreeForMu, IHphi.
+  - rewrite EFreeForMu, IHϕ.
     by split; [by intros []; constructor | inversion 1].
-  - rewrite EFreeForApp, IHphi1, IHphi2.
+  - rewrite EFreeForApp, IHϕ1, IHϕ2.
     by split; [by intros []; constructor | inversion 1].
 Qed.
 
-Lemma EFreeForInd_x_not_occurs x delta phi (Hx : ~ EOccursInd x phi) : EFreeForInd x delta phi.
+Lemma EFreeForInd_x_not_occurs x delta ϕ (Hx : ~ EOccursInd x ϕ) : EFreeForInd x delta ϕ.
 Proof.
-  induction phi; cycle 4. 3-5 : by constructor.
-  - constructor; [by apply IHphi; contradict Hx; constructor |].
+  induction ϕ; cycle 4. 3-5 : by constructor.
+  - constructor; [by apply IHϕ; contradict Hx; constructor |].
     by intros _; contradict Hx; constructor; apply EOccursInd_iff; left.
-  - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
+  - by constructor; [apply IHϕ1 | apply IHϕ2]; contradict Hx;
       [apply eo_app_left | apply eo_app_right].
-  - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
+  - by constructor; [apply IHϕ1 | apply IHϕ2]; contradict Hx;
       [apply eo_impl_left | apply eo_impl_right].
-  - constructor; [by apply IHphi; contradict Hx; constructor |].
+  - constructor; [by apply IHϕ; contradict Hx; constructor |].
     by intros _ _; contradict Hx; constructor; apply EOccursInd_iff; left.
 Qed.
 
-Lemma EFreeFor_x_theta_if_not_bound x theta phi :
-  (forall y, EVarFree y theta -> y <> x -> ~ EVarBound y phi) ->
-  (forall y, SVarFree y theta -> ~ SVarBound y phi) ->
-  EFreeFor x theta phi.
+Lemma EFreeFor_x_theta_if_not_bound x theta ϕ :
+  (forall y, EVarFree y theta -> y <> x -> ~ EVarBound y ϕ) ->
+  (forall y, SVarFree y theta -> ~ SVarBound y ϕ) ->
+  EFreeFor x theta ϕ.
 Proof.
   intros Hetheta Hstheta; (split; intros z Hz; [intros Hzx |]; intros theta' Htheta'); exfalso.
   - by eapply Hetheta; [..| eapply EVarBound_BEV, SubPatternExBound].
   - by eapply Hstheta; [| eapply SVarBound_BSV, SubPatternMuBound].
 Qed.
 
-Lemma EFreeFor_x_theta_if_no_free_vars x theta phi :
+Lemma EFreeFor_x_theta_if_no_free_vars x theta ϕ :
   FEV theta ⊆ {[x]} ->
   FSV theta ≡ ∅ ->
-  EFreeFor x theta phi.
+  EFreeFor x theta ϕ.
 Proof.
   intros Hetheta Hstheta; apply EFreeFor_x_theta_if_not_bound.
   - by intros y Hy; apply EVarFree_FEV, Hetheta, elem_of_singleton in Hy.
   - by intro; rewrite SVarFree_FSV, Hstheta; set_solver.
 Qed.
 
-Lemma EFreeFor_x_y_if_not_bound x y phi (Hx : ~ EVarBound y phi) : EFreeFor x (PEVar y) phi.
+Lemma EFreeFor_x_y_if_not_bound x y ϕ (Hx : ~ EVarBound y ϕ) : EFreeFor x (PEVar y) ϕ.
 Proof. by apply EFreeFor_x_theta_if_not_bound; inversion 1. Qed.
 
-Record SFreeFor (x : SVar) (delta phi : Pattern) :=
+Record SFreeFor (x : SVar) (delta ϕ : Pattern) :=
 {
   sff_evar : forall z, EVarFree z delta ->
-    forall theta, SubPattern (PEx z theta) phi -> ~ SVarFree x theta;
+    forall theta, SubPattern (PEx z theta) ϕ -> ~ SVarFree x theta;
   sff_svar : forall z, SVarFree z delta -> z <> x ->
-    forall theta, SubPattern (PMu z theta) phi -> ~ SVarFree x theta
+    forall theta, SubPattern (μₚ z theta) ϕ -> ~ SVarFree x theta
 }.
 
 Lemma SFreeForAtomic x delta a : PatternAtomic a -> SFreeFor x delta a.
 Proof. by inversion 1; (split; [inversion 2 | inversion 3]). Qed.
 
-Lemma SFreeForImpl x delta phi1 phi2 :
-  SFreeFor x delta (PImpl phi1 phi2) <-> SFreeFor x delta phi1 /\ SFreeFor x delta phi2.
+Lemma SFreeForImpl x delta ϕ1 ϕ2 :
+  SFreeFor x delta (PImpl ϕ1 ϕ2) <-> SFreeFor x delta ϕ1 /\ SFreeFor x delta ϕ2.
 Proof.
   split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]];
     [split |]; (split; intros z Hz; [| intros Hxz]; intros theta Hsub).
@@ -493,8 +493,8 @@ Proof.
   - by inversion_clear Hsub; [eapply Hs1 | eapply Hs2].
 Qed.
 
-Lemma SFreeForApp x delta phi1 phi2 :
-  SFreeFor x delta (PApp phi1 phi2) <-> SFreeFor x delta phi1 /\ SFreeFor x delta phi2.
+Lemma SFreeForApp x delta ϕ1 ϕ2 :
+  SFreeFor x delta (PApp ϕ1 ϕ2) <-> SFreeFor x delta ϕ1 /\ SFreeFor x delta ϕ2.
 Proof.
   split; [intros [He Hs] | intros [[He1 Hs1] [He2 Hs2]]];
     [split |]; (split; intros z Hz; [| intros Hxz]; intros theta Hsub).
@@ -506,8 +506,8 @@ Proof.
   - by inversion_clear Hsub; [eapply Hs1 | eapply Hs2].
 Qed.
 
-Lemma SFreeForEx x delta y phi :
-  SFreeFor x delta (PEx y phi) <-> SFreeFor x delta phi /\ (EVarFree y delta -> ~ SVarFree x phi).
+Lemma SFreeForEx x delta y ϕ :
+  SFreeFor x delta (PEx y ϕ) <-> SFreeFor x delta ϕ /\ (EVarFree y delta -> ~ SVarFree x ϕ).
 Proof.
   split; [intros [He Hs] | intros [[He Hs] Hy]]; repeat split.
   - by intros; eapply He; [| apply sp_ex].
@@ -517,8 +517,8 @@ Proof.
   - by inversion 3; subst; eapply Hs.
 Qed.
 
-Lemma SFreeForMu x delta y phi :
-  SFreeFor x delta (PMu y phi) <-> SFreeFor x delta phi /\ (SVarFree y delta -> y <> x -> ~ SVarFree x phi).
+Lemma SFreeForMu x delta y ϕ :
+  SFreeFor x delta (μₚ y ϕ) <-> SFreeFor x delta ϕ /\ (SVarFree y delta -> y <> x -> ~ SVarFree x ϕ).
 Proof.
   split; [intros [He Hs] | intros [[He Hs] Hy]]; repeat split.
   - by intros; eapply He; [| apply sp_mu].
@@ -532,102 +532,102 @@ Inductive SFreeForInd (x : SVar) (delta : Pattern) : Pattern -> Prop :=
 | sffi_evar : forall y, SFreeForInd x delta (PEVar y)
 | sffi_svar : forall Y, SFreeForInd x delta (PSVar Y)
 | sffi_op : forall o, SFreeForInd x delta (POp o)
-| sffi_impl : forall phi1 phi2, SFreeForInd x delta phi1 -> SFreeForInd x delta phi2 ->
-    SFreeForInd x delta (PImpl phi1 phi2)
-| sffi_app : forall phi1 phi2, SFreeForInd x delta phi1 -> SFreeForInd x delta phi2 ->
-    SFreeForInd x delta (PApp phi1 phi2)
-| sffi_ex : forall y phi, SFreeForInd x delta phi -> (EVarFree y delta -> ~ SVarFree x phi) ->
-    SFreeForInd x delta (PEx y phi)
-| sffi_mu : forall Y phi, SFreeForInd x delta phi -> (SVarFree Y delta -> Y <> x -> ~ SVarFree x phi) ->
-    SFreeForInd x delta (PMu Y phi).
+| sffi_impl : forall ϕ1 ϕ2, SFreeForInd x delta ϕ1 -> SFreeForInd x delta ϕ2 ->
+    SFreeForInd x delta (PImpl ϕ1 ϕ2)
+| sffi_app : forall ϕ1 ϕ2, SFreeForInd x delta ϕ1 -> SFreeForInd x delta ϕ2 ->
+    SFreeForInd x delta (PApp ϕ1 ϕ2)
+| sffi_ex : forall y ϕ, SFreeForInd x delta ϕ -> (EVarFree y delta -> ~ SVarFree x ϕ) ->
+    SFreeForInd x delta (PEx y ϕ)
+| sffi_mu : forall Y ϕ, SFreeForInd x delta ϕ -> (SVarFree Y delta -> Y <> x -> ~ SVarFree x ϕ) ->
+    SFreeForInd x delta (μₚ Y ϕ).
 
-Lemma SFreeForInd_iff x delta phi : SFreeFor x delta phi <-> SFreeForInd x delta phi.
+Lemma SFreeForInd_iff x delta ϕ : SFreeFor x delta ϕ <-> SFreeForInd x delta ϕ.
 Proof.
-  induction phi.
+  induction ϕ.
   1-2,7: by split; [constructor | split; [inversion 2 | inversion 3]].
-  - rewrite SFreeForImpl, IHphi1, IHphi2.
+  - rewrite SFreeForImpl, IHϕ1, IHϕ2.
     by split; [by intros []; constructor | inversion 1].
-  - rewrite SFreeForEx, IHphi.
+  - rewrite SFreeForEx, IHϕ.
     by split; [by intros []; constructor | inversion 1].
-  - rewrite SFreeForMu, IHphi.
+  - rewrite SFreeForMu, IHϕ.
     by split; [intros []; constructor | inversion 1].
-  - rewrite SFreeForApp, IHphi1, IHphi2.
+  - rewrite SFreeForApp, IHϕ1, IHϕ2.
     by split; [by intros []; constructor | inversion 1].
 Qed.
 
-Lemma SFreeForInd_x_not_occurs x delta phi (Hx : ~ SOccursInd x phi) : SFreeForInd x delta phi.
+Lemma SFreeForInd_x_not_occurs x delta ϕ (Hx : ~ SOccursInd x ϕ) : SFreeForInd x delta ϕ.
 Proof.
-  induction phi; cycle 4. 3-5 : by constructor.
-  - constructor; [by apply IHphi; contradict Hx; constructor |].
+  induction ϕ; cycle 4. 3-5 : by constructor.
+  - constructor; [by apply IHϕ; contradict Hx; constructor |].
     by intros _ _; contradict Hx; constructor; apply SOccursInd_iff; left.
-  - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
+  - by constructor; [apply IHϕ1 | apply IHϕ2]; contradict Hx;
       [apply so_app_left | apply so_app_right].
-  - by constructor; [apply IHphi1 | apply IHphi2]; contradict Hx;
+  - by constructor; [apply IHϕ1 | apply IHϕ2]; contradict Hx;
       [apply so_impl_left | apply so_impl_right].
-  - constructor; [by apply IHphi; contradict Hx; constructor |].
+  - constructor; [by apply IHϕ; contradict Hx; constructor |].
     by intros _; contradict Hx; constructor; apply SOccursInd_iff; left.
 Qed.
 
-Lemma SFreeFor_x_theta_if_not_bound x theta phi :
-  (forall y, EVarFree y theta -> ~ EVarBound y phi) ->
-  (forall y, SVarFree y theta -> y <> x -> ~ SVarBound y phi) ->
-  SFreeFor x theta phi.
+Lemma SFreeFor_x_theta_if_not_bound x theta ϕ :
+  (forall y, EVarFree y theta -> ~ EVarBound y ϕ) ->
+  (forall y, SVarFree y theta -> y <> x -> ~ SVarBound y ϕ) ->
+  SFreeFor x theta ϕ.
 Proof.
   intros Hetheta Hstheta; (split; intros z Hz; [| intros Hxz]; intros theta' Htheta'); exfalso.
   - by eapply Hetheta; [| eapply EVarBound_BEV, SubPatternExBound].
   - by eapply Hstheta; [..| eapply SVarBound_BSV, SubPatternMuBound].
 Qed.
 
-Lemma SFreeFor_x_theta_if_no_free_vars x theta phi :
+Lemma SFreeFor_x_theta_if_no_free_vars x theta ϕ :
   FEV theta ≡ ∅ ->
   FSV theta ⊆ {[x]} ->
-  SFreeFor x theta phi.
+  SFreeFor x theta ϕ.
 Proof.
   intros Hetheta Hstheta; apply SFreeFor_x_theta_if_not_bound.
   - by intro; rewrite EVarFree_FEV, Hetheta; set_solver.
   - by intros y Hy; apply SVarFree_FSV, Hstheta, elem_of_singleton in Hy.
 Qed.
 
-Lemma SFreeFor_x_y_if_not_bound x y phi (Hx : ~ SVarBound y phi) : SFreeFor x (PSVar y) phi.
+Lemma SFreeFor_x_y_if_not_bound x y ϕ (Hx : ~ SVarBound y ϕ) : SFreeFor x (PSVar y) ϕ.
 Proof. by apply SFreeFor_x_theta_if_not_bound; inversion 1. Qed.
 
 Inductive OccursPositively (X : SVar) : Pattern -> Prop :=
 | op_evar : forall x, OccursPositively X (PEVar x)
 | op_svar : forall Y, OccursPositively X (PSVar Y)
 | op_cons : forall c, OccursPositively X (POp c)
-| op_app : forall phi psi, OccursPositively X phi -> OccursPositively X psi ->
-    OccursPositively X (PApp phi psi)
-| op_ex : forall x phi, OccursPositively X phi -> OccursPositively X (PEx x phi)
-| op_mu_eq : forall phi, OccursPositively X (PMu X phi)
-| op_mu_neq : forall Y phi, Y <> X -> OccursPositively X phi ->
-    OccursPositively X (PMu Y phi)
-| op_impl : forall phi psi, OccursNegatively X phi -> OccursPositively X psi ->
-    OccursPositively X (PImpl phi psi)
+| op_app : forall ϕ ψ, OccursPositively X ϕ -> OccursPositively X ψ ->
+    OccursPositively X (PApp ϕ ψ)
+| op_ex : forall x ϕ, OccursPositively X ϕ -> OccursPositively X (PEx x ϕ)
+| op_mu_eq : forall ϕ, OccursPositively X (μₚ X ϕ)
+| op_mu_neq : forall Y ϕ, Y <> X -> OccursPositively X ϕ ->
+    OccursPositively X (μₚ Y ϕ)
+| op_impl : forall ϕ ψ, OccursNegatively X ϕ -> OccursPositively X ψ ->
+    OccursPositively X (PImpl ϕ ψ)
 with OccursNegatively (X : SVar) : Pattern -> Prop :=
 | on_evar : forall x, OccursNegatively X (PEVar x)
 | on_svar : forall Y, Y <> X -> OccursNegatively X (PSVar Y)
 | on_cons : forall c, OccursNegatively X (POp c)
-| on_app : forall phi psi, OccursNegatively X phi -> OccursNegatively X psi ->
-    OccursNegatively X (PApp phi psi)
-| on_ex : forall x phi, OccursNegatively X phi -> OccursNegatively X (PEx x phi)
-| on_mu_eq : forall phi, OccursNegatively X (PMu X phi)
-| on_mu_neq : forall Y phi, Y <> X -> OccursNegatively X phi ->
-    OccursNegatively X (PMu Y phi)
-| on_impl : forall phi psi, OccursPositively X phi -> OccursNegatively X psi ->
-    OccursNegatively X (PImpl phi psi)
+| on_app : forall ϕ ψ, OccursNegatively X ϕ -> OccursNegatively X ψ ->
+    OccursNegatively X (PApp ϕ ψ)
+| on_ex : forall x ϕ, OccursNegatively X ϕ -> OccursNegatively X (PEx x ϕ)
+| on_mu_eq : forall ϕ, OccursNegatively X (μₚ X ϕ)
+| on_mu_neq : forall Y ϕ, Y <> X -> OccursNegatively X ϕ ->
+    OccursNegatively X (μₚ Y ϕ)
+| on_impl : forall ϕ ψ, OccursPositively X ϕ -> OccursNegatively X ψ ->
+    OccursNegatively X (PImpl ϕ ψ)
 .
 
-Record ClosedPattern (phi : Pattern) : Prop :=
+Record ClosedPattern (ϕ : Pattern) : Prop :=
 {
-  cpe : forall x, ~ EVarFree x phi;
-  cps : forall X, ~ SVarFree X phi;
+  cpe : forall x, ~ EVarFree x ϕ;
+  cps : forall X, ~ SVarFree X ϕ;
 }.
 
 Definition set_closed_pattern `{Set_ Pattern PatternSet} (Gamma : PatternSet) : Prop :=
-  forall phi, phi ∈ Gamma -> ClosedPattern phi.
+  forall ϕ, ϕ ∈ Gamma -> ClosedPattern ϕ.
 
-Lemma ClosedPattern_iff phi :
-  ClosedPattern phi <-> FEV phi ≡ ∅ /\ FSV phi ≡ ∅.
+Lemma ClosedPattern_iff ϕ :
+  ClosedPattern ϕ <-> FEV ϕ ≡ ∅ /\ FSV ϕ ≡ ∅.
 Proof.
   split; intros [HEV HSV]; cycle 1; split.
   - by intros x Hx; rewrite EVarFree_FEV, HEV in Hx; contradict Hx; apply not_elem_of_empty.
@@ -640,17 +640,17 @@ Proof.
     by set_solver.
 Qed.
 
-Lemma ClosedPattern_elim phi :
-  FEV phi ≡ ∅ -> FSV phi ≡ ∅ -> ClosedPattern phi.
+Lemma ClosedPattern_elim ϕ :
+  FEV ϕ ≡ ∅ -> FSV ϕ ≡ ∅ -> ClosedPattern ϕ.
 Proof. by intros; apply ClosedPattern_iff. Qed.
 
 Definition CFEV (c : AppContext) : EVarSet := FEV (csubst c pBot).
 
-Lemma elem_of_CFEV x c : x ∈ CFEV c <-> forall phi, x ∈ FEV (csubst c phi).
+Lemma elem_of_CFEV x c : x ∈ CFEV c <-> forall ϕ, x ∈ FEV (csubst c ϕ).
 Proof.
-  split; [| by intros Hphi; apply Hphi].
+  split; [| by intros Hϕ; apply Hϕ].
   induction c; cbn; [intros Hx; contradict Hx; apply not_elem_of_empty |..];
-    setoid_rewrite elem_of_union; intros [] phi.
+    setoid_rewrite elem_of_union; intros [] ϕ.
   - by left; apply IHc.
   - by right.
   - by left.

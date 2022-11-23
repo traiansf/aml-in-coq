@@ -6,7 +6,7 @@ Inductive Pattern `{signature} : Type :=
 | PSVar : SVar -> Pattern
 | PImpl : Pattern -> Pattern -> Pattern
 | PEx : EVar -> Pattern -> Pattern
-| PMu : SVar -> Pattern -> Pattern
+| μₚ : SVar -> Pattern -> Pattern
 | PApp : Pattern -> Pattern -> Pattern
 | POp : Sigma -> Pattern.
 
@@ -15,19 +15,22 @@ Section sec_pattern.
 Context
   `{signature}.
 
-Definition pBot := PMu inhabitant (PSVar inhabitant).
-Definition pNeg (phi : Pattern) := PImpl phi pBot.
+Definition pBot := μₚ inhabitant (PSVar inhabitant).
+Definition pNeg (ϕ : Pattern) := PImpl ϕ pBot.
 Definition pTop := pNeg pBot.
-Definition pOr (phi psi : Pattern) := PImpl (pNeg phi) psi.
-Definition pAnd (phi psi : Pattern) := pNeg (pOr (pNeg phi) (pNeg psi)).
-Definition pIff (phi psi : Pattern) := pAnd (PImpl phi psi) (PImpl psi phi).
-Definition pAll (x : EVar) (phi : Pattern) := pNeg (PEx x (pNeg phi)).
+Definition pOr (ϕ ψ : Pattern) := PImpl (pNeg ϕ) ψ.
+Definition pAnd (ϕ ψ : Pattern) := pNeg (pOr (pNeg ϕ) (pNeg ψ)).
+Definition pIff (ϕ ψ : Pattern) := pAnd (PImpl ϕ ψ) (PImpl ψ ϕ).
+Definition pAll (x : EVar) (ϕ : Pattern) := pNeg (PEx x (pNeg ϕ)).
 
-Definition finite_conjunction (phis : list Pattern) : Pattern :=
-  foldr pAnd pTop phis.
+#[export] Instance Pattern_inhabited : Inhabited Pattern :=
+  populate pBot.
 
-Definition finite_disjunction (phis : list Pattern) : Pattern :=
-  foldr pOr pBot phis.
+Definition finite_conjunction (ϕs : list Pattern) : Pattern :=
+  foldr pAnd pTop ϕs.
+
+Definition finite_disjunction (ϕs : list Pattern) : Pattern :=
+  foldr pOr pBot ϕs.
 
 #[export] Instance PatternDec : EqDecision Pattern.
 Proof.
@@ -56,10 +59,10 @@ Fixpoint is_pattern_to_Pattern [e : Expression] (He : is_pattern e) : Pattern :=
     | atomic_svar X => PSVar X
     | atomic_cons c => POp c
     end
-  | pattern_app phi psi Hphi Hpsi => PApp (is_pattern_to_Pattern Hphi) (is_pattern_to_Pattern Hpsi)
-  | pattern_impl phi psi Hphi Hpsi => PImpl (is_pattern_to_Pattern Hphi) (is_pattern_to_Pattern Hpsi)
-  | pattern_ex x phi Hphi => PEx x (is_pattern_to_Pattern Hphi)
-  | pattern_mu X phi Hphi => PMu X (is_pattern_to_Pattern Hphi)
+  | pattern_app ϕ ψ Hϕ Hψ => PApp (is_pattern_to_Pattern Hϕ) (is_pattern_to_Pattern Hψ)
+  | pattern_impl ϕ ψ Hϕ Hψ => PImpl (is_pattern_to_Pattern Hϕ) (is_pattern_to_Pattern Hψ)
+  | pattern_ex x ϕ Hϕ => PEx x (is_pattern_to_Pattern Hϕ)
+  | pattern_mu X ϕ Hϕ => μₚ X (is_pattern_to_Pattern Hϕ)
   end.
 
 Definition expression_pattern_to_Pattern (ep : expression_pattern) : Pattern :=
@@ -71,7 +74,7 @@ Fixpoint unparser (p : Pattern) : Expression :=
   | PSVar X => [svar X]
   | PImpl p1 p2 => [impl] ++ unparser p1 ++ unparser p2
   | PEx x p => [ex; evar x] ++ unparser p
-  | PMu X p => [mu; svar X] ++ unparser p
+  | μₚ X p => [mu; svar X] ++ unparser p
   | PApp p1 p2 => [app] ++ unparser p1 ++ unparser p2
   | POp c => [op c]
   end.
@@ -89,10 +92,10 @@ Proof.
 Defined.
 
 Lemma unparser_is_pattern_impl :
-  forall phi psi,
-    unparser_is_pattern (PImpl phi psi)
+  forall ϕ ψ,
+    unparser_is_pattern (PImpl ϕ ψ)
       =
-    pattern_impl (unparser phi) (unparser psi) (unparser_is_pattern phi) (unparser_is_pattern psi).
+    pattern_impl (unparser ϕ) (unparser ψ) (unparser_is_pattern ϕ) (unparser_is_pattern ψ).
 Proof. done. Qed.
 
 Definition Pattern_to_expression_pattern (p : Pattern) : expression_pattern :=
@@ -125,14 +128,14 @@ Proof.
   - by rewrite IHp1, IHp2.
 Qed.
 
-Inductive SubPattern (chi : Pattern) : Pattern -> Prop :=
-| sp_refl : SubPattern chi chi
-| sp_app_left : forall phi psi, SubPattern chi phi -> SubPattern chi (PApp phi psi)
-| sp_app_right : forall phi psi, SubPattern chi psi -> SubPattern chi (PApp phi psi)
-| sp_impl_left : forall phi psi,  SubPattern chi phi -> SubPattern chi (PImpl phi psi)
-| sp_impl_right : forall phi psi,  SubPattern chi psi -> SubPattern chi (PImpl phi psi)
-| sp_ex : forall x phi, SubPattern chi phi -> SubPattern chi (PEx x phi)
-| sp_mu : forall X phi, SubPattern chi phi -> SubPattern chi (PMu X phi)
+Inductive SubPattern (χ : Pattern) : Pattern -> Prop :=
+| sp_refl : SubPattern χ χ
+| sp_app_left : forall ϕ ψ, SubPattern χ ϕ -> SubPattern χ (PApp ϕ ψ)
+| sp_app_right : forall ϕ ψ, SubPattern χ ψ -> SubPattern χ (PApp ϕ ψ)
+| sp_impl_left : forall ϕ ψ,  SubPattern χ ϕ -> SubPattern χ (PImpl ϕ ψ)
+| sp_impl_right : forall ϕ ψ,  SubPattern χ ψ -> SubPattern χ (PImpl ϕ ψ)
+| sp_ex : forall x ϕ, SubPattern χ ϕ -> SubPattern χ (PEx x ϕ)
+| sp_mu : forall X ϕ, SubPattern χ ϕ -> SubPattern χ (μₚ X ϕ)
 .
 
 Inductive AppContext : Type :=
@@ -140,11 +143,25 @@ Inductive AppContext : Type :=
 | LApp : AppContext -> Pattern -> AppContext
 | RApp : Pattern -> AppContext -> AppContext.
 
-Fixpoint csubst (c : AppContext) (phi :Pattern) : Pattern :=
+Fixpoint csubst (c : AppContext) (ϕ :Pattern) : Pattern :=
   match c with
-  | Hole => phi
-  | LApp c psi => PApp (csubst c phi) psi
-  | RApp psi c => PApp psi (csubst c phi)
+  | Hole => ϕ
+  | LApp c ψ => PApp (csubst c ϕ) ψ
+  | RApp ψ c => PApp ψ (csubst c ϕ)
   end.
 
 End sec_pattern.
+
+Declare Scope ml_scope.
+
+Notation "x →ₚ y" := (PImpl x y) (at level 55, right associativity) : ml_scope.
+Notation "¬ₚ x" := (pNeg x) (at level 40) : ml_scope.
+Notation "x ∧ₚ y" := (pAnd x y) (at level 50, left associativity) : ml_scope.
+Notation "x ∨ₚ y" := (pOr x y) (at level 53, left associativity) : ml_scope.
+Notation "x ↔ₚ y" := (pIff x y) (at level 57, no associativity) : ml_scope.
+Notation "⊥ₚ" := (pBot) (at level 37) : ml_scope.
+Notation "⊤ₚ" := (pTop) (at level 37) : ml_scope.
+Notation "∀ₚ x y" := (pAll x y) (at level 58, right associativity) : ml_scope.
+Notation "∃ₚ x y" := (PEx x y) (at level 58, right associativity) : ml_scope.
+
+Open Scope ml_scope.
