@@ -29,11 +29,11 @@ Context `{ReachabilitySignature}.
 
 Definition can_reach_in_one_step (ϕ ψ : Pattern) : Pattern := ϕ →ₚ ∙ ϕ.
 
-Definition AF ϕ := μₚ inhabitant (ϕ ∨ₚ (AX (PSVar inhabitant) ∧ₚ can_transition)).
-Definition wAF ϕ := νₚ inhabitant (ϕ ∨ₚ (AX (PSVar inhabitant) ∧ₚ can_transition)).
+Definition AF X ϕ := μₚ X (ϕ ∨ₚ (AX (PSVar X) ∧ₚ can_transition)).
+Definition wAF X ϕ := νₚ X (ϕ ∨ₚ (AX (PSVar X) ∧ₚ can_transition)).
 
-Definition EF ϕ := μₚ inhabitant (ϕ ∨ₚ EX (PSVar inhabitant)).
-Definition wEF ϕ := νₚ inhabitant (ϕ ∨ₚ EX (PSVar inhabitant)).
+Definition EF X ϕ := μₚ X (ϕ ∨ₚ EX (PSVar X)).
+Definition wEF X ϕ := νₚ X (ϕ ∨ₚ EX (PSVar X)).
 
 End sec_definitions.
 
