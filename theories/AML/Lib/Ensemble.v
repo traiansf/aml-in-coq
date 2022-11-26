@@ -367,6 +367,47 @@ Qed.
 
 End sec_ensemble.
 
+Section sec_ensemble_maps.
+
+Definition image `(F : A -> Ensemble B) (X : Ensemble A) : Ensemble B :=
+  filtered_union (fun x : A => x ∈ X) F.
+
+Lemma image_singleton `(F : A -> Ensemble B) (a : A) :
+  F a ≡ image F {[ a ]}.
+Proof.
+  intro x; unfold image.
+  rewrite elem_of_filtered_union.
+  setoid_rewrite elem_of_singleton.
+  by set_solver.
+Qed.
+
+Lemma elem_of_image `(F : A -> Ensemble B) (X : Ensemble A) (b : B) :
+  b ∈ image F X <-> exists a, a ∈ X /\ b ∈ F a.
+Proof. by apply elem_of_filtered_union. Qed.
+
+Definition fiber `(F : A -> Ensemble B) (y : B) : Ensemble A := 
+  filtered_union (fun x : A => y ∈ F x) singleton.
+
+Lemma elem_of_fiber `(F : A -> Ensemble B) (b : B) (a : A) :
+  a ∈ fiber F b <-> b ∈ F a.
+Proof.
+  unfold fiber; rewrite elem_of_filtered_union.
+  by set_solver.
+Qed.
+
+Definition preimage {A B : Type} : (A -> Ensemble B) -> Ensemble B -> Ensemble A := 
+  image ∘ fiber.
+
+Lemma elem_of_preimage `(F : A -> Ensemble B) (Y : Ensemble B) (a : A) :
+  a ∈ preimage F Y <-> exists y, y ∈ Y /\ y ∈ F a.
+Proof.
+  unfold preimage; cbn.
+  rewrite elem_of_image.
+  by setoid_rewrite elem_of_fiber.
+Qed.
+
+End sec_ensemble_maps.
+
 Notation "⋂ l" := (intersection_list l) (at level 20, format "⋂ l") : stdpp_scope.
 
 Section SecKnasterTarski.
@@ -497,6 +538,18 @@ Context
   {idomain : Type}
   (F : Ensemble idomain -> Ensemble idomain)
   `{!Proper ((⊆) ==> (⊆)) F}.
+
+#[export] Instance pow_compose_monotone n : Proper ((⊆) ==> (⊆)) (pow_compose F n).
+Proof.
+  induction n; cbn; [by typeclasses eauto |].
+  by intros ? ? ?; apply Proper0, IHn.
+Qed.
+
+Lemma pre_fixpoint_pow_compose A n : pre_fixpoint F A -> pow_compose F n A ⊆ A.
+Proof.
+  intros Hpre; induction n; [done |].
+  by etransitivity; [apply Proper0 | apply Hpre].
+Qed.
 
 Definition klfp : Ensemble idomain := indexed_union (fun n => pow_compose F n ∅).
 

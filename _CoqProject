@@ -5,6 +5,7 @@
 theories/AML/Lib/Functions.v
 theories/AML/Lib/Ensemble.v
 theories/AML/Lib/List.v
+theories/AML/Lib/Traces.v
 
 theories/AML/Signature.v
 theories/AML/Syntax/Expression.v
