@@ -1,6 +1,7 @@
-From stdpp Require Import prelude.
+From stdpp Require Import prelude fin_maps.
 From AML Require Import Signature Pattern Variables Substitution.
 From AML.Proofs Require Import TautologicalProof ProofSystem Theorems.
+From AML.Semantics Require Import Tautology.
 
 Section sec_proofs.
 
@@ -17,7 +18,7 @@ Inductive MLProof (Gamma : PatternSet) : list Pattern -> Prop :=
         MLProof Gamma (ϕ :: proof)
 | ml_proof_tautology :
     forall proof ϕ, MLProof Gamma proof ->
-        MLTautology ϕ ->
+        Tautology ϕ ->
         MLProof Gamma (ϕ :: proof)
 | ml_proof_axiom :
     forall proof ϕ, MLProof Gamma proof ->
@@ -111,6 +112,43 @@ Proof.
       by cbn; lia.
 Qed.
 
-
-
 End sec_proofs.
+
+Section sec_elaborated_proof.
+
+Context
+  `{signature}
+  `{Set_ Pattern PatternSet}
+  `{FinMap string StringMap}.
+
+
+Inductive ElaboratedProofStep:=
+| eps_assumpmtion : forall (idx : nat), ElaboratedProofStep
+| eps_tautology : forall τ : Pattern, ElaboratedProofStep
+| eps_ax_ex_quantifier : forall (x y : EVar) (ϕ : Pattern), ElaboratedProofStep
+| eps_propagation_bot_l : forall (ϕ : Pattern), ElaboratedProofStep
+| eps_propagation_bot_r : forall (ϕ : Pattern), ElaboratedProofStep
+| eps_propagation_or_l : forall (ϕ_or_l ψ_or_r χ_app_r : Pattern), ElaboratedProofStep
+| eps_propagation_or_r : forall (ϕ_or_l ψ_or_r χ_app_l : Pattern), ElaboratedProofStep
+| eps_propagation_ex_l : forall (x : EVar) (ϕ_ex χ_app_r : Pattern), ElaboratedProofStep
+| eps_propagation_ex_r : forall (x : EVar) (ϕ_ex χ_app_l : Pattern), ElaboratedProofStep
+| eps_pre_fixpoint : forall (X : SVar) (ϕ_mu : Pattern), ElaboratedProofStep
+| eps_existence : forall (x : EVar), ElaboratedProofStep
+| eps_singleton_variable : forall (x : EVar) (phi : Pattern) (C1 C2 : AppContext),
+    ElaboratedProofStep
+| eps_ex_quantifier : forall (n : nat) (x : EVar), ElaboratedProofStep
+| eps_framing_l : forall (n : nat) (chi : Pattern), ElaboratedProofStep 
+| eps_framing_r : forall (n : nat) (chi : Pattern), ElaboratedProofStep 
+| eps_set_variable_substitution : forall (n : nat) (psi : Pattern),
+    ElaboratedProofStep
+| eps_knaster_tarsky : forall (n : nat) (X : SVar) (phi : Pattern), ElaboratedProofStep
+| eps_modus_ponens : forall (n_impl n_premise : nat), ElaboratedProofStep
+.
+
+End sec_elaborated_proof.
+
+Section sec_derived_rules.
+
+
+
+End sec_derived_rules.

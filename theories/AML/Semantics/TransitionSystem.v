@@ -1,5 +1,5 @@
 From stdpp Require Import prelude.
-From Coq Require Import Classical ClassicalChoice.
+From Coq Require Import ClassicalEpsilon.
 From AML.Lib Require Import Ensemble Traces.
 From AML Require Import Signature.
 From AML.Syntax Require Import Pattern Variables Substitution Reachability.
@@ -285,7 +285,6 @@ Qed.
 Section sec_iterated_choice.
 
 Context
-  `{forall a, Decision (stuck a)}
   (A : Ensemble idomain)
   (choose: {a : idomain | (a ∉ A) ∧ ¬ stuck a} → idomain)
   (Hchoose_not_in: forall x : {a : idomain | (a ∉ A) ∧ ¬ stuck a}, choose x ∉ A).
@@ -295,7 +294,7 @@ CoFixpoint iterated_choice
   (Ha : a ∉ A)
   : trace idomain
   :=
-  match (decide (stuck a)) with
+  match (excluded_middle_informative (stuck a)) with
   | left _ => Tnil a
   | right Hnot_stuck =>
     Tcons a (iterated_choice _ (Hchoose_not_in (exist _ a (conj Ha Hnot_stuck))))
@@ -306,7 +305,7 @@ Lemma iterated_choice_unfold
   (Ha : a ∉ A)
   : iterated_choice a Ha
     =
-    match (decide (stuck a)) with
+    match (excluded_middle_informative (stuck a)) with
     | left _ => Tnil a
     | right Hnot_stuck =>
       Tcons a (iterated_choice _ (Hchoose_not_in (exist _ a (conj Ha Hnot_stuck))))
@@ -315,12 +314,14 @@ Proof. by apply trace_eq_hd_tl; done. Qed.
 
 Lemma iterated_choice_hd (a : idomain) (Ha : a ∉ A) :
   hd (iterated_choice a Ha) = a.
-Proof. by rewrite iterated_choice_unfold; case_decide. Qed.
+Proof.
+  rewrite iterated_choice_unfold.
+  by destruct (excluded_middle_informative (stuck a)).
+Qed.
 
 End sec_iterated_choice.
 
-Lemma trace_all_path_finally_pattern_least_pre_fixpoint
-  `{forall a, Decision (stuck a)} A :
+Lemma trace_all_path_finally_pattern_least_pre_fixpoint A :
   pre_fixpoint phi_or_next_on_all_paths_functor A ->
   trace_all_path_finally_pattern ⊆ A.
 Proof.
@@ -339,7 +340,8 @@ Proof.
     by eapply not_elem_of_phi_or_next_on_all_paths_functor_pre_fixpoint, ForAll1_forall.
   }
   clear Hall.
-  assert (Hall_ex : forall x : {a : idomain | a ∉ A /\ ~ stuck a},
+  assert (Hall_ex :
+   forall x : {a : idomain | a ∉ A /\ ~ stuck a},
                     exists a' : idomain, (a' ∉ A) /\ transition (` x) a').
   {
     intros (a0 & Hna0 & Hnot_stuck0).
@@ -354,19 +356,21 @@ Proof.
   - unfold validTEX.
     revert a Hna.
     cofix CIH; intros a Hna.
-    rewrite iterated_choice_unfold; case_decide as Hstuck.
-    + by apply Forall_nil.
-    + apply Forall_delay.
-      * rewrite iterated_choice_hd.
-        change a with (` (exist (fun a => (a ∉ A) ∧ ¬ stuck a) a (conj Hna Hstuck))).
-        by apply Hchoose.
-      * apply CIH.
+    rewrite iterated_choice_unfold.
+    destruct (excluded_middle_informative (stuck a)) as [| Hnstuck];
+      [by apply Forall_nil |].
+    apply Forall_delay.
+    + rewrite iterated_choice_hd.
+      change a with (` (exist (fun a => (a ∉ A) ∧ ¬ stuck a) a (conj Hna Hnstuck))).
+      by apply Hchoose.
+    + apply CIH.
   - revert a Hna.
     cofix CIH; intros a Hna.
-    rewrite iterated_choice_unfold; case_decide as Hstuck.
-    + by apply Forall_nil.
-    + apply Forall_delay; [done |].
-      apply CIH.
+    rewrite iterated_choice_unfold.
+    destruct (excluded_middle_informative (stuck a));
+      [by apply Forall_nil |].
+    apply Forall_delay; [done |].
+    by apply CIH.
 Qed.
 
 End sec_fix_points.
