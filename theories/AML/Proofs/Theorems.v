@@ -6,43 +6,72 @@ From AML.Semantics Require Import Tautology.
 
 Section sec_theorems.
 
-Context `{signature} `{Set_ Pattern PatternSet}.
+Context
+  `{signature}
+  `{Set_ Pattern PatternSet}
+  .
 
-Inductive MLGammaTheorem (Gamma : PatternSet) : Pattern -> Prop :=
-| ml_thm_assumption : forall ϕ, ϕ ∈ Gamma -> MLGammaTheorem Gamma ϕ
-| ml_thm_tautology : forall ϕ, Tautology ϕ -> MLGammaTheorem Gamma ϕ
-| ml_thm_axiom : forall ϕ, MLAxiom ϕ -> MLGammaTheorem Gamma ϕ
+Section sec_parameterized_definition.
+
+Context (single_premise_rule : Pattern -> Pattern -> Prop).
+
+Inductive MLXGammaTheorem (Gamma : PatternSet) : Pattern -> Prop :=
+| ml_thm_assumption : forall ϕ, ϕ ∈ Gamma -> MLXGammaTheorem Gamma ϕ
+| ml_thm_tautology : forall ϕ, Tautology ϕ -> MLXGammaTheorem Gamma ϕ
+| ml_thm_axiom : forall ϕ, MLAxiom ϕ -> MLXGammaTheorem Gamma ϕ
 | ml_thm_modus_ponens : forall ϕ ψ χ,
     MLModusPonens ϕ ψ χ ->
-    MLGammaTheorem Gamma ϕ ->
-    MLGammaTheorem Gamma ψ ->
-    MLGammaTheorem Gamma χ
+    MLXGammaTheorem Gamma ϕ ->
+    MLXGammaTheorem Gamma ψ ->
+    MLXGammaTheorem Gamma χ
 | ml_thm_single_premise : forall ϕ ψ,
-    MLSinglePremiseRule ϕ ψ ->
-    MLGammaTheorem Gamma ϕ ->
-    MLGammaTheorem Gamma ψ
+    single_premise_rule ϕ ψ ->
+    MLXGammaTheorem Gamma ϕ ->
+    MLXGammaTheorem Gamma ψ
 .
 
-Definition set_deduction (Gamma Delta : PatternSet) : Prop :=
-  forall ϕ, ϕ ∈ Delta -> MLGammaTheorem Gamma ϕ.
+Definition x_set_deduction (Gamma Delta : PatternSet) : Prop :=
+  forall ϕ, ϕ ∈ Delta -> MLXGammaTheorem Gamma ϕ.
+
+End sec_parameterized_definition.
+
+Definition MLStrictGammaTheorem := MLXGammaTheorem MLStrictSinglePremiseRule.
+Definition MLLocalGammaTheorem := MLXGammaTheorem MLLocalSinglePremiseRule.
+Definition MLGammaTheorem := MLXGammaTheorem MLGlobalSinglePremiseRule.
+Definition strict_set_deduction := x_set_deduction MLStrictSinglePremiseRule.
+Definition local_set_deduction := x_set_deduction MLLocalSinglePremiseRule.
+Definition set_deduction := x_set_deduction MLGlobalSinglePremiseRule.
 
 End sec_theorems.
 
+Global Notation "Gamma ⊢[ spr ] phi " := (MLXGammaTheorem spr Gamma phi) (at level 60, no associativity).
+Global Notation "Gamma |-[ spr ] Delta " := (x_set_deduction spr Gamma Delta) (at level 60, no associativity).
+
+Global Infix "⊢ₛ" := MLStrictGammaTheorem (at level 60, no associativity).
+Global Infix "|-ₛ" := strict_set_deduction (at level 60, no associativity).
+
+Global Infix "⊢ₗ" := MLLocalGammaTheorem (at level 60, no associativity).
+Global Infix "|-ₗ" := local_set_deduction (at level 60, no associativity).
+
 Global Infix "⊢" := MLGammaTheorem (at level 60, no associativity).
-Global Infix "⊢ₛ" := set_deduction (at level 60, no associativity).
+Global Infix "|-" := set_deduction (at level 60, no associativity).
 
 Section sec_theorem_properties.
 
 Context
   `{signature}
-  `{Set_ Pattern PatternSet}.
+  `{Set_ Pattern PatternSet}
+  (single_premise_rule : Pattern -> Pattern -> Prop).
 
-Definition MLTheorem (ϕ : Pattern) : Prop :=
-  MLGammaTheorem (PatternSet := PatternSet) ∅ ϕ.
+Definition MLXTheorem spr (ϕ : Pattern) : Prop :=
+  MLXGammaTheorem (PatternSet := PatternSet) spr ∅ ϕ.
+Definition MLTheorem := MLXTheorem MLGlobalSinglePremiseRule.
+Definition MLLocalTheorem := MLXTheorem MLLocalSinglePremiseRule.
+Definition MLStrictTheorem := MLXTheorem MLStrictSinglePremiseRule.
 
-Lemma gamma_theorem_subsumption :
+Lemma x_gamma_theorem_subsumption spr :
   forall (Gamma Delta : PatternSet), Delta ⊆ Gamma ->
-  forall ϕ, Delta ⊢ ϕ -> Gamma ⊢ ϕ.
+  forall ϕ, Delta ⊢[spr] ϕ -> Gamma ⊢[spr] ϕ.
 Proof.
   intros * Hincl ϕ HDelta.
   induction HDelta.
@@ -53,18 +82,60 @@ Proof.
   - by eapply ml_thm_single_premise.
 Qed.
 
-Lemma theorem_subsumption :
-  forall (Gamma : PatternSet) (ϕ : Pattern),
-  MLTheorem ϕ -> Gamma ⊢ ϕ.
+Definition gamma_theorem_subsumption := x_gamma_theorem_subsumption MLGlobalSinglePremiseRule.
+Definition local_gamma_theorem_subsumption := x_gamma_theorem_subsumption MLLocalSinglePremiseRule.
+Definition strict_gamma_theorem_subsumption := x_gamma_theorem_subsumption MLStrictSinglePremiseRule.
+
+Lemma strict_local_deduction_subsumption (Γ : PatternSet) ϕ :
+  Γ ⊢ₛ ϕ -> Γ ⊢ₗ ϕ.
 Proof.
-  intro Gamma.
-  apply gamma_theorem_subsumption.
-  set_solver.
+  induction 1 as [| | | | ? ? Hspr].
+  - by apply ml_thm_assumption.
+  - by apply ml_thm_tautology.
+  - by apply ml_thm_axiom.
+  - by eapply ml_thm_modus_ponens.
+  - by inversion Hspr.
 Qed.
 
-Lemma set_deduction_subsumption :
-  forall (Gamma Delta : PatternSet), Gamma ⊢ₛ Delta ->
-  forall ϕ, Delta ⊢ ϕ -> Gamma ⊢ ϕ.
+Lemma strict_local_set_deduction_subsumption (Γ Δ : PatternSet) :
+  Γ |-ₛ Δ -> Γ |-ₗ Δ.
+Proof. by intros Hincl ϕ Hϕ; apply strict_local_deduction_subsumption, Hincl. Qed.
+
+Lemma local_deduction_subsumption (Γ : PatternSet) ϕ :
+  Γ ⊢ₗ ϕ -> Γ ⊢ ϕ.
+Proof.
+  induction 1 as [| | | | ? ? Hspr].
+  - by apply ml_thm_assumption.
+  - by apply ml_thm_tautology.
+  - by apply ml_thm_axiom.
+  - by eapply ml_thm_modus_ponens.
+  - by eapply ml_thm_single_premise; [apply rule_local_premise |].
+Qed.
+
+Lemma local_set_deduction_subsumption (Γ Δ : PatternSet) :
+  Γ |-ₗ Δ -> Γ |- Δ.
+Proof. by intros Hincl ϕ Hϕ; apply local_deduction_subsumption, Hincl. Qed.
+
+Lemma strict_deduction_subsumption (Γ : PatternSet) ϕ :
+  Γ ⊢ₛ ϕ -> Γ ⊢ ϕ.
+Proof. by intro; apply local_deduction_subsumption, strict_local_deduction_subsumption. Qed.
+
+Lemma strict_set_deduction_subsumption (Γ Δ : PatternSet) :
+  Γ |-ₛ Δ -> Γ |- Δ.
+Proof. by intros Hincl ϕ Hϕ; apply strict_deduction_subsumption, Hincl. Qed.
+
+Lemma x_theorem_subsumption spr :
+  forall (Gamma : PatternSet) (ϕ : Pattern),
+  MLXTheorem spr ϕ -> Gamma ⊢[spr] ϕ.
+Proof. by intro Gamma; apply x_gamma_theorem_subsumption; set_solver. Qed.
+
+Definition theorem_subsumption := x_theorem_subsumption MLGlobalSinglePremiseRule.
+Definition local_theorem_subsumption := x_theorem_subsumption MLLocalSinglePremiseRule.
+Definition strict_theorem_subsumption := x_theorem_subsumption MLStrictSinglePremiseRule.
+
+Lemma x_set_deduction_premises_subsumption spr :
+  forall (Gamma Delta : PatternSet), Gamma |-[spr] Delta ->
+  forall ϕ, Delta ⊢[spr] ϕ -> Gamma ⊢[spr] ϕ.
 Proof.
   intros * Hincl ϕ HDelta.
   induction HDelta.
@@ -75,23 +146,27 @@ Proof.
   - by eapply ml_thm_single_premise.
 Qed.
 
+Definition set_deduction_premises_subsumption := x_set_deduction_premises_subsumption MLGlobalSinglePremiseRule.
+Definition local_set_deduction_premises_subsumption := x_set_deduction_premises_subsumption MLLocalSinglePremiseRule.
+Definition strict_set_deduction_premises_subsumption := x_set_deduction_premises_subsumption MLStrictSinglePremiseRule.
+
 End sec_theorem_properties.
 
 Section sec_theorem_ensemble.
 
 Context `{signature}.
 
-Definition set_of_gamma_theorems (Gamma : Ensemble Pattern) : Ensemble Pattern :=
-  fun ϕ => Gamma ⊢ ϕ.
+Definition x_set_of_gamma_theorems spr (Gamma : Ensemble Pattern) : Ensemble Pattern :=
+  fun ϕ => Gamma ⊢[spr] ϕ.
 
-Lemma set_of_gamma_theorems_idem (Gamma : Ensemble Pattern) :
-  set_of_gamma_theorems (set_of_gamma_theorems Gamma)
+Lemma x_set_of_gamma_theorems_idem spr (Gamma : Ensemble Pattern) :
+  x_set_of_gamma_theorems spr (x_set_of_gamma_theorems spr Gamma)
     ≡
-  set_of_gamma_theorems Gamma.
+  x_set_of_gamma_theorems spr Gamma.
 Proof.
   intro ϕ; split.
-  - by apply set_deduction_subsumption; intro.
-  - apply gamma_theorem_subsumption.
+  - by apply x_set_deduction_premises_subsumption; intro.
+  - apply x_gamma_theorem_subsumption.
     by intros ? ?; apply ml_thm_assumption.
 Qed.
 
@@ -104,52 +179,52 @@ Context
   `{Set_ Pattern PatternSet}
   (Γ : PatternSet).
 
-Lemma ml_assumption ϕ : ϕ ∈ Γ -> Γ ⊢ ϕ.
+Lemma ml_assumption spr ϕ : ϕ ∈ Γ -> Γ ⊢[spr] ϕ.
 Proof. by apply ml_thm_assumption. Qed.
 
-Lemma ml_tautology ϕ : Tautology ϕ -> Γ ⊢ ϕ.
+Lemma ml_tautology spr ϕ : Tautology ϕ -> Γ ⊢[spr] ϕ.
 Proof. by apply ml_thm_tautology. Qed.
 
-Lemma ml_ax_ex_quantifier (x y : EVar) (ϕ : Pattern) :
-  Γ ⊢ evar_sub0 x (PEVar y) ϕ →ₚ PEx x ϕ.
+Lemma ml_ax_ex_quantifier spr (x y : EVar) (ϕ : Pattern) :
+  Γ ⊢[spr] evar_sub0 x (PEVar y) ϕ →ₚ PEx x ϕ.
 Proof. by apply ml_thm_axiom, ax_ex_quantifier. Qed.
 
-Lemma ml_propagation_bot_l (ϕ : Pattern) :
-  Γ ⊢ PApp (⊥ₚ) ϕ →ₚ ⊥ₚ.
+Lemma ml_propagation_bot_l spr (ϕ : Pattern) :
+  Γ ⊢[spr] PApp (⊥ₚ) ϕ →ₚ ⊥ₚ.
 Proof. by apply ml_thm_axiom, ax_propagation_bot_l. Qed.
 
-Lemma ml_propagation_bot_r (ϕ : Pattern) :
-  Γ ⊢ PApp ϕ (⊥ₚ) →ₚ ⊥ₚ.
+Lemma ml_propagation_bot_r spr (ϕ : Pattern) :
+  Γ ⊢[spr] PApp ϕ (⊥ₚ) →ₚ ⊥ₚ.
 Proof. by apply ml_thm_axiom, ax_propagation_bot_r. Qed.
 
-Lemma ml_propagation_or_l (ϕ ψ χ : Pattern) :
-  Γ ⊢ PApp (ϕ ∨ₚ ψ) χ →ₚ PApp ϕ χ ∨ₚ PApp ψ χ.
+Lemma ml_propagation_or_l spr (ϕ ψ χ : Pattern) :
+  Γ ⊢[spr] PApp (ϕ ∨ₚ ψ) χ →ₚ PApp ϕ χ ∨ₚ PApp ψ χ.
 Proof. by apply ml_thm_axiom, ax_propagation_or_l. Qed.
 
-Lemma ml_propagation_or_r (ϕ ψ χ : Pattern) :
-  Γ ⊢ PApp χ (ϕ ∨ₚ ψ) →ₚ PApp χ ϕ ∨ₚ PApp χ ψ.
+Lemma ml_propagation_or_r spr (ϕ ψ χ : Pattern) :
+  Γ ⊢[spr] PApp χ (ϕ ∨ₚ ψ) →ₚ PApp χ ϕ ∨ₚ PApp χ ψ.
 Proof. by apply ml_thm_axiom, ax_propagation_or_r. Qed.
 
-Lemma ml_propagation_ex_l x (ϕ χ : Pattern) (Hχ : x ∉ FEV χ) :
-  Γ ⊢ PApp (PEx x ϕ) χ →ₚ PEx x (PApp ϕ χ).
+Lemma ml_propagation_ex_l spr x (ϕ χ : Pattern) (Hχ : x ∉ FEV χ) :
+  Γ ⊢[spr] PApp (PEx x ϕ) χ →ₚ PEx x (PApp ϕ χ).
 Proof. by apply ml_thm_axiom, ax_propagation_ex_l. Qed.
 
-Lemma ml_propagation_ex_r x (ϕ χ : Pattern) (Hχ : x ∉ FEV χ) :
-  Γ ⊢ PApp χ (PEx x ϕ) →ₚ PEx x (PApp χ ϕ).
+Lemma ml_propagation_ex_r spr x (ϕ χ : Pattern) (Hχ : x ∉ FEV χ) :
+  Γ ⊢[spr] PApp χ (PEx x ϕ) →ₚ PEx x (PApp χ ϕ).
 Proof. by apply ml_thm_axiom, ax_propagation_ex_r. Qed.
 
-Lemma ml_pre_fixpoint : forall X ϕ,
+Lemma ml_pre_fixpoint spr : forall X ϕ,
   OccursPositively X ϕ ->
   SFreeFor X (μₚ X ϕ) ϕ ->
-  Γ ⊢ (svar_sub0 X (μₚ X ϕ) ϕ) →ₚ (μₚ X ϕ).
+  Γ ⊢[spr] (svar_sub0 X (μₚ X ϕ) ϕ) →ₚ (μₚ X ϕ).
 Proof. by intros; apply ml_thm_axiom, ax_pre_fixpoint. Qed.
 
-Lemma ml_existence : forall x,
-  Γ ⊢ PEx x (PEVar x).
+Lemma ml_existence spr : forall x,
+  Γ ⊢[spr] PEx x (PEVar x).
 Proof. by intros; apply ml_thm_axiom, ax_existence. Qed.
 
-Lemma ml_singleton_variable : forall x ϕ C1 C2,
-  Γ ⊢ ¬ₚ (csubst C1 (x ∧ₚ ϕ) ∧ₚ csubst C2 (x ∧ₚ ¬ₚ ϕ)).
+Lemma ml_singleton_variable spr : forall x ϕ C1 C2,
+  Γ ⊢[spr] ¬ₚ (csubst C1 (x ∧ₚ ϕ) ∧ₚ csubst C2 (x ∧ₚ ¬ₚ ϕ)).
 Proof. by intros; apply ml_thm_axiom, ax_singleton_variable. Qed.
 
 Lemma ml_ex_quantifier : forall x ϕ ψ,
@@ -158,15 +233,35 @@ Lemma ml_ex_quantifier : forall x ϕ ψ,
   Γ ⊢ PEx x ϕ →ₚ ψ.
 Proof. by intros; eapply ml_thm_single_premise; [apply rule_ex_quantifier |]. Qed.
 
+Lemma local_ml_framing_l : forall ϕ ψ χ,
+  Γ ⊢ₗ ϕ →ₚ ψ ->
+  Γ ⊢ₗ PApp ϕ χ →ₚ PApp ψ χ.
+Proof.
+  by intros; eapply ml_thm_single_premise; [apply rule_framing_l |].
+Qed.
+
 Lemma ml_framing_l : forall ϕ ψ χ,
   Γ ⊢ ϕ →ₚ ψ ->
   Γ ⊢ PApp ϕ χ →ₚ PApp ψ χ.
-Proof. by intros; eapply ml_thm_single_premise; [apply rule_framing_l |]. Qed.
+Proof.
+  by intros; eapply ml_thm_single_premise;
+    [apply rule_local_premise, rule_framing_l |].
+Qed.
+
+Lemma local_ml_framing_r : forall ϕ ψ χ,
+  Γ ⊢ₗ ϕ →ₚ ψ ->
+  Γ ⊢ₗ PApp χ ϕ →ₚ PApp χ ψ.
+Proof.
+  by intros; eapply ml_thm_single_premise; [apply rule_framing_r |].
+Qed.
 
 Lemma ml_framing_r : forall ϕ ψ χ,
   Γ ⊢ ϕ →ₚ ψ ->
   Γ ⊢ PApp χ ϕ →ₚ PApp χ ψ.
-Proof. by intros; eapply ml_thm_single_premise; [apply rule_framing_r |]. Qed.
+Proof.
+  by intros; eapply ml_thm_single_premise;
+    [apply rule_local_premise, rule_framing_r |].
+Qed.
 
 Lemma ml_set_variable_substitution : forall ϕ X ψ,
     SFreeFor X ψ ϕ ->
@@ -176,24 +271,33 @@ Proof.
   by intros; eapply ml_thm_single_premise; [apply rule_set_variable_substitution |].
 Qed.
 
+Lemma local_ml_knaster_tarsky : forall ϕ X ψ,
+    SFreeFor X ψ ϕ ->
+    Γ ⊢ₗ svar_sub0 X ψ ϕ →ₚ ψ ->
+    Γ ⊢ₗ μₚ X ϕ →ₚ ψ.
+Proof.
+  by intros; eapply ml_thm_single_premise; [apply rule_knaster_tarsky |].
+Qed.
+
 Lemma ml_knaster_tarsky : forall ϕ X ψ,
     SFreeFor X ψ ϕ ->
     Γ ⊢ svar_sub0 X ψ ϕ →ₚ ψ ->
     Γ ⊢ μₚ X ϕ →ₚ ψ.
 Proof.
-  by intros; eapply ml_thm_single_premise; [apply rule_knaster_tarsky |].
+  by intros; eapply ml_thm_single_premise;
+    [apply rule_local_premise, rule_knaster_tarsky |].
 Qed.
 
-Lemma ml_modus_ponens : forall ϕ ψ,
-  Γ ⊢ ϕ ->
-  Γ ⊢ ϕ →ₚ ψ ->
-  Γ ⊢ ψ.
+Lemma ml_modus_ponens spr : forall ϕ ψ,
+  Γ ⊢[spr] ϕ ->
+  Γ ⊢[spr] ϕ →ₚ ψ ->
+  Γ ⊢[spr] ψ.
 Proof. by intros ? ?; eapply ml_thm_modus_ponens. Qed.
 
-Lemma ml_equivalent_goal ϕ ψ :
+Lemma ml_equivalent_goal spr ϕ ψ :
   Tautology (ϕ ↔ₚ ψ) ->
-  Γ ⊢ ϕ ->
-  Γ ⊢ ψ.
+  Γ ⊢[spr] ϕ ->
+  Γ ⊢[spr] ψ.
 Proof.
   intros.
   eapply ml_modus_ponens; [done |].

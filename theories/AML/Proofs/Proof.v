@@ -8,6 +8,7 @@ Section sec_proofs.
 Context
   `{signature}
   `{Set_ Pattern PatternSet}
+  (single_premise_rule : Pattern -> Pattern -> Prop)
   .
 
 Inductive MLProof (Gamma : PatternSet) : list Pattern -> Prop :=
@@ -32,7 +33,7 @@ Inductive MLProof (Gamma : PatternSet) : list Pattern -> Prop :=
     MLProof Gamma (χ :: proof)
 | ml_proof_single_premise : forall proof ϕ ψ,
     MLProof Gamma proof ->
-    MLSinglePremiseRule ϕ ψ ->
+    single_premise_rule ϕ ψ ->
     ϕ ∈ proof ->
     MLProof Gamma (ψ :: proof)
 .
@@ -61,7 +62,7 @@ Proof.
 Qed.
 
 Lemma MLTheoremProofs_iff (Gamma : PatternSet) (ϕ : Pattern) :
-  Gamma ⊢ ϕ
+  Gamma ⊢[single_premise_rule] ϕ
     <->
   exists proof, MLProof Gamma (ϕ :: proof).
 Proof.
@@ -70,15 +71,15 @@ Proof.
     + by exists []; apply ml_proof_assumption; [constructor |].
     + by exists []; apply ml_proof_tautology; [constructor |].
     + by exists []; apply ml_proof_axiom; [constructor |].
-    + destruct IHMLGammaTheorem1 as [proof_ϕ Hproof_ϕ].
-      destruct IHMLGammaTheorem2 as [proof_ψ Hproof_ψ].
+    + destruct IHMLXGammaTheorem1 as [proof_ϕ Hproof_ϕ].
+      destruct IHMLXGammaTheorem2 as [proof_ψ Hproof_ψ].
       exists ((ϕ :: proof_ϕ) ++ ψ :: proof_ψ). 
       apply ml_proof_modus_ponens with ϕ ψ.
       * by apply MLProof_app.
       * done.
       * by apply elem_of_app; left; left.
       * by apply elem_of_app; right; left.
-    + destruct IHMLGammaTheorem as [proof_ϕ Hproof_ϕ].
+    + destruct IHMLXGammaTheorem as [proof_ϕ Hproof_ϕ].
       exists (ϕ :: proof_ϕ).
       by eapply ml_proof_single_premise; [..| left].
   - intros [proof Hproof].
@@ -148,7 +149,5 @@ Inductive ElaboratedProofStep:=
 End sec_elaborated_proof.
 
 Section sec_derived_rules.
-
-
 
 End sec_derived_rules.
