@@ -29,8 +29,9 @@ theories/AML/Semantics/Predicate.v
 theories/AML/Semantics/Tautology.v
 theories/AML/Semantics/TransitionSystem.v
 
-
 theories/AML/Proofs/TautologicalProof.v
 theories/AML/Proofs/ProofSystem.v
 theories/AML/Proofs/Theorems.v
 theories/AML/Proofs/Proof.v
+
+theories/AML/Soundness/StrongSoundness.v
