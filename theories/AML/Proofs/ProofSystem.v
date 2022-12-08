@@ -8,6 +8,7 @@ Context `{signature}.
 
 Inductive MLAxiom : Pattern -> Prop :=
 | ax_ex_quantifier : forall x y ϕ,
+    EFreeFor x (PEVar y) ϕ ->
     MLAxiom (PImpl (evar_sub0 x (PEVar y) ϕ) (PEx x ϕ))
 | ax_propagation_bot_l : forall ϕ,
     MLAxiom (PImpl (PApp pBot ϕ) pBot)
@@ -33,7 +34,7 @@ Inductive MLAxiom : Pattern -> Prop :=
     MLAxiom (pNeg (pAnd (csubst C1 (pAnd x ϕ)) (csubst C2 (pAnd x (pNeg ϕ)))))
 .
 
-Inductive MLStrictSinglePremiseRule : Pattern -> Pattern -> Prop := .
+Inductive MLStrongSinglePremiseRule : Pattern -> Pattern -> Prop := .
 
 Inductive MLLocalSinglePremiseRule : Pattern -> Pattern -> Prop := 
 | rule_framing_l : forall ϕ ψ χ,

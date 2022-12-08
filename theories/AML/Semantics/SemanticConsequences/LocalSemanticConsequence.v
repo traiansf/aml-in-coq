@@ -7,12 +7,19 @@ From AML Require Import Valuation PropositionalPatternValuation PatternValuation
 From AML Require Import Tautology.
 From AML Require Import StrongSemanticConsequence.
 
+Definition local_semantic_consequence `{signature} (ϕ ψ : Pattern) : Prop :=
+  forall s e, esatisfies s e ϕ -> esatisfies s e ψ.
+
+Notation "{ phi } ⊧ₗ psi" := (local_semantic_consequence phi psi) (at level 60, no associativity) : ml_scope.
+
+Definition locally_logically_equivalent `{signature} (ϕ ψ : Pattern) : Prop :=
+  forall s e, esatisfies s e ϕ <-> esatisfies s e ψ.
+
+Infix "≡ₗ" := locally_logically_equivalent (at level 60, no associativity) : ml_scope.
+
 Section sec_local_semantic_consequence.
 
-  Context `{signature}.
-
-Definition local_semantic_consequence (ϕ ψ : Pattern) : Prop :=
-  forall s e, esatisfies s e ϕ -> esatisfies s e ψ.
+Context `{signature}.
 
 #[export] Instance local_semantic_consequence_refl : Reflexive local_semantic_consequence.
 Proof. by intros ? ?. Qed.
@@ -22,9 +29,6 @@ Proof.
   intros ϕ ψ χ Hψ Hchi s e Hϕ.
   by apply Hchi, Hψ.
 Qed.
-
-Definition locally_logically_equivalent (ϕ ψ : Pattern) : Prop :=
-  forall s e, esatisfies s e ϕ <-> esatisfies s e ψ.
 
 #[export] Instance locally_logically_equivalent_refl : Reflexive locally_logically_equivalent.
 Proof. by intros ? ?. Qed.
@@ -42,9 +46,9 @@ Proof.
 Qed.
 
 Lemma locally_logically_equivalent_iff ϕ ψ :
-  locally_logically_equivalent ϕ ψ
+  ϕ ≡ₗ ψ
     <->
-  local_semantic_consequence ϕ ψ /\ local_semantic_consequence ψ ϕ.
+  {ϕ} ⊧ₗ ψ /\ {ψ} ⊧ₗ ϕ.
 Proof.
   split; [intro Heqv; split | intros [Hcns Hcns']]; intro; [by apply Heqv..| split].
   - by apply Hcns.
@@ -74,25 +78,25 @@ Proof.
 Qed.
 
 Lemma locally_logically_equivalent_evar x y :
-  locally_logically_equivalent (PEVar x) (PEVar y).
+  PEVar x ≡ₗ PEVar y.
 Proof. by intros s e; rewrite !esatisfies_evar. Qed.
 
 Lemma strong_semantic_consequence_local ϕ ψ :
-  strong_semantic_consequence ϕ ψ -> local_semantic_consequence ϕ ψ.
+  {ϕ} ⊧ₛ ψ -> {ϕ} ⊧ₗ ψ.
 Proof.
   intros Hstrong s e; setoid_rewrite elem_of_equiv_top; intros Hϕ a.
   by apply Hstrong, Hϕ.
 Qed.
 
 Lemma strongly_logically_equivalent_locally ϕ ψ :
-  strongly_logically_equivalent ϕ ψ -> locally_logically_equivalent ϕ ψ.
+  ϕ ≡ₛ ψ -> ϕ ≡ₗ ψ.
 Proof.
   rewrite strongly_logically_equivalent_iff, locally_logically_equivalent_iff.
   by intros []; split; apply strong_semantic_consequence_local.
 Qed.
 
 Lemma locally_logically_equivalent_not_strong :
-  exists ϕ ψ, locally_logically_equivalent ϕ ψ /\ ~ strong_semantic_consequence ϕ ψ.
+  exists ϕ ψ, ϕ ≡ₗ ψ /\ ~ {ϕ} ⊧ₛ ψ.
 Proof.
   assert (exists x y : EVar, x <> y) as (x & y & Hxy).
   {
@@ -118,23 +122,26 @@ Proof.
 Qed.
 
 Lemma local_semantic_consequence_not_strong :
-  exists ϕ ψ, local_semantic_consequence ϕ ψ /\ ~ strong_semantic_consequence ϕ ψ.
+  exists ϕ ψ, {ϕ} ⊧ₗ ψ /\ ~ {ϕ} ⊧ₛ ψ.
 Proof.
   destruct locally_logically_equivalent_not_strong as (ϕ & ψ & Heqv & Hncons).
   by exists ϕ, ψ; split; [apply locally_logically_equivalent_iff in Heqv as [] |].
 Qed.
 
 Lemma locally_logically_equivalent_not_strongly :
-  exists ϕ ψ, locally_logically_equivalent ϕ ψ /\ ~ strongly_logically_equivalent ϕ ψ.
+  exists ϕ ψ, ϕ ≡ₗ ψ /\ ~ ϕ ≡ₛ ψ.
 Proof.
   destruct locally_logically_equivalent_not_strong as (ϕ & ψ & Heqv & Hncons).
   exists ϕ, ψ; split; [done |].
   by contradict Hncons; apply strongly_logically_equivalent_iff in Hncons as [].
 Qed.
 
-Section sec_set_local_semantic_consequence.
+End sec_local_semantic_consequence.
+
+Section sec_set_local_semantic_consequence_definition.
 
 Context
+  `{signature}
   `{Set_ Pattern PatternSet}.
 
 Definition set_local_semantic_consequence (Gamma : PatternSet) (ϕ : Pattern) :=
@@ -155,7 +162,7 @@ Proof.
 Qed.
 
 Lemma set_local_semantic_consequence_singleton ϕ ψ :
-  set_local_semantic_consequence {[ϕ]} ψ <-> local_semantic_consequence ϕ ψ.
+  set_local_semantic_consequence {[ϕ]} ψ <-> {ϕ} ⊧ₗ ψ.
 Proof.
   unfold set_local_semantic_consequence, local_semantic_consequence.
   by setoid_rewrite set_esatisfies_singleton.
@@ -170,50 +177,73 @@ Proof.
   contradict H_ϕ; apply not_elem_of_empty.
 Qed.
 
-Lemma set_local_semantic_consequence_union_left Gamma Gamma' ϕ :
-  set_local_semantic_consequence Gamma ϕ ->
-  set_local_semantic_consequence (Gamma ∪ Gamma') ϕ.
-Proof. by intros HGamma; rewrite <- (union_subseteq_l Gamma Gamma'). Qed.
+End sec_set_local_semantic_consequence_definition.
 
-Lemma set_local_semantic_consequence_union_right Gamma Gamma' ϕ :
-  set_local_semantic_consequence Gamma' ϕ ->
-  set_local_semantic_consequence (Gamma ∪ Gamma') ϕ.
-Proof. by intros HGamma; rewrite <- (union_subseteq_r Gamma Gamma'). Qed.
+Infix "⊧ₗ" := set_local_semantic_consequence (at level 60, no associativity) : ml_scope.
 
-Lemma valid_set_local_semantic_consequence_any ϕ Gamma :
-  valid ϕ -> set_local_semantic_consequence Gamma ϕ.
+Section sec_set_local_semantic_consequence.
+
+Context
+  `{signature}
+  `{Set_ Pattern PatternSet}.
+
+Lemma set_local_semantic_consequence_union_left (Gamma Gamma' : PatternSet) ϕ :
+  Gamma ⊧ₗ ϕ ->
+  Gamma ∪ Gamma' ⊧ₗ ϕ.
 Proof.
-  intro; rewrite <- (empty_subseteq Gamma).
-  by apply set_local_semantic_consequence_empty_valid.
+  intros HGamma.
+  eapply set_local_semantic_consequence_proper_subseteq; [| done..].
+  by eapply union_subseteq_l.
 Qed.
 
-#[export] Instance local_semantic_consequence_set_consequence Gamma :
+Lemma set_local_semantic_consequence_union_right (Gamma Gamma' : PatternSet) ϕ :
+  Gamma' ⊧ₗ ϕ ->
+  Gamma ∪ Gamma' ⊧ₗ ϕ.
+Proof.
+  intros HGamma.
+  eapply set_local_semantic_consequence_proper_subseteq; [| done..].
+  by eapply union_subseteq_r.
+Qed.
+
+Lemma set_strong_semantic_consequence_local (Gamma : PatternSet) ϕ :
+  Gamma ⊧ₛ ϕ -> Gamma ⊧ₗ ϕ.
+Proof.
+  intros Hstrong s e; rewrite set_esatisfies_set_pattern_valuation; setoid_rewrite elem_of_equiv_top.
+  by intros HGamma a; apply Hstrong, HGamma.
+Qed.
+
+Lemma valid_set_local_semantic_consequence_any ϕ (Gamma : PatternSet) :
+  valid ϕ -> Gamma ⊧ₗ ϕ.
+Proof.
+  by intro; apply set_strong_semantic_consequence_local,
+    valid_set_strong_semantic_consequence_any.
+Qed.
+
+#[export] Instance local_semantic_consequence_set_consequence (Gamma : PatternSet) :
   Proper (local_semantic_consequence ==> Basics.impl) (set_local_semantic_consequence Gamma).
 Proof. by intros ϕ ψ Hcns Hϕ s e HGamma; apply Hcns, Hϕ. Qed.
 
-#[export] Instance locally_logically_equivalent_set_consequence Gamma :
+#[export] Instance locally_logically_equivalent_set_consequence (Gamma : PatternSet) :
   Proper (locally_logically_equivalent ==> iff) (set_local_semantic_consequence Gamma).
 Proof.
   intros ϕ ψ; rewrite locally_logically_equivalent_iff; intros [Hl Hr].
   by split; [rewrite Hl | rewrite Hr].
 Qed.
 
-Lemma set_local_semantic_consequence_and Gamma ϕ ψ :
-  set_local_semantic_consequence Gamma (pAnd ϕ ψ)
+Lemma set_local_semantic_consequence_and (Gamma : PatternSet) ϕ ψ :
+  Gamma ⊧ₗ ϕ ∧ₚ ψ
     <->
-  set_local_semantic_consequence Gamma ϕ /\ set_local_semantic_consequence Gamma ψ.
+  Gamma ⊧ₗ ϕ /\ Gamma ⊧ₗ ψ.
 Proof.
   unfold set_local_semantic_consequence.
   setoid_rewrite esatisfies_and_classic.
   by split; [intro Hand; split; intros; apply Hand | intros []; split; itauto].
 Qed.
 
-Lemma set_local_semantic_consequence_iff Gamma ϕ ψ :
-  set_local_semantic_consequence Gamma (pIff ϕ ψ)
+Lemma set_local_semantic_consequence_iff (Gamma : PatternSet) ϕ ψ :
+  Gamma ⊧ₗ ϕ ↔ₚ ψ
     <->
-  set_local_semantic_consequence Gamma (PImpl ϕ ψ)
-    /\
-  set_local_semantic_consequence Gamma (PImpl ψ ϕ).
+  Gamma ⊧ₗ ϕ →ₚ ψ /\ Gamma ⊧ₗ ψ →ₚ ϕ.
 Proof.
   unfold set_local_semantic_consequence; setoid_rewrite esatisfies_iff_alt_classic.
   by split; [intro Hand; split; intros; apply Hand | intros []; split; itauto].
@@ -221,6 +251,8 @@ Qed.
 
 Definition set_local_semantic_consequence_set (Gamma Delta : PatternSet) : Prop :=
   forall (s : Structure) (e : Valuation), set_esatisfies s e Gamma -> set_esatisfies s e Delta.
+
+Infix "|=ₗ" := set_local_semantic_consequence_set (at level 60, no associativity) : ml_scope.
 
 #[export] Instance set_local_semantic_consequence_set_proper :
   Proper ((≡) ==> (≡) ==> iff) set_local_semantic_consequence_set.
@@ -257,7 +289,7 @@ Qed.
 Lemma set_locally_logically_equivalent_set_proper_iff Gamma Delta :
   set_locally_logically_equivalent_set Gamma Delta
     <->
-  set_local_semantic_consequence_set Gamma Delta /\ set_local_semantic_consequence_set Delta Gamma .
+  Gamma |=ₗ Delta /\ Delta |=ₗ Gamma .
 Proof.
   unfold set_locally_logically_equivalent_set, set_local_semantic_consequence_set.
   by split; [intros Heqv; split; intros; apply Heqv | intros []; split; auto].
@@ -298,19 +330,12 @@ Proof.
   itauto.
 Qed.
 
-Lemma set_strong_semantic_consequence_local Gamma ϕ :
-  set_strong_semantic_consequence Gamma ϕ -> set_local_semantic_consequence Gamma ϕ.
-Proof.
-  intros Hstrong s e; rewrite set_esatisfies_set_pattern_valuation; setoid_rewrite elem_of_equiv_top.
-  by intros HGamma a; apply Hstrong, HGamma.
-Qed.
-
 Section sec_rules.
 
-Lemma set_local_mp Gamma ϕ ψ :
-  set_local_semantic_consequence Gamma ϕ ->
-  set_local_semantic_consequence Gamma (PImpl ϕ ψ) ->
-  set_local_semantic_consequence Gamma ψ.
+Lemma set_local_mp (Gamma : PatternSet) ϕ ψ :
+  Gamma ⊧ₗ ϕ ->
+  Gamma ⊧ₗ ϕ →ₚ ψ ->
+  Gamma ⊧ₗ ψ.
 Proof.
   intros Hϕ Hϕψ A e HGamma.
   specialize (Hϕ A e HGamma).
@@ -318,10 +343,10 @@ Proof.
   by eapply esatisfies_mp_classic.
 Qed.
 
-Lemma set_local_impl_trans Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (PImpl ϕ ψ) ->
-  set_local_semantic_consequence Gamma (PImpl ψ χ) ->
-  set_local_semantic_consequence Gamma (PImpl ψ χ).
+Lemma set_local_impl_trans (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ →ₚ ψ ->
+  Gamma ⊧ₗ ψ →ₚ χ ->
+  Gamma ⊧ₗ ψ →ₚ χ.
 Proof.
   intros Hϕψ Hψchi A e HGamma.
   specialize (Hϕψ A e HGamma).
@@ -330,10 +355,10 @@ Proof.
   by etransitivity.
 Qed.
 
-Lemma set_local_and_curry Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (PImpl (pAnd ϕ ψ) χ)
+Lemma set_local_and_curry (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ ∧ₚ ψ →ₚ χ
     <->
-  set_local_semantic_consequence Gamma (PImpl ϕ (PImpl ψ χ)).
+  Gamma ⊧ₗ ϕ →ₚ ψ →ₚ χ.
 Proof.
   pose proof (Hcurry := tautology_impl_impl_and ϕ ψ χ).
   apply tautology_valid, strongly_logically_equivalent_valid, strongly_logically_equivalent_locally in Hcurry.
@@ -345,35 +370,35 @@ End sec_rules.
 Section sec_application.
 
 Lemma local_semantic_consequence_impl_app_r ϕ ψ χ :
-  local_semantic_consequence (PImpl ϕ ψ) (PImpl (PApp χ ϕ) (PApp χ ψ)).
+  {ϕ →ₚ ψ} ⊧ₗ PApp χ ϕ →ₚ PApp χ ψ.
 Proof.
   intros A e; rewrite !esatisfies_impl_classic; cbn.
   by intros Hincl; rewrite Hincl.
 Qed.
 
 Lemma local_semantic_consequence_impl_app_l ϕ ψ χ :
-  local_semantic_consequence (PImpl ϕ ψ) (PImpl (PApp ϕ χ) (PApp ψ χ)).
+  {ϕ →ₚ ψ} ⊧ₗ PApp ϕ χ →ₚ PApp ψ χ.
 Proof.
   intros A e; rewrite !esatisfies_impl_classic; cbn.
   by intros Hincl; rewrite Hincl.
 Qed.
 
 Lemma local_semantic_consequence_iff_app_r ϕ ψ χ :
-  local_semantic_consequence (pIff ϕ ψ) (pIff (PApp χ ϕ) (PApp χ ψ)).
+  {ϕ ↔ₚ ψ} ⊧ₗ PApp χ ϕ ↔ₚ PApp χ ψ.
 Proof.
   intros A e; rewrite !esatisfies_iff_classic; cbn.
   by intros Hincl; rewrite Hincl.
 Qed.
 
 Lemma local_semantic_consequence_iff_app_l ϕ ψ χ :
-  local_semantic_consequence (pIff ϕ ψ) (pIff (PApp ϕ χ) (PApp ψ χ)).
+  {ϕ ↔ₚ ψ} ⊧ₗ PApp ϕ χ ↔ₚ PApp ψ χ.
 Proof.
   intros A e; rewrite !esatisfies_iff_classic; cbn.
   by intros Hincl; rewrite Hincl.
 Qed.
 
 Lemma local_semantic_consequence_impl_neg ϕ ψ :
-  local_semantic_consequence (PImpl ϕ ψ) (PImpl (pNeg ψ) (pNeg ϕ)).
+  {ϕ →ₚ ψ} ⊧ₗ ¬ₚ ψ →ₚ ¬ₚ ϕ.
 Proof.
   intros A e; rewrite !esatisfies_impl_classic, !pattern_valuation_neg_classic
     by typeclasses eauto.
@@ -381,7 +406,7 @@ Proof.
 Qed.
 
 Lemma local_semantic_consequence_iff_neg ϕ ψ :
-  local_semantic_consequence (pIff ϕ ψ) (pIff (pNeg ϕ) (pNeg ψ)).
+  {ϕ ↔ₚ ψ} ⊧ₗ ¬ₚ ϕ ↔ₚ ¬ₚ ψ.
 Proof.
   intros A e; rewrite !esatisfies_iff_classic, !pattern_valuation_neg_classic
     by typeclasses eauto.
@@ -389,92 +414,92 @@ Proof.
 Qed.
 
 Lemma local_semantic_consequence_impl_app_neg_l ϕ ψ χ :
-  local_semantic_consequence (PImpl ϕ ψ) (PImpl (PApp (pNeg ψ) χ) (PApp (pNeg ϕ) χ)).
+  {ϕ →ₚ ψ} ⊧ₗ PApp (¬ₚ ψ) χ →ₚ PApp (¬ₚ ϕ) χ.
 Proof.
   etransitivity; [by apply local_semantic_consequence_impl_neg |].
   apply local_semantic_consequence_impl_app_l.
 Qed.
 
 Lemma local_semantic_consequence_impl_app_neg_r ϕ ψ χ :
-  local_semantic_consequence (PImpl ϕ ψ) (PImpl (PApp χ (pNeg ψ)) (PApp χ (pNeg ϕ))).
+  {ϕ →ₚ ψ} ⊧ₗ PApp χ (¬ₚ ψ) →ₚ PApp χ (¬ₚ ϕ).
 Proof.
   etransitivity; [by apply local_semantic_consequence_impl_neg |].
   apply local_semantic_consequence_impl_app_r.
 Qed.
 
 Lemma local_semantic_consequence_iff_app_neg_l ϕ ψ χ :
-  local_semantic_consequence (pIff ϕ ψ) (pIff (PApp (pNeg ϕ) χ) (PApp (pNeg ψ) χ)).
+  {ϕ ↔ₚ ψ} ⊧ₗ PApp (¬ₚ ϕ) χ ↔ₚ PApp (¬ₚ ψ) χ.
 Proof.
   etransitivity; [by apply local_semantic_consequence_iff_neg |].
   apply local_semantic_consequence_iff_app_l.
 Qed.
 
 Lemma local_semantic_consequence_iff_app_neg_r ϕ ψ χ :
-  local_semantic_consequence (pIff ϕ ψ) (pIff (PApp χ (pNeg ϕ)) (PApp χ (pNeg ψ))).
+  {ϕ ↔ₚ ψ} ⊧ₗ PApp χ (¬ₚ ϕ) ↔ₚ PApp χ (¬ₚ ψ).
 Proof.
   etransitivity; [by apply local_semantic_consequence_iff_neg |].
   apply local_semantic_consequence_iff_app_r.
 Qed.
 
-Lemma set_local_semantic_consequence_impl_app_elim_l Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (PImpl ϕ ψ) ->
-  set_local_semantic_consequence Gamma (PImpl (PApp ϕ χ) (PApp ψ χ)).
+Lemma set_local_semantic_consequence_impl_app_elim_l (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ →ₚ ψ ->
+  Gamma ⊧ₗ PApp ϕ χ →ₚ PApp ψ χ.
 Proof.
   apply local_semantic_consequence_set_consequence,
     local_semantic_consequence_impl_app_l.
 Qed.
 
-Lemma set_local_semantic_consequence_impl_app_elim_r Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (PImpl ϕ ψ) ->
-  set_local_semantic_consequence Gamma (PImpl (PApp χ ϕ) (PApp χ ψ)).
+Lemma set_local_semantic_consequence_impl_app_elim_r (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ →ₚ ψ ->
+  Gamma ⊧ₗ PApp χ ϕ →ₚ PApp χ ψ.
 Proof.
   apply local_semantic_consequence_set_consequence,
     local_semantic_consequence_impl_app_r.
 Qed.
 
-Lemma set_local_semantic_consequence_iff_app_elim_r Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (pIff ϕ ψ) ->
-  set_local_semantic_consequence Gamma (pIff (PApp χ ϕ) (PApp χ ψ)).
+Lemma set_local_semantic_consequence_iff_app_elim_r (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ ↔ₚ ψ ->
+  Gamma ⊧ₗ PApp χ ϕ ↔ₚ PApp χ ψ.
 Proof.
   apply local_semantic_consequence_set_consequence,
     local_semantic_consequence_iff_app_r.
 Qed.
 
-Lemma set_local_semantic_consequence_iff_app_elim_l Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (pIff ϕ ψ) ->
-  set_local_semantic_consequence Gamma (pIff (PApp ϕ χ) (PApp ψ χ)).
+Lemma set_local_semantic_consequence_iff_app_elim_l (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ ↔ₚ ψ ->
+  Gamma ⊧ₗ PApp ϕ χ ↔ₚ PApp ψ χ.
 Proof.
   apply local_semantic_consequence_set_consequence,
     local_semantic_consequence_iff_app_l.
 Qed.
 
-Lemma set_local_semantic_consequence_impl_app_neg_elim_l Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (PImpl ϕ ψ) ->
-  set_local_semantic_consequence Gamma (PImpl (PApp (pNeg ψ) χ) (PApp (pNeg ϕ) χ)).
+Lemma set_local_semantic_consequence_impl_app_neg_elim_l (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ →ₚ ψ ->
+  Gamma ⊧ₗ PApp (¬ₚ ψ) χ →ₚ PApp (¬ₚ ϕ) χ.
 Proof.
   apply local_semantic_consequence_set_consequence,
     local_semantic_consequence_impl_app_neg_l.
 Qed.
 
-Lemma set_local_semantic_consequence_impl_app_neg_elim_r Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (PImpl ϕ ψ) ->
-  set_local_semantic_consequence Gamma (PImpl (PApp χ (pNeg ψ)) (PApp χ (pNeg ϕ))).
+Lemma set_local_semantic_consequence_impl_app_neg_elim_r (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ →ₚ ψ ->
+  Gamma ⊧ₗ PApp χ (¬ₚ ψ) →ₚ PApp χ (¬ₚ ϕ).
 Proof.
   apply local_semantic_consequence_set_consequence,
     local_semantic_consequence_impl_app_neg_r.
 Qed.
 
-Lemma set_local_semantic_consequence_iff_app_neg_elim_r Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (pIff ϕ ψ) ->
-  set_local_semantic_consequence Gamma (pIff (PApp χ (pNeg ϕ)) (PApp χ (pNeg ψ))).
+Lemma set_local_semantic_consequence_iff_app_neg_elim_r (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ ↔ₚ ψ ->
+  Gamma ⊧ₗ PApp χ (¬ₚ ϕ) ↔ₚ PApp χ (¬ₚ ψ).
 Proof.
   apply local_semantic_consequence_set_consequence,
     local_semantic_consequence_iff_app_neg_r.
 Qed.
 
-Lemma set_local_semantic_consequence_iff_app_neg_elim_l Gamma ϕ ψ χ :
-  set_local_semantic_consequence Gamma (pIff ϕ ψ) ->
-  set_local_semantic_consequence Gamma (pIff (PApp (pNeg ϕ) χ) (PApp (pNeg ψ) χ)).
+Lemma set_local_semantic_consequence_iff_app_neg_elim_l (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₗ ϕ ↔ₚ ψ ->
+  Gamma ⊧ₗ PApp (¬ₚ ϕ) χ ↔ₚ PApp (¬ₚ ψ) χ.
 Proof.
   apply local_semantic_consequence_set_consequence,
     local_semantic_consequence_iff_app_neg_l.
@@ -485,7 +510,7 @@ End sec_application.
 Section sec_contexts.
 
 Lemma local_semantic_consequence_context_impl c ϕ ψ :
-  local_semantic_consequence (PImpl ϕ ψ) (PImpl (csubst c ϕ) (csubst c ψ)).
+  {ϕ →ₚ ψ} ⊧ₗ csubst c ϕ →ₚ csubst c ψ.
 Proof.
   intros A e; induction c; cbn; [done |..]; intros Himpl.
   - by apply local_semantic_consequence_impl_app_l, IHc.
@@ -493,24 +518,24 @@ Proof.
 Qed.
 
 Lemma local_semantic_consequence_context_iff c ϕ ψ :
-  local_semantic_consequence (pIff ϕ ψ) (pIff (csubst c ϕ) (csubst c ψ)).
+  {ϕ ↔ₚ ψ} ⊧ₗ csubst c ϕ ↔ₚ csubst c ψ.
 Proof.
   intros A e; induction c; cbn; [done |..]; intros Himpl.
   - by apply local_semantic_consequence_iff_app_l, IHc.
   - by apply local_semantic_consequence_iff_app_r, IHc.
 Qed.
 
-Lemma set_local_semantic_consequence_context_impl Gamma c ϕ ψ :
-  set_local_semantic_consequence Gamma (PImpl ϕ ψ) ->
-  set_local_semantic_consequence Gamma (PImpl (csubst c ϕ) (csubst c ψ)).
+Lemma set_local_semantic_consequence_context_impl (Gamma : PatternSet) c ϕ ψ :
+  Gamma ⊧ₗ ϕ →ₚ ψ ->
+  Gamma ⊧ₗ csubst c ϕ →ₚ csubst c ψ.
 Proof.
   intros Himpl A e HGamma.
   by apply local_semantic_consequence_context_impl, Himpl.
 Qed.
 
-Lemma set_local_semantic_consequence_context_iff Gamma c ϕ ψ :
-  set_local_semantic_consequence Gamma (pIff ϕ ψ) ->
-  set_local_semantic_consequence Gamma (pIff (csubst c ϕ) (csubst c ψ)).
+Lemma set_local_semantic_consequence_context_iff (Gamma : PatternSet) c ϕ ψ :
+  Gamma ⊧ₗ ϕ ↔ₚ ψ ->
+  Gamma ⊧ₗ csubst c ϕ ↔ₚ csubst c ψ.
 Proof.
   intros Hiff A e HGamma.
   by apply local_semantic_consequence_context_iff, Hiff.
@@ -522,9 +547,7 @@ Section sec_mu.
 
 Lemma local_semantic_consequence_knaster_tarski ϕ ψ X :
   SFreeFor X ψ ϕ ->
-  local_semantic_consequence
-    (PImpl (svar_sub0 X ψ ϕ) ψ)
-    (PImpl (μₚ X ϕ) ψ).
+  {svar_sub0 X ψ ϕ →ₚ ψ} ⊧ₗ μₚ X ϕ →ₚ ψ.
 Proof.
   intros ? A e; rewrite !esatisfies_impl_classic.
   rewrite pattern_valuation_svar_sub0 by done.
@@ -533,10 +556,10 @@ Proof.
   pattern_valuation A (valuation_supdate e X B) ϕ ⊆ B) id _ Hincl).
 Qed.
 
-Lemma set_local_semantic_consequence_knaster_tarski Gamma ϕ ψ X :
+Lemma set_local_semantic_consequence_knaster_tarski (Gamma : PatternSet) ϕ ψ X :
   SFreeFor X ψ ϕ ->
-  set_local_semantic_consequence Gamma (PImpl (svar_sub0 X ψ ϕ) ψ) ->
-  set_local_semantic_consequence Gamma (PImpl (μₚ X ϕ) ψ).
+  Gamma ⊧ₗ svar_sub0 X ψ ϕ →ₚ ψ ->
+  Gamma ⊧ₗ μₚ X ϕ →ₚ ψ.
 Proof.
   intro.
   by apply local_semantic_consequence_set_consequence,
@@ -546,5 +569,3 @@ Qed.
 End sec_mu.
 
 End sec_set_local_semantic_consequence.
-
-End sec_local_semantic_consequence.

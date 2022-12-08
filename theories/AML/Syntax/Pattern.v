@@ -153,6 +153,7 @@ Fixpoint csubst (c : AppContext) (ϕ :Pattern) : Pattern :=
 End sec_pattern.
 
 Declare Scope ml_scope.
+Bind Scope ml_scope with signature.
 
 Notation "x →ₚ y" := (PImpl x y) (at level 55, right associativity) : ml_scope.
 Notation "¬ₚ x" := (pNeg x) (at level 40) : ml_scope.

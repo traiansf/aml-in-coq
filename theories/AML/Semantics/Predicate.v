@@ -96,7 +96,7 @@ Lemma set_local_semantic_consequence_global_closed_predicate Gamma ϕ :
   set_closed_predicate Gamma ->
     set_local_semantic_consequence Gamma ϕ
       <->
-    set_global_semantic_consequence Gamma ϕ.
+    Gamma ⊧ ϕ.
 Proof.
   by intro HGamma; eapply set_local_semantic_consequence_global_closed_pattern,
     set_closed_predicate_pattern.

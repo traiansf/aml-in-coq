@@ -5,15 +5,19 @@ From AML Require Import Signature Pattern Variables Structure Satisfaction Valid
 From AML Require Import Valuation PropositionalPatternValuation PatternValuation.
 From AML Require Import Tautology.
 
-Section sec_strong_semantic_consequence.
-
-  Context `{signature}.
-
-Definition strong_semantic_consequence (ϕ ψ : Pattern) : Prop :=
+Definition strong_semantic_consequence `{signature} (ϕ ψ : Pattern) : Prop :=
   forall s e, pattern_valuation s e ϕ ⊆ pattern_valuation s e ψ.
 
-Definition strongly_logically_equivalent (ϕ ψ : Pattern) : Prop :=
+Notation "{ phi } ⊧ₛ psi" := (strong_semantic_consequence phi psi) (at level 60, no associativity) : ml_scope.
+
+Definition strongly_logically_equivalent `{signature} (ϕ ψ : Pattern) : Prop :=
   forall s e, pattern_valuation s e ϕ ≡ pattern_valuation s e ψ.
+
+Infix "≡ₛ" := strongly_logically_equivalent (at level 60, no associativity) : ml_scope.
+
+Section sec_strong_semantic_consequence.
+
+Context `{signature}.
 
 #[export] Instance strongly_logically_equivalent_refl :
   Reflexive strongly_logically_equivalent.
@@ -36,9 +40,9 @@ Proof.
 Qed.
 
 Lemma strongly_logically_equivalent_iff ϕ ψ :
-  strongly_logically_equivalent ϕ ψ
+  ϕ ≡ₛ ψ
     <->
-  strong_semantic_consequence ϕ ψ /\ strong_semantic_consequence ψ ϕ.
+  {ϕ} ⊧ₛ ψ /\ {ψ} ⊧ₛ ϕ.
 Proof.
   split; [intro Heqv; split | intros [Hcns Hcns']]; intros s e a; [by apply Heqv..| split].
   - by apply Hcns.
@@ -46,13 +50,13 @@ Proof.
 Qed.
 
 Lemma strong_semantic_consequence_valid ϕ ψ :
-  strong_semantic_consequence ϕ ψ <-> ϕ `valid_impl` ψ.
+  {ϕ} ⊧ₛ ψ <-> ϕ `valid_impl` ψ.
 Proof.
   by unfold valid_impl, valid, satisfies; setoid_rewrite esatisfies_impl_classic.
 Qed.
 
 Lemma strongly_logically_equivalent_valid ϕ ψ :
-  strongly_logically_equivalent ϕ ψ <-> ϕ `valid_iff` ψ.
+  ϕ ≡ₛ ψ <-> ϕ `valid_iff` ψ.
 Proof.
   rewrite valid_iff_alt_classic, <- !strong_semantic_consequence_valid.
   apply strongly_logically_equivalent_iff.
@@ -72,9 +76,12 @@ Proof.
   by split; [rewrite Hl | rewrite Hr].
 Qed.
 
-Section sec_set_strong_semantic_consequence.
+End sec_strong_semantic_consequence.
+
+Section sec_set_strong_semantic_consequence_definition.
 
 Context
+  `{signature}
   `{Set_ Pattern PatternSet}.
 
 Definition set_strong_semantic_consequence (Gamma : PatternSet) (ϕ : Pattern) :=
@@ -92,7 +99,7 @@ Qed.
 Proof. by intros Gamma Gamma' Hsub _ϕ ϕ -> HGamma' s e; rewrite <- Hsub. Qed.
 
 Lemma set_strong_semantic_consequence_singleton ϕ ψ :
-  set_strong_semantic_consequence {[ϕ]} ψ <-> strong_semantic_consequence ϕ ψ.
+  set_strong_semantic_consequence {[ϕ]} ψ <-> {ϕ} ⊧ₛ ψ.
 Proof.
   by unfold set_strong_semantic_consequence; setoid_rewrite set_pattern_valuation_singleton.
 Qed.
@@ -105,38 +112,58 @@ Proof.
   by setoid_rewrite top_subseteq_equiv.
 Qed.
 
-Lemma set_strong_semantic_consequence_union_left Gamma Gamma' ϕ :
-  set_strong_semantic_consequence Gamma ϕ ->
-  set_strong_semantic_consequence (Gamma ∪ Gamma') ϕ.
-Proof. by intros HGamma; rewrite <- (union_subseteq_l Gamma Gamma'). Qed.
+End sec_set_strong_semantic_consequence_definition.
 
-Lemma set_strong_semantic_consequence_union_right Gamma Gamma' ϕ :
-  set_strong_semantic_consequence Gamma' ϕ ->
-  set_strong_semantic_consequence (Gamma ∪ Gamma') ϕ.
-Proof. by intros HGamma; rewrite <- (union_subseteq_r Gamma Gamma'). Qed.
+Infix "⊧ₛ" := set_strong_semantic_consequence (at level 60, no associativity) : ml_scope.
 
-Lemma valid_set_strong_semantic_consequence_any ϕ Gamma :
-  valid ϕ -> set_strong_semantic_consequence Gamma ϕ.
+Section sec_set_strong_semantic_consequence.
+
+Context
+  `{signature}
+  `{Set_ Pattern PatternSet}.
+
+Lemma set_strong_semantic_consequence_union_left (Gamma Gamma' : PatternSet) ϕ :
+  Gamma ⊧ₛ ϕ ->
+  Gamma ∪ Gamma' ⊧ₛ ϕ.
 Proof.
-  intro; rewrite <- (empty_subseteq Gamma).
+  intros HGamma.
+  eapply set_strong_semantic_consequence_proper_subseteq; [| done..].
+  by eapply union_subseteq_l.
+Qed.
+
+Lemma set_strong_semantic_consequence_union_right (Gamma Gamma' : PatternSet) ϕ :
+  Gamma' ⊧ₛ ϕ ->
+  Gamma ∪ Gamma' ⊧ₛ ϕ.
+Proof.
+  intros HGamma.
+  eapply set_strong_semantic_consequence_proper_subseteq; [| done..].
+  by eapply union_subseteq_r.
+Qed.
+
+Lemma valid_set_strong_semantic_consequence_any ϕ (Gamma : PatternSet) :
+  valid ϕ -> Gamma ⊧ₛ ϕ.
+Proof.
+  intro.
+  eapply set_strong_semantic_consequence_proper_subseteq;
+    [apply empty_subseteq | done |].
   by apply set_strong_semantic_consequence_empty_valid.
 Qed.
 
-#[export] Instance strong_semantic_consequence_set_consequence Gamma :
+#[export] Instance strong_semantic_consequence_set_consequence (Gamma : PatternSet) :
   Proper (strong_semantic_consequence ==> Basics.impl) (set_strong_semantic_consequence Gamma).
 Proof. by intros ϕ ψ Hcns Hϕ s e a HGamma; apply Hcns, Hϕ. Qed.
 
-#[export] Instance strongly_logically_equivalent_set_consequence Gamma :
+#[export] Instance strongly_logically_equivalent_set_consequence (Gamma : PatternSet) :
   Proper (strongly_logically_equivalent ==> iff) (set_strong_semantic_consequence Gamma).
 Proof.
   intros ϕ ψ; rewrite strongly_logically_equivalent_iff; intros [Hl Hr].
   by split; [rewrite Hl | rewrite Hr].
 Qed.
 
-Lemma set_strong_semantic_consequence_and Gamma ϕ ψ :
-  set_strong_semantic_consequence Gamma (pAnd ϕ ψ)
+Lemma set_strong_semantic_consequence_and (Gamma : PatternSet) ϕ ψ :
+  Gamma ⊧ₛ ϕ ∧ₚ ψ
     <->
-  set_strong_semantic_consequence Gamma ϕ /\ set_strong_semantic_consequence Gamma ψ.
+  Gamma ⊧ₛ ϕ /\ Gamma ⊧ₛ ψ.
 Proof.
   unfold set_strong_semantic_consequence.
   setoid_rewrite pattern_valuation_and_classic; [| typeclasses eauto].
@@ -145,17 +172,17 @@ Proof.
   by split; [intro Hand; split; intros; apply Hand | intros []; split; itauto].
 Qed.
 
-Lemma set_strong_semantic_consequence_iff Gamma ϕ ψ :
-  set_strong_semantic_consequence Gamma (pIff ϕ ψ)
+Lemma set_strong_semantic_consequence_iff (Gamma : PatternSet) ϕ ψ :
+  Gamma ⊧ₛ ϕ ↔ₚ ψ
     <->
-  set_strong_semantic_consequence Gamma (PImpl ϕ ψ)
-    /\
-  set_strong_semantic_consequence Gamma (PImpl ψ ϕ).
+  Gamma ⊧ₛ ϕ →ₚ ψ /\ Gamma ⊧ₛ ψ →ₚ ϕ.
 Proof. by unfold pIff; rewrite set_strong_semantic_consequence_and. Qed.
 
 Definition set_strong_semantic_consequence_set (Gamma Delta : PatternSet) : Prop :=
   forall (s : Structure) (e : Valuation),
     set_pattern_valuation s e Gamma ⊆ set_pattern_valuation s e Delta.
+
+Infix "|=ₛ" := set_strong_semantic_consequence_set (at level 60, no associativity) : ml_scope.
 
 #[export] Instance set_strong_semantic_consequence_set_proper :
   Proper ((≡) ==> (≡) ==> iff) set_strong_semantic_consequence_set.
@@ -196,7 +223,7 @@ Qed.
 Lemma set_strongly_logically_equivalent_set_proper_iff Gamma Delta :
   set_strongly_logically_equivalent_set Gamma Delta
     <->
-  set_strong_semantic_consequence_set Gamma Delta /\ set_strong_semantic_consequence_set Delta Gamma .
+  Gamma |=ₛ Delta /\ Delta |=ₛ Gamma .
 Proof.
   unfold set_strongly_logically_equivalent_set, set_strong_semantic_consequence_set.
   setoid_rewrite set_equiv_subseteq.
@@ -245,10 +272,10 @@ Qed.
 
 Section sec_rules.
 
-Lemma set_strong_mp Gamma ϕ ψ :
-  set_strong_semantic_consequence Gamma ϕ ->
-  set_strong_semantic_consequence Gamma (PImpl ϕ ψ) ->
-  set_strong_semantic_consequence Gamma ψ.
+Lemma set_strong_mp (Gamma : PatternSet) ϕ ψ :
+  Gamma ⊧ₛ ϕ ->
+  Gamma ⊧ₛ ϕ →ₚ ψ ->
+  Gamma ⊧ₛ ψ.
 Proof.
   intros Hϕ Hϕψ A e.
   transitivity (pattern_valuation A e ϕ ∩ pattern_valuation A e (PImpl ϕ ψ));
@@ -258,10 +285,10 @@ Proof.
   by set_solver.
 Qed.
 
-Lemma set_strong_impl_trans Gamma ϕ ψ χ :
-  set_strong_semantic_consequence Gamma (PImpl ϕ ψ) ->
-  set_strong_semantic_consequence Gamma (PImpl ψ χ) ->
-  set_strong_semantic_consequence Gamma (PImpl ψ χ).
+Lemma set_strong_impl_trans (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₛ ϕ →ₚ ψ ->
+  Gamma ⊧ₛ ψ →ₚ χ ->
+  Gamma ⊧ₛ ψ →ₚ χ.
 Proof.
   intros Hϕψ Hψchi A e.
   transitivity (pattern_valuation A e (PImpl ϕ ψ) ∩ pattern_valuation A e (PImpl ψ χ));
@@ -270,10 +297,10 @@ Proof.
   by set_solver.
 Qed.
 
-Lemma set_strong_and_curry Gamma ϕ ψ χ :
-  set_strong_semantic_consequence Gamma (PImpl (pAnd ϕ ψ) χ)
+Lemma set_strong_and_curry (Gamma : PatternSet) ϕ ψ χ :
+  Gamma ⊧ₛ (ϕ ∧ₚ ψ) →ₚ χ
     <->
-  set_strong_semantic_consequence Gamma (PImpl ϕ (PImpl ψ χ)).
+  Gamma ⊧ₛ ϕ →ₚ ψ →ₚ χ.
 Proof.
   pose proof (Hcurry := tautology_impl_impl_and ϕ ψ χ).
   apply tautology_valid, strongly_logically_equivalent_valid in Hcurry.
@@ -283,5 +310,3 @@ Qed.
 End sec_rules.
 
 End sec_set_strong_semantic_consequence.
-
-End sec_strong_semantic_consequence.

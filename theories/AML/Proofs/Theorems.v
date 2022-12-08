@@ -35,26 +35,26 @@ Definition x_set_deduction (Gamma Delta : PatternSet) : Prop :=
 
 End sec_parameterized_definition.
 
-Definition MLStrictGammaTheorem := MLXGammaTheorem MLStrictSinglePremiseRule.
+Definition MLStrongGammaTheorem := MLXGammaTheorem MLStrongSinglePremiseRule.
 Definition MLLocalGammaTheorem := MLXGammaTheorem MLLocalSinglePremiseRule.
 Definition MLGammaTheorem := MLXGammaTheorem MLGlobalSinglePremiseRule.
-Definition strict_set_deduction := x_set_deduction MLStrictSinglePremiseRule.
+Definition strong_set_deduction := x_set_deduction MLStrongSinglePremiseRule.
 Definition local_set_deduction := x_set_deduction MLLocalSinglePremiseRule.
 Definition set_deduction := x_set_deduction MLGlobalSinglePremiseRule.
 
 End sec_theorems.
 
-Global Notation "Gamma ⊢[ spr ] phi " := (MLXGammaTheorem spr Gamma phi) (at level 60, no associativity).
-Global Notation "Gamma |-[ spr ] Delta " := (x_set_deduction spr Gamma Delta) (at level 60, no associativity).
+Notation "Gamma ⊢[ spr ] phi " := (MLXGammaTheorem spr Gamma phi) (at level 60, no associativity).
+Notation "Gamma |-[ spr ] Delta " := (x_set_deduction spr Gamma Delta) (at level 60, no associativity).
 
-Global Infix "⊢ₛ" := MLStrictGammaTheorem (at level 60, no associativity).
-Global Infix "|-ₛ" := strict_set_deduction (at level 60, no associativity).
+Infix "⊢ₛ" := MLStrongGammaTheorem (at level 60, no associativity) : ml_scope.
+Infix "|-ₛ" := strong_set_deduction (at level 60, no associativity) : ml_scope.
 
-Global Infix "⊢ₗ" := MLLocalGammaTheorem (at level 60, no associativity).
-Global Infix "|-ₗ" := local_set_deduction (at level 60, no associativity).
+Infix "⊢ₗ" := MLLocalGammaTheorem (at level 60, no associativity) : ml_scope.
+Infix "|-ₗ" := local_set_deduction (at level 60, no associativity) : ml_scope.
 
-Global Infix "⊢" := MLGammaTheorem (at level 60, no associativity).
-Global Infix "|-" := set_deduction (at level 60, no associativity).
+Infix "⊢" := MLGammaTheorem (at level 60, no associativity) : ml_scope.
+Infix "|-" := set_deduction (at level 60, no associativity) : ml_scope.
 
 Section sec_theorem_properties.
 
@@ -67,7 +67,7 @@ Definition MLXTheorem spr (ϕ : Pattern) : Prop :=
   MLXGammaTheorem (PatternSet := PatternSet) spr ∅ ϕ.
 Definition MLTheorem := MLXTheorem MLGlobalSinglePremiseRule.
 Definition MLLocalTheorem := MLXTheorem MLLocalSinglePremiseRule.
-Definition MLStrictTheorem := MLXTheorem MLStrictSinglePremiseRule.
+Definition MLStrongTheorem := MLXTheorem MLStrongSinglePremiseRule.
 
 Lemma x_gamma_theorem_subsumption spr :
   forall (Gamma Delta : PatternSet), Delta ⊆ Gamma ->
@@ -84,9 +84,9 @@ Qed.
 
 Definition gamma_theorem_subsumption := x_gamma_theorem_subsumption MLGlobalSinglePremiseRule.
 Definition local_gamma_theorem_subsumption := x_gamma_theorem_subsumption MLLocalSinglePremiseRule.
-Definition strict_gamma_theorem_subsumption := x_gamma_theorem_subsumption MLStrictSinglePremiseRule.
+Definition strong_gamma_theorem_subsumption := x_gamma_theorem_subsumption MLStrongSinglePremiseRule.
 
-Lemma strict_local_deduction_subsumption (Γ : PatternSet) ϕ :
+Lemma strong_local_deduction_subsumption (Γ : PatternSet) ϕ :
   Γ ⊢ₛ ϕ -> Γ ⊢ₗ ϕ.
 Proof.
   induction 1 as [| | | | ? ? Hspr].
@@ -97,9 +97,9 @@ Proof.
   - by inversion Hspr.
 Qed.
 
-Lemma strict_local_set_deduction_subsumption (Γ Δ : PatternSet) :
+Lemma strong_local_set_deduction_subsumption (Γ Δ : PatternSet) :
   Γ |-ₛ Δ -> Γ |-ₗ Δ.
-Proof. by intros Hincl ϕ Hϕ; apply strict_local_deduction_subsumption, Hincl. Qed.
+Proof. by intros Hincl ϕ Hϕ; apply strong_local_deduction_subsumption, Hincl. Qed.
 
 Lemma local_deduction_subsumption (Γ : PatternSet) ϕ :
   Γ ⊢ₗ ϕ -> Γ ⊢ ϕ.
@@ -116,13 +116,13 @@ Lemma local_set_deduction_subsumption (Γ Δ : PatternSet) :
   Γ |-ₗ Δ -> Γ |- Δ.
 Proof. by intros Hincl ϕ Hϕ; apply local_deduction_subsumption, Hincl. Qed.
 
-Lemma strict_deduction_subsumption (Γ : PatternSet) ϕ :
+Lemma strong_deduction_subsumption (Γ : PatternSet) ϕ :
   Γ ⊢ₛ ϕ -> Γ ⊢ ϕ.
-Proof. by intro; apply local_deduction_subsumption, strict_local_deduction_subsumption. Qed.
+Proof. by intro; apply local_deduction_subsumption, strong_local_deduction_subsumption. Qed.
 
-Lemma strict_set_deduction_subsumption (Γ Δ : PatternSet) :
+Lemma strong_set_deduction_subsumption (Γ Δ : PatternSet) :
   Γ |-ₛ Δ -> Γ |- Δ.
-Proof. by intros Hincl ϕ Hϕ; apply strict_deduction_subsumption, Hincl. Qed.
+Proof. by intros Hincl ϕ Hϕ; apply strong_deduction_subsumption, Hincl. Qed.
 
 Lemma x_theorem_subsumption spr :
   forall (Gamma : PatternSet) (ϕ : Pattern),
@@ -131,7 +131,7 @@ Proof. by intro Gamma; apply x_gamma_theorem_subsumption; set_solver. Qed.
 
 Definition theorem_subsumption := x_theorem_subsumption MLGlobalSinglePremiseRule.
 Definition local_theorem_subsumption := x_theorem_subsumption MLLocalSinglePremiseRule.
-Definition strict_theorem_subsumption := x_theorem_subsumption MLStrictSinglePremiseRule.
+Definition strong_theorem_subsumption := x_theorem_subsumption MLStrongSinglePremiseRule.
 
 Lemma x_set_deduction_premises_subsumption spr :
   forall (Gamma Delta : PatternSet), Gamma |-[spr] Delta ->
@@ -148,7 +148,7 @@ Qed.
 
 Definition set_deduction_premises_subsumption := x_set_deduction_premises_subsumption MLGlobalSinglePremiseRule.
 Definition local_set_deduction_premises_subsumption := x_set_deduction_premises_subsumption MLLocalSinglePremiseRule.
-Definition strict_set_deduction_premises_subsumption := x_set_deduction_premises_subsumption MLStrictSinglePremiseRule.
+Definition strong_set_deduction_premises_subsumption := x_set_deduction_premises_subsumption MLStrongSinglePremiseRule.
 
 End sec_theorem_properties.
 
@@ -186,8 +186,9 @@ Lemma ml_tautology spr ϕ : Tautology ϕ -> Γ ⊢[spr] ϕ.
 Proof. by apply ml_thm_tautology. Qed.
 
 Lemma ml_ax_ex_quantifier spr (x y : EVar) (ϕ : Pattern) :
+  EFreeFor x (PEVar y) ϕ ->
   Γ ⊢[spr] evar_sub0 x (PEVar y) ϕ →ₚ PEx x ϕ.
-Proof. by apply ml_thm_axiom, ax_ex_quantifier. Qed.
+Proof. by intros; apply ml_thm_axiom, ax_ex_quantifier. Qed.
 
 Lemma ml_propagation_bot_l spr (ϕ : Pattern) :
   Γ ⊢[spr] PApp (⊥ₚ) ϕ →ₚ ⊥ₚ.
