@@ -225,7 +225,7 @@ Lemma ml_existence spr : forall x,
 Proof. by intros; apply ml_thm_axiom, ax_existence. Qed.
 
 Lemma ml_singleton_variable spr : forall x ϕ C1 C2,
-  Γ ⊢[spr] ¬ₚ (csubst C1 (x ∧ₚ ϕ) ∧ₚ csubst C2 (x ∧ₚ ¬ₚ ϕ)).
+  Γ ⊢[spr] ¬ₚ (csubst C1 (PEVar x ∧ₚ ϕ) ∧ₚ csubst C2 (PEVar x ∧ₚ ¬ₚ ϕ)).
 Proof. by intros; apply ml_thm_axiom, ax_singleton_variable. Qed.
 
 Lemma ml_ex_quantifier : forall x ϕ ψ,

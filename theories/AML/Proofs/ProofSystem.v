@@ -31,7 +31,7 @@ Inductive MLAxiom : Pattern -> Prop :=
 | ax_existence : forall x,
     MLAxiom (PEx x (PEVar x))
 | ax_singleton_variable : forall x ϕ C1 C2,
-    MLAxiom (pNeg (pAnd (csubst C1 (pAnd x ϕ)) (csubst C2 (pAnd x (pNeg ϕ)))))
+    MLAxiom (pNeg (pAnd (csubst C1 (pAnd (PEVar x) ϕ)) (csubst C2 (pAnd (PEVar x) (pNeg ϕ)))))
 .
 
 Inductive MLStrongSinglePremiseRule : Pattern -> Pattern -> Prop := .
