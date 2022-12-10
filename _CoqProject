@@ -35,3 +35,5 @@ theories/AML/Proofs/Theorems.v
 theories/AML/Proofs/Proof.v
 
 theories/AML/Soundness/StrongSoundness.v
+theories/AML/Soundness/LocalSoundness.v
+theories/AML/Soundness/GlobalSoundness.v
