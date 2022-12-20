@@ -56,14 +56,30 @@ Fixpoint nth_tl_keep_nil (tr : trace) (n : nat) : trace :=
 Lemma nth_tl_keep_nil_nil (a : A) : forall m, nth_tl_keep_nil (Tnil a) m = Tnil a.
 Proof. by induction m. Qed.
 
+Lemma nth_tl_keep_nil_twice tr n1 n2 :
+  nth_tl_keep_nil tr (n1 + n2) = nth_tl_keep_nil (nth_tl_keep_nil tr n1) n2.
+Proof.
+  revert tr n2.
+  induction n1; [done |].
+  intros [] *; [by rewrite !nth_tl_keep_nil_nil |].
+  by apply IHn1.
+Qed.
+
 Definition nth_keep_nil (tr : trace) (n : nat) : A := hd (nth_tl_keep_nil tr n).
 
 Lemma nth_keep_nil_nil (a : A) : forall m, nth_keep_nil (Tnil a) m = a.
 Proof. by intros; unfold nth_keep_nil; rewrite nth_tl_keep_nil_nil. Qed.
 
+Lemma nth_keep_nil_0 tr : nth_keep_nil tr 0 = hd tr.
+Proof. by destruct tr. Qed.
+
 Lemma nth_keep_nil_cons (a : A) (tr : trace) (n : nat) :
   nth_keep_nil (Tcons a tr) (S n) = nth_keep_nil tr n.
 Proof. done. Qed.
+
+Lemma nth_keep_nil_twice tr n1 n2 :
+  nth_keep_nil tr (n1 + n2) = nth_keep_nil (nth_tl_keep_nil tr n1) n2.
+Proof. by unfold nth_keep_nil; rewrite nth_tl_keep_nil_twice. Qed.
 
 Definition trace_decompose (tr: trace): trace :=
 match tr with
@@ -255,6 +271,16 @@ Qed.
 Lemma Exists1_exists (P : A -> Prop) tr :
   Exists1 P tr <-> exists n, P (nth_keep_nil tr n).
 Proof. by apply ExistsSuffix_exists. Qed.
+
+Lemma Exists1_weaken (P Q : A -> Prop) tr :
+  (forall a, P a -> Q a) ->
+  Exists1 P tr -> Exists1 Q tr.
+Proof.
+  intro Hincl.
+  rewrite !Exists1_exists.
+  intros [n Hn].
+  by exists n; apply Hincl.
+Qed.
 
 End sec_traces.
 
