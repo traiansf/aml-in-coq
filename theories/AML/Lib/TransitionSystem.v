@@ -9,6 +9,49 @@ Section sec_transition_system.
 
 Context `{TransitionSystem}.
 
+Section sec_quantification.
+
+Context {quant : Type}.
+
+Definition quantified_set : Type := quant -> Ensemble idomain.
+Definition quantified_element : Type := quant -> idomain.
+
+Record RewriteRule : Type :=
+{
+  lhs : quantified_set;
+  rhs : quantified_element
+}.
+
+Record Claim : Type :=
+{ af_lhs : quantified_set;
+  af_rhs : quantified_set;
+}.
+
+End sec_quantification.
+
+Record ClosedRewriteRule : Type :=
+{
+  quant : Type;
+  rule :> @RewriteRule quant;
+}.
+
+Record ClosedClaim : Type :=
+{
+  af_quant : Type;
+  claim :> @Claim af_quant;
+}.
+
+Definition satisfies (r : ClosedRewriteRule) : Prop :=
+  forall q : quant r, forall a, a ∈ lhs r q -> transition a (rhs r q).
+
+Definition defined_by `{Set_ ClosedRewriteRule ClosedRewriteRuleSet} (rs : ClosedRewriteRuleSet) : Prop :=
+  forall a b,
+    transition a b
+      <->
+    exists r, r ∈ rs /\
+    exists q : quant r,
+    a ∈ lhs r q /\ b = rhs r q.
+
 Definition EX_fs (b : idomain) : Ensemble idomain := flip transition b.
 Definition EX_functor (B : Ensemble idomain) : Ensemble idomain := filtered_union B EX_fs.
 
@@ -74,6 +117,9 @@ Proof. by apply ForAllSuffixes_drop_n. Qed.
 Definition AF_ts (P : Ensemble idomain) (a : idomain) : Prop :=
   forall tr : trace idomain, hd tr = a -> validTEX tr ->
   Exists1 (fun b : idomain => b ∈ P) tr.
+
+Definition AF_satisfies (c : ClosedClaim) : Prop :=
+  forall q : af_quant c, af_lhs c q ⊆ AF_ts (af_rhs c q).
 
 #[export] Instance AF_ts_proper_subseteq :
   Proper ((⊆) ==> (⊆)) AF_ts.
