@@ -23,6 +23,11 @@ Record ValuationEquiv (v1 v2 : Valuation) : Prop :=
 
 #[export] Instance valuation_equiv : Equiv Valuation := ValuationEquiv.
 
+#[export] Instance valuation_equiv_symmetric : Symmetric ValuationEquiv.
+Proof.
+  by intros [] [] []; split; [| intro x; rewrite veqvs0].
+Qed.
+
 #[export] Instance ValidationInhabited : Inhabited Valuation :=
   populate {| eval := const inhabitant; sval := const ∅ |}.
 

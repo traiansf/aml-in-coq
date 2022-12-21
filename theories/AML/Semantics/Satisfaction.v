@@ -222,6 +222,13 @@ Qed.
 Definition set_satisfies (Gamma : PatternSet) :=
   forall e, set_esatisfies e Gamma.
 
+Lemma set_satisfies_alt Gamma :
+  set_satisfies Gamma <-> forall ϕ, ϕ ∈ Gamma -> satisfies ϕ.
+Proof.
+  unfold set_satisfies, set_esatisfies, satisfies. 
+  by firstorder.
+Qed.
+
 #[export] Instance set_satisfies_proper :
   Proper ((≡) ==> (iff)) set_satisfies.
 Proof.

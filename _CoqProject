@@ -6,6 +6,7 @@ theories/AML/Lib/Functions.v
 theories/AML/Lib/Ensemble.v
 theories/AML/Lib/List.v
 theories/AML/Lib/Traces.v
+theories/AML/Lib/TransitionSystem.v
 
 theories/AML/Signature.v
 theories/AML/Syntax/Expression.v
@@ -14,6 +15,7 @@ theories/AML/Syntax/Variables.v
 theories/AML/Syntax/Substitution.v
 theories/AML/Syntax/PatternClosureProps.v
 theories/AML/Syntax/Reachability.v
+theories/AML/Syntax/PatternTranslation.v
 
 theories/AML/Semantics/Structure.v
 theories/AML/Semantics/Valuation.v
@@ -27,7 +29,8 @@ theories/AML/Semantics/SemanticConsequences/LocalSemanticConsequence.v
 theories/AML/Semantics/SemanticConsequences/StrongSemanticConsequence.v
 theories/AML/Semantics/Predicate.v
 theories/AML/Semantics/Tautology.v
-theories/AML/Semantics/TransitionSystem.v
+theories/AML/Semantics/MLTransitionSystem.v
+theories/AML/Semantics/StructureReduct.v
 
 theories/AML/Proofs/TautologicalProof.v
 theories/AML/Proofs/ProofSystem.v
