@@ -2,12 +2,12 @@ From stdpp Require Import prelude.
 From Coq Require Import ClassicalEpsilon.
 From AML.Lib Require Import Ensemble Traces.
 
+
+Class TransitionSystem (idomain : Type) := transition : relation idomain.
+
 Section sec_transition_system.
 
-Context
-  {idomain : Type}
-  (transition : relation idomain)
-  .
+Context `{TransitionSystem}.
 
 Definition EX_fs (b : idomain) : Ensemble idomain := flip transition b.
 Definition EX_functor (B : Ensemble idomain) : Ensemble idomain := filtered_union B EX_fs.
@@ -34,6 +34,23 @@ Proof. by unfold stuck, reducible; set_solver. Qed.
 Lemma stuck_iff_no_transition a :
   stuck a <-> forall b, ~ transition a b.
 Proof. by firstorder. Qed.
+
+Lemma reducible_transition_image a : reducible a <-> ∅ ⊂ transition_image a.
+Proof.
+  destruct (classic (reducible a)) as [| Ha];
+    [by split; [unfold reducible, transition_image; set_solver |] |].
+  apply stuck_transition_image in Ha as Hempty.
+  setoid_rewrite stuck_iff_no_transition in Ha.
+  unfold transition_image in *.
+  unfold reducible.
+  by set_solver.
+Qed.
+
+Lemma transition_image_subseteq a A :
+  transition_image a ⊆ A
+    <->
+  forall b, transition a b -> b ∈ A.
+Proof. firstorder. Qed.
 
 Section sec_traces.
 
@@ -186,7 +203,7 @@ Context
 Definition AF_ts_fixed_point_functor (X : Ensemble idomain) : Ensemble idomain :=
   fun a => a ∈ ψ \/ reducible a /\ forall b, transition a b -> b ∈ X.
 
-Lemma trace_all_path_finally_pattern_pre_fixpoint :
+Lemma AF_ts_pre_fixpoint :
   pre_fixpoint AF_ts_fixed_point_functor (AF_ts ψ).
 Proof.
   intro a.
@@ -196,7 +213,7 @@ Proof.
   by eapply Exists_delay, Hall.
 Qed.
 
-Lemma trace_all_path_finally_pattern_post_fixpoint :
+Lemma AF_ts_post_fixpoint :
   post_fixpoint AF_ts_fixed_point_functor (AF_ts ψ).
 Proof.
   intros a Hall.
@@ -211,12 +228,12 @@ Proof.
     by feed specialize Hall; [| eapply validTEX_delay | inversion Hall].
 Qed.
 
-Lemma trace_all_path_finally_pattern_fixpoint :
+Lemma AF_ts_fixpoint :
   fixpoint AF_ts_fixed_point_functor (AF_ts ψ).
 Proof.
   split.
-  - apply (trace_all_path_finally_pattern_pre_fixpoint x).
-  - apply (trace_all_path_finally_pattern_post_fixpoint x).
+  - apply (AF_ts_pre_fixpoint x).
+  - apply (AF_ts_post_fixpoint x).
 Qed.
 
 Lemma not_elem_of_phi_or_next_on_all_paths_functor_pre_fixpoint
@@ -282,7 +299,7 @@ Qed.
 
 End sec_iterated_choice.
 
-Lemma trace_all_path_finally_pattern_least_pre_fixpoint A :
+Lemma AF_ts_least_pre_fixpoint A :
   pre_fixpoint AF_ts_fixed_point_functor A ->
   AF_ts ψ ⊆ A.
 Proof.

@@ -501,6 +501,27 @@ Qed.
 
 End SecKnasterTarski.
 
+Section sec_fix_points_props.
+
+Context
+  {idomain : Type}
+  (F G : Ensemble idomain -> Ensemble idomain)
+  (Hext : forall A, F A ≡ G A).
+
+Lemma pre_fixpoint_equiv B :
+  pre_fixpoint F B <-> pre_fixpoint G B.
+Proof. by unfold pre_fixpoint; rewrite Hext. Qed.
+
+Lemma post_fixpoint_equiv B :
+  post_fixpoint F B <-> post_fixpoint G B.
+Proof. by unfold post_fixpoint; rewrite Hext. Qed.
+
+Lemma fixpoint_equiv B :
+  fixpoint F B <-> fixpoint G B.
+Proof. by unfold fixpoint; rewrite Hext. Qed.
+
+End sec_fix_points_props.
+
 Class Continuous {idomain : Type} (F : Ensemble idomain -> Ensemble idomain) : Prop :=
 {
   continuous : forall (C : nat -> Ensemble idomain),
