@@ -1,6 +1,7 @@
 From stdpp Require Import prelude.
 From Coq Require Import ClassicalEpsilon.
-From AML.Lib Require Import Ensemble Traces TransitionSystem.
+From AML.Lib Require Import Ensemble Traces.
+From AML.ARS Require Import TransitionSystem.
 From AML Require Import Signature.
 From AML.Syntax Require Import Pattern Variables Substitution Reachability.
 From AML.Semantics Require Import Structure Valuation PatternValuation.
