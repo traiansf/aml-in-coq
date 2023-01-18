@@ -1,5 +1,5 @@
 From stdpp Require Import prelude.
-From AML.Lib Require Import List.
+From sets Require Import List.
 From AML Require Import Signature Pattern Variables Substitution.
 
 Section sec_tautology.
@@ -230,7 +230,7 @@ Definition ml_tautology_to_proof [ϕ : Pattern] (Hϕ :  MLTautology ϕ)
 Proof.
   induction Hϕ.
   + exact [].
-  + exact ((ϕ :: IHHϕ1) ++ ψ :: IHHϕ2). 
+  + exact ((ϕ :: IHHϕ1) ++ ψ :: IHHϕ2).
 Defined.
 
 Lemma ml_tautology_to_proof_sound (ϕ : Pattern) (Hϕ :  MLTautology ϕ) :
@@ -256,11 +256,11 @@ Proof.
   + by apply ml_tauto_axiom.
   + apply elem_of_list_split_alt in Hϕ0.
     assert (Hproof_ϕ0 : MLTautologicalProof (ϕ0 ::  drop_until_eq ϕ0 proof))
-      by (subst; eapply MLTautologicalProof_suffix; done). 
+      by (subst; eapply MLTautologicalProof_suffix; done).
     apply (f_equal length) in Hϕ0.
     apply elem_of_list_split_alt in Hψ.
     assert (Hproof_ψ : MLTautologicalProof (ψ :: drop_until_eq ψ proof))
-      by (subst; eapply MLTautologicalProof_suffix; done). 
+      by (subst; eapply MLTautologicalProof_suffix; done).
     apply (f_equal length) in Hψ.
     rewrite app_length in Hϕ0, Hψ; cbn in Hϕ0, Hψ.
     apply ml_tauto_modus_ponens with ϕ0 ψ; [..| done]; eapply Hind.

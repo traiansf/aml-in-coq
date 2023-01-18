@@ -1,5 +1,5 @@
 From stdpp Require Import prelude.
-From AML.Lib Require Import Ensemble.
+From sets Require Import Ensemble.
 From AML Require Import Signature.
 From AML.Syntax Require Import Pattern PatternTranslation.
 From AML.Semantics Require Import Structure Valuation PatternValuation.
@@ -56,14 +56,14 @@ Lemma valuation_reduct_eupdate A v x vx :
   valuation_eupdate (valuation_reduct A v) x vx.
 Proof. done. Qed.
 
-Lemma pattern_valuation_reduct 
+Lemma pattern_valuation_reduct
   (A : Structure (Sigma := Sigma2))
   (va : Valuation (s := A))
   (ϕ : Pattern (Sigma := Sigma1))
   : pattern_valuation A va (pattern_translation h ϕ)
     ≡
     pattern_valuation (structure_reduct A) (valuation_reduct A va) ϕ.
-Proof. 
+Proof.
   revert va; induction ϕ.
   - done.
   - done.
@@ -80,7 +80,7 @@ Proof.
   - done.
 Qed.
 
-Lemma esatisfies_reduct 
+Lemma esatisfies_reduct
   (A : Structure (Sigma := Sigma2))
   (va : Valuation (s := A))
   (ϕ : Pattern (Sigma := Sigma1))
@@ -91,7 +91,7 @@ Proof.
   by unfold esatisfies; rewrite pattern_valuation_reduct.
 Qed.
 
-Lemma satisfies_reduct 
+Lemma satisfies_reduct
   (A : Structure (Sigma := Sigma2))
   (ϕ : Pattern (Sigma := Sigma1))
   : satisfies A (pattern_translation h ϕ)

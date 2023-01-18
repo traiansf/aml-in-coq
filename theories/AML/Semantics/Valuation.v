@@ -1,7 +1,7 @@
 From Cdcl Require Import Itauto. #[local] Tactic Notation "itauto" := itauto auto.
 From stdpp Require Import prelude.
-From AML Require Import Functions Ensemble.
-From AML Require Import Signature Ensemble Structure.
+From sets Require Import Functions Ensemble.
+From AML Require Import Signature Structure.
 
 Section sec_valuation.
 

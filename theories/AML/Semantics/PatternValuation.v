@@ -1,6 +1,6 @@
 From stdpp Require Import prelude.
 From Coq Require Import Classical IndefiniteDescription.
-From AML Require Import Functions Ensemble.
+From sets Require Import Functions Ensemble.
 From AML Require Import Signature Pattern Variables Substitution.
 From AML Require Import Structure Valuation PropositionalPatternValuation.
 

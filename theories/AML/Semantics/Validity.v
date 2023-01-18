@@ -1,7 +1,7 @@
 From Cdcl Require Import Itauto. #[local] Tactic Notation "itauto" := itauto auto.
 From stdpp Require Import prelude.
 From Coq Require Import Classical.
-From AML Require Import Functions Ensemble.
+From sets Require Import Functions Ensemble.
 From AML Require Import Signature Pattern Variables Substitution.
 From AML Require Import Structure Valuation PropositionalPatternValuation PatternValuation Satisfaction.
 
@@ -192,7 +192,7 @@ Proof.
     specialize (Htheta_ϕ s (valuation_eupdate v x b)); apply esatisfies_iff_classic in Htheta_ϕ.
     by symmetry; apply Htheta_ϕ.
 Qed.
-    
+
 Lemma valid_esubst_all x y ϕ :
   pAll x ϕ `valid_impl` esubst ϕ x (PEVar y).
 Proof.
@@ -245,7 +245,7 @@ Proof.
     specialize (Htheta_ϕ s (valuation_eupdate v x b)); apply esatisfies_iff_classic in Htheta_ϕ.
     by apply Htheta_ϕ.
 Qed.
- 
+
 Lemma valid_svar_rename x y ϕ :
   ~ SOccurs y ϕ ->
   ϕ `valid_iff` svar_rename x y ϕ.
@@ -283,7 +283,7 @@ Qed.
 
 Lemma valid_svar_rename_iter_fresh rename_vars avoid_vars ϕ :
   rename_vars ⊆ BSV ϕ -> SV ϕ ⊆ avoid_vars ->
-  let refreshed_ϕ := 
+  let refreshed_ϕ :=
         svar_rename_iter
           (elements rename_vars)
           (fresh_list (length (elements rename_vars)) avoid_vars)
@@ -314,7 +314,7 @@ Qed.
 
 Lemma valid_evar_rename_iter_fresh rename_vars avoid_vars ϕ :
   rename_vars ⊆ BEV ϕ -> EV ϕ ⊆ avoid_vars ->
-  let refreshed_ϕ := 
+  let refreshed_ϕ :=
         evar_rename_iter
           (elements rename_vars)
           (fresh_list (length (elements rename_vars)) avoid_vars)
@@ -511,7 +511,7 @@ Lemma valid_impl_app_all_l x ϕ ψ :
   PApp (pAll x ϕ) ψ `valid_impl` pAll x (PApp ϕ ψ).
 Proof.
   intros Hx A e; apply esatisfies_impl_classic.
-  rewrite pattern_valuation_app, !pattern_valuation_forall_classic. 
+  rewrite pattern_valuation_app, !pattern_valuation_forall_classic.
   cbn; rewrite ext_iapp_indexed_intersection_l.
   intro a; rewrite !elem_of_indexed_intersection.
   apply forall_proper; intro b; revert a; apply ext_iapp_Proper; [done |].
@@ -526,7 +526,7 @@ Lemma valid_impl_app_all_r x ϕ ψ :
   PApp ψ (pAll x ϕ) `valid_impl` pAll x (PApp ψ ϕ).
 Proof.
   intros Hx A e; apply esatisfies_impl_classic.
-  rewrite pattern_valuation_app, !pattern_valuation_forall_classic. 
+  rewrite pattern_valuation_app, !pattern_valuation_forall_classic.
   cbn; rewrite ext_iapp_indexed_intersection_r.
   intro a; rewrite !elem_of_indexed_intersection.
   apply forall_proper; intro b; revert a; apply ext_iapp_Proper; [| done].

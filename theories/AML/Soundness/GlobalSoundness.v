@@ -1,5 +1,5 @@
 From stdpp Require Import prelude.
-From AML.Lib Require Import Ensemble.
+From sets Require Import Ensemble.
 From AML Require Import Signature.
 From AML.Syntax Require Import Pattern.
 From AML.Proofs Require Import ProofSystem Theorems.

@@ -1,5 +1,6 @@
-From AML Require Import Ensemble Signature.
 From stdpp Require Import prelude.
+From sets Require Import Ensemble.
+From AML Require Import Signature.
 
 Class Structure `{signature} : Type :=
 {

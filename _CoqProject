@@ -2,14 +2,6 @@
 
 -arg -w -arg -future-coercion-class-field
 
-theories/AML/Lib/Functions.v
-theories/AML/Lib/Ensemble.v
-theories/AML/Lib/List.v
-theories/AML/Lib/Traces.v
-
-theories/AML/ARS/TransitionSystem.v
-theories/AML/ARS/RuleBasedTransitionSystem.v
-
 theories/AML/Signature.v
 theories/AML/Syntax/Expression.v
 theories/AML/Syntax/Pattern.v
@@ -31,7 +23,6 @@ theories/AML/Semantics/SemanticConsequences/LocalSemanticConsequence.v
 theories/AML/Semantics/SemanticConsequences/StrongSemanticConsequence.v
 theories/AML/Semantics/Predicate.v
 theories/AML/Semantics/Tautology.v
-theories/AML/Semantics/MLTransitionSystem.v
 theories/AML/Semantics/StructureReduct.v
 
 theories/AML/Proofs/TautologicalProof.v

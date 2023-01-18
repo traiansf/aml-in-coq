@@ -1,5 +1,5 @@
 From stdpp Require Import prelude.
-From AML.Lib Require Import Ensemble.
+From sets Require Import Ensemble.
 From AML Require Import Signature Pattern Variables Substitution.
 From AML.Proofs Require Import TautologicalProof ProofSystem.
 From AML.Semantics Require Import Tautology.

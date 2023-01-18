@@ -1,6 +1,6 @@
 From stdpp Require Import prelude.
 From Coq Require Import Classical.
-From AML Require Import Ensemble.
+From sets Require Import Ensemble.
 From AML Require Import Signature Pattern Variables PatternClosureProps.
 From AML Require Import Structure Valuation PropositionalPatternValuation PatternValuation.
 From AML Require Import Satisfaction SemanticConsequences.

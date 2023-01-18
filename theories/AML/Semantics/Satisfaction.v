@@ -1,6 +1,6 @@
 From Cdcl Require Import Itauto. #[local] Tactic Notation "itauto" := itauto auto.
 From stdpp Require Import prelude.
-From AML Require Import Ensemble.
+From sets Require Import Ensemble.
 From AML Require Import Signature Pattern Structure Variables.
 From AML Require Import Valuation PropositionalPatternValuation PatternValuation.
 
@@ -225,7 +225,7 @@ Definition set_satisfies (Gamma : PatternSet) :=
 Lemma set_satisfies_alt Gamma :
   set_satisfies Gamma <-> forall ϕ, ϕ ∈ Gamma -> satisfies ϕ.
 Proof.
-  unfold set_satisfies, set_esatisfies, satisfies. 
+  unfold set_satisfies, set_esatisfies, satisfies.
   by firstorder.
 Qed.
 
