@@ -168,7 +168,7 @@ Lemma ml_tautology_idd ϕ ψ : ϕ →ₜ ψ →ₚ ψ.
 Proof. by apply ml_tautology_a1i, ml_tautology_id. Defined.
 
 Lemma ml_tautology_impi ϕ ψ χ :
-  ϕ →ₜ ψ →ₚ χ -> ¬ₚ(ϕ →ₚ ¬ₚψ) →ₜ χ.
+  ϕ →ₜ ψ →ₚ χ -> ¬ₚ(ϕ →ₚ ¬ₚ ψ) →ₜ χ.
 Admitted.
 
 Lemma ml_tautology_sim' ϕ ψ : ¬ₚ (ϕ →ₚ ¬ₚ ψ) →ₜ ψ.

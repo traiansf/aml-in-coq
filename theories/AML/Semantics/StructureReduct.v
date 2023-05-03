@@ -119,7 +119,7 @@ Context
 Lemma set_esatisfies_reduct
   (A : Structure (Sigma := Sigma2))
   (va : Valuation (s := A))
-  : set_esatisfies A va (pattern_set_translation h Γ)
+  : set_esatisfies A va (pattern_set_translation h Γ (PatternSet2 := PatternSet2))
     <->
     set_esatisfies (structure_reduct A) (valuation_reduct A va) Γ.
 Proof.
@@ -134,7 +134,7 @@ Qed.
 
 Lemma set_satisfies_reduct
   (A : Structure (Sigma := Sigma2))
-  : set_satisfies A (pattern_set_translation h Γ)
+  : set_satisfies A (pattern_set_translation h Γ (PatternSet2 := PatternSet2))
     <->
     set_satisfies (structure_reduct A) Γ.
 Proof.
@@ -151,7 +151,7 @@ Qed.
 Lemma global_semantic_consequence_set_reduct
   (ϕ : Pattern (Sigma := Sigma1))
   : Γ ⊧ ϕ ->
-    pattern_set_translation h Γ ⊧ pattern_translation h ϕ.
+    pattern_set_translation h Γ (PatternSet2 := PatternSet2) ⊧ pattern_translation h ϕ.
 Proof.
   intros Hsat M HΓ.
   by apply satisfies_reduct, Hsat, set_satisfies_reduct.

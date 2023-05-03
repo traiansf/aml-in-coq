@@ -157,7 +157,7 @@ Proof.
   - replace (elements _) with [y]; cycle 1.
     {
       apply Permutation_singleton_l.
-      rewrite <- elements_singleton.
+      unshelve erewrite <- elements_singleton; [| done.. |].
       apply elements_proper.
       intro a; rewrite elem_of_intersection, elem_of_union, !elem_of_singleton.
       rewrite <- EVarBound_BEV.
@@ -209,7 +209,7 @@ Proof.
   - replace (elements _) with [y]; cycle 1.
     {
       apply Permutation_singleton_l.
-      rewrite <- elements_singleton.
+      unshelve erewrite <- elements_singleton; [| done.. |].
       apply elements_proper.
       intro a; rewrite elem_of_intersection, elem_of_union, !elem_of_singleton.
       rewrite <- EVarBound_BEV.
