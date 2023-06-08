@@ -61,7 +61,7 @@ Notation "'∃ₚ' x .. y , P" := (pattern_ex (λ x, .. (pattern_ex (λ y, P)) .
 
 Definition pattern_mu (φ : Pattern -> Pattern) : Pattern := lfp φ.
 Notation "'μₚ' x .. y , P" := (pattern_mu (λ x, .. (pattern_mu (λ y, P)) .. ))
-  (at level 200, x binder, y binder, right associativity,
+  (at level 54, x binder, y binder, right associativity,
   format "μₚ  x  ..  y ,  P") : ml_scope.
 
 Notation "⊥ₚ" := (μₚ X, X) (at level 37) : ml_scope.
@@ -274,3 +274,63 @@ Proof.
   by exists x; apply elem_of_singleton.
 Qed.
 
+Definition context := Element -> Pattern.
+
+Definition context_app (ec : context) (ϕ : Pattern) : Pattern :=
+  fun x => exists b, b ∈ ϕ /\ x ∈ ec b.
+
+Lemma singleton_variable (C₁ C₂ : context) (ϕ : Pattern) (x : Element) :
+  ¬ₚ (context_app C₁ ({[ x ]} ∧ₚ ϕ) ∧ₚ context_app C₂ ({[ x ]} ∧ₚ ¬ₚ ϕ)).
+Proof.
+  apply pattern_to_sets.
+  intro e.
+  rewrite pattern_neg_to_complement, elem_of_complement,
+    pattern_and_to_intersection, elem_of_intersection.
+  intros [(b & Hxphi & _) (c & Hxnphi & _)].
+  rewrite pattern_and_to_intersection, elem_of_intersection, elem_of_singleton
+    in *.
+  destruct Hxphi as [-> Hxphi], Hxnphi as [-> Hxnphi].
+  by rewrite pattern_neg_to_complement, elem_of_complement in Hxnphi.
+Qed.
+
+Lemma ex_quantifier_rule (ϕ : Element -> Pattern) (ψ : Pattern) (e : Element) :
+  ϕ e →ₚ ψ -> ∃ₚ x, ϕ x →ₚ ψ.
+Proof.
+  intro Himpl.
+  apply pattern_to_sets; intro a.
+  apply elem_of_indexed_union.
+  exists e.
+  by revert a; apply pattern_to_sets.
+Qed.
+
+Lemma framing_l (ϕ ψ χ : Pattern) : ϕ →ₚ ψ -> ϕ $$ χ →ₚ ψ $$ χ.
+Proof.
+  intros Himpl%pattern_impl_to_inclusion.
+  apply pattern_impl_to_inclusion; intro e.
+  rewrite !elem_of_pattern_app.
+  intros (b & Hb & c & Hc & He).
+  exists b; split; [by apply Himpl |].
+  by eexists.
+Qed.
+
+Lemma framing_r (ϕ ψ χ : Pattern) : ϕ →ₚ ψ -> χ $$ ϕ →ₚ χ $$ ψ.
+Proof.
+  intros Himpl%pattern_impl_to_inclusion.
+  apply pattern_impl_to_inclusion; intro e.
+  rewrite !elem_of_pattern_app.
+  intros (b & Hb & c & Hc & He).
+  exists b; split; [done |].
+  by exists c; split; [apply Himpl |].
+Qed.
+
+Lemma set_variable_substitution (ϕ : Pattern -> Pattern) (ψ : Pattern) :
+  (forall X, ϕ X) -> ϕ ψ.
+Proof. done. Qed.
+
+Lemma knaster_tarsky (ϕ : Pattern -> Pattern) (ψ : Pattern) :
+  ϕ ψ →ₚ ψ -> μₚ X, ϕ X →ₚ ψ.
+Proof.
+  intros Hincl%pattern_impl_to_inclusion.
+  apply pattern_impl_to_inclusion.
+  by apply knaster_tarsky_least_pre_fixpoint.
+Qed.
