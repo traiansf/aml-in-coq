@@ -2,6 +2,9 @@
 
 -arg -w -arg -future-coercion-class-field
 
+
+theories/AML/Shallow.v
+
 theories/AML/Signature.v
 theories/AML/Syntax/Expression.v
 theories/AML/Syntax/Pattern.v
