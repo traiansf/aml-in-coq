@@ -550,3 +550,21 @@ Proof.
   apply pattern_impl_to_inclusion.
   by apply knaster_tarsky_least_pre_fixpoint.
 Qed.
+
+Section sec_definedness.
+
+Parameter def : Element.
+
+Definition defined (phi : Pattern) : Pattern := {[def]} $$ phi.
+
+Notation "⌈ x ⌉" := (defined x) (at level 39) : ml_scope.
+
+Axiom definedness : ∀ₚ x, ⌈{[x]}⌉.
+
+Definition total (phi : Pattern) : Pattern :=
+  ¬ₚ⌈¬ₚ phi⌉.
+
+Notation "⌊ x ⌋" := ({[def]} $$ x) (at level 39) : ml_scope.
+  
+
+End sec_definedness.
