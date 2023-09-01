@@ -3,8 +3,6 @@
 -arg -w -arg -future-coercion-class-field
 
 
-theories/AML/Shallow.v
-
 theories/AML/Signature.v
 theories/AML/Syntax/Expression.v
 theories/AML/Syntax/Pattern.v
@@ -36,3 +34,7 @@ theories/AML/Proofs/Proof.v
 theories/AML/Soundness/StrongSoundness.v
 theories/AML/Soundness/LocalSoundness.v
 theories/AML/Soundness/GlobalSoundness.v
+
+theories/AML/Shallow.v
+theories/AML/Shallow/PatternToShallow.v
+_

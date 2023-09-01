@@ -28,31 +28,33 @@ We assume as given a base type, called <<Element>> and a binary function <<app>>
 mapping pairs of element to sets of elements.
 *)
 
+Class ShallowMLContext `(app : Element -> Element -> Ensemble Element).
+
+Section sec_shallow_ml.
+
 (** ** The language
 
 Since we are embedding AML as a theory over sets, all constructs are introduced
 directly through their set interpretation.
 *)
 
-Parameters
-  (Element : Type)
-  (app : Element -> Element -> Ensemble Element).
+Context `{app : Element -> Element -> Ensemble Element} `{!ShallowMLContext app}.
 
 Definition Pattern : Type := Ensemble Element.
 
 (** A context is modeled as a map from elements to patterns. *)
 Definition context := Element -> Pattern.
 
-Declare Scope ml_scope.
-Open Scope ml_scope.
+Declare Scope sml_scope.
+Open Scope sml_scope.
 
 (*
   Pattern application is defined as the extension of <<app>> to patterns
   (as sets of elements).
 *)
 Definition pattern_app (B C : Pattern) : Pattern :=
-    fun x => exists b, b ∈ B /\ exists c, c ∈ C /\ x ∈ app b c.
-Infix "$$" := pattern_app (at level 11) : ml_scope.
+    fun x => exists b : Element, b ∈ B /\ exists c : Element, c ∈ C /\ x ∈ app b c.
+Infix "$$" := pattern_app (at level 11) : sml_scope.
 
 (**
   Context application on a pattern is defined similarly to regular application
@@ -70,7 +72,7 @@ Definition context_app_r (ϕ : Pattern) (e : Element) : Pattern :=
 
 Definition pattern_impl (B C : Pattern) :
   Pattern := complement B ∪ C.
-Notation "x →ₚ y" := (pattern_impl x y) (at level 55, right associativity) : ml_scope.
+Notation "x →ₛ y" := (pattern_impl x y) (at level 55, right associativity) : sml_scope.
 
 (**
   Existential quantification is modeled using HOAS and identifying the
@@ -78,9 +80,9 @@ Notation "x →ₚ y" := (pattern_impl x y) (at level 55, right associativity) :
   instances of the quantified variable.
 *)
 Definition pattern_ex (φ : Element -> Pattern) : Pattern := indexed_union φ.
-Notation "'∃ₚ' x .. y , P" := (pattern_ex (λ x, .. (pattern_ex (λ y, P)) .. ))
+Notation "'∃ₛ' x .. y , P" := (pattern_ex (λ x, .. (pattern_ex (λ y, P)) .. ))
   (at level 200, x binder, y binder, right associativity,
-  format "∃ₚ  x  ..  y ,  P") : ml_scope.
+  format "∃ₛ  x  ..  y ,  P") : sml_scope.
 
 (**
   Mu binding is also modeled using HOAS and identifying the mu-bound pattern
@@ -88,35 +90,35 @@ Notation "'∃ₚ' x .. y , P" := (pattern_ex (λ x, .. (pattern_ex (λ y, P)) .
   function from sets to sets.
 *)
 Definition pattern_mu (φ : Pattern -> Pattern) : Pattern := lfp φ.
-Notation "'μₚ' x .. y , P" := (pattern_mu (λ x, .. (pattern_mu (λ y, P)) .. ))
+Notation "'μₛ' x .. y , P" := (pattern_mu (λ x, .. (pattern_mu (λ y, P)) .. ))
   (at level 54, x binder, y binder, right associativity,
-  format "μₚ  x  ..  y ,  P") : ml_scope.
+  format "μₛ  x  ..  y ,  P") : sml_scope.
 
 (** The other connectives are derived from the base ones as in AML. *)
-Notation "⊥ₚ" := (μₚ X, X) (at level 37) : ml_scope.
-Notation "¬ₚ x" := (x →ₚ ⊥ₚ) (at level 40) : ml_scope.
-Notation "⊤ₚ" := (¬ₚ ⊥ₚ) (at level 37) : ml_scope.
-Notation "x ∨ₚ y" := (¬ₚ x →ₚ y) (at level 53, left associativity) : ml_scope.
-Notation "x ∧ₚ y" := (¬ₚ(¬ₚ x ∨ₚ ¬ₚ y)) (at level 50, left associativity) : ml_scope.
-Notation "x ↔ₚ y" := ((x →ₚ y) ∧ₚ (y →ₚ x)) (at level 57, no associativity) : ml_scope.
+Notation "⊥ₛ" := (μₛ X, X) (at level 37) : sml_scope.
+Notation "¬ₛ x" := (x →ₛ ⊥ₛ) (at level 40) : sml_scope.
+Notation "⊤ₛ" := (¬ₛ ⊥ₛ) (at level 37) : sml_scope.
+Notation "x ∨ₛ y" := (¬ₛ x →ₛ y) (at level 53, left associativity) : sml_scope.
+Notation "x ∧ₛ y" := (¬ₛ(¬ₛ x ∨ₛ ¬ₛ y)) (at level 50, left associativity) : sml_scope.
+Notation "x ↔ₛ y" := ((x →ₛ y) ∧ₛ (y →ₛ x)) (at level 57, no associativity) : sml_scope.
 
-Notation "'∀ₚ' x .. y , P" := (¬ₚ ∃ₚ x, ¬ₚ .. (¬ₚ ∃ₚ y, ¬ₚ P) .. )
+Notation "'∀ₛ' x .. y , P" := (¬ₛ ∃ₛ x, ¬ₛ .. (¬ₛ ∃ₛ y, ¬ₛ P) .. )
   (at level 200, x binder, y binder, right associativity,
-  format "∀ₚ  x  ..  y ,  P") : ml_scope.
+  format "∀ₛ  x  ..  y ,  P") : sml_scope.
 
 Definition pattern_nu (φ : Pattern -> Pattern) : Pattern :=
-  ¬ₚ μₚ X, ¬ₚ φ (¬ₚ X).
+  ¬ₛ μₛ X, ¬ₛ φ (¬ₛ X).
 
-Notation "'νₚ' x .. y , P" := (pattern_nu (λ x, .. (pattern_nu (λ y, P)) .. ))
+Notation "'νₛ' x .. y , P" := (pattern_nu (λ x, .. (pattern_nu (λ y, P)) .. ))
   (at level 200, x binder, y binder, right associativity,
-  format "νₚ  x  ..  y ,  P") : ml_scope.
+  format "νₛ  x  ..  y ,  P") : sml_scope.
 
 (** We define truth as the pattern being equivalent to the whole set (⊤). *)
-Definition Is_top (φ : Pattern) : Prop := φ ≡ ⊤ₚ.
+Definition Is_top (φ : Pattern) : Prop := φ ≡ ⊤ₛ.
 
 (** The coercion to Prop allows us to write patterns as Coq propositions. *)
 Coercion Is_top : Pattern >-> Sortclass.
-Global Hint Unfold Is_top : core.
+Hint Unfold Is_top : core.
 
 (** ** Auxiliary set-theoretical results
 
@@ -183,10 +185,10 @@ Proof.
   by rewrite elem_of_complement; set_solver.
 Qed.
 
-Lemma top_true (a : Element) : a ∈ ⊤ₚ.
+Lemma top_true (a : Element) : a ∈ ⊤ₛ.
 Proof.
   unfold pattern_impl; rewrite elem_of_union, elem_of_complement.
-  by destruct (classic (a ∈ ⊥ₚ)); set_solver.
+  by destruct (classic (a ∈ ⊥ₛ)); set_solver.
 Qed.
 
 Lemma pattern_to_sets (φ : Pattern) : φ <-> forall x, x ∈ φ.
@@ -211,7 +213,7 @@ Proof.
   by split; apply Is_top_proper_subseteq.
 Qed.
 
-Lemma pattern_impl_to_inclusion (φ ψ : Pattern) : φ →ₚ ψ  <-> φ ⊆ ψ.
+Lemma pattern_impl_to_inclusion (φ ψ : Pattern) : φ →ₛ ψ  <-> φ ⊆ ψ.
 Proof.
   rewrite pattern_to_sets; unfold pattern_impl.
   apply forall_proper; intro.
@@ -237,7 +239,7 @@ Proof.
 Qed.
 
 Lemma pattern_ex_proper_subseteq (ϕ ψ : Element -> Pattern) :
-  (forall x, ϕ x ⊆ ψ x) -> (∃ₚ x, ϕ x) ⊆ ∃ₚ x, ψ x.
+  (forall x, ϕ x ⊆ ψ x) -> (∃ₛ x, ϕ x) ⊆ ∃ₛ x, ψ x.
 Proof.
   intros Hincl e He.
   apply elem_of_indexed_union in He as [x He].
@@ -246,7 +248,7 @@ Proof.
 Qed.
 
 Lemma pattern_ex_proper (ϕ ψ : Element -> Pattern) :
-  (forall x, ϕ x ≡ ψ x) -> (∃ₚ x, ϕ x) ≡ ∃ₚ x, ψ x.
+  (forall x, ϕ x ≡ ψ x) -> (∃ₛ x, ϕ x) ≡ ∃ₛ x, ψ x.
 Proof.
   intros Hincl; apply set_equiv_subseteq.
   by split; apply pattern_ex_proper_subseteq; set_solver.
@@ -265,7 +267,7 @@ Instance pattern_ex_flip_impl_morphism {A : Type} :
   Proper (pointwise_relation Element (flip (⊆)) ==> (flip (⊆))) pattern_ex | 1.
 Proof. by intros ϕ ψ Heqv; apply pattern_ex_proper_subseteq. Qed.
 
-Lemma pattern_bot_to_empty : ⊥ₚ ≡ ∅.
+Lemma pattern_bot_to_empty : ⊥ₛ ≡ ∅.
 Proof.
   split; [| by set_solver].
   unfold pattern_mu, lfp, pre_fixpoint.
@@ -273,14 +275,14 @@ Proof.
   by intros Hbot; apply Hbot.
 Qed.
 
-Lemma pattern_top_to_top : ⊤ₚ ≡ top Element.
+Lemma pattern_top_to_top : ⊤ₛ ≡ top Element.
 Proof.
   split; [by set_solver |].
   unfold pattern_impl; rewrite pattern_bot_to_empty.
   by rewrite (union_empty_r (complement ∅)), complement_empty_top.
 Qed.
 
-Lemma pattern_or_to_union (φ ψ : Pattern) : φ ∨ₚ ψ ≡ φ ∪ ψ.
+Lemma pattern_or_to_union (φ ψ : Pattern) : φ ∨ₛ ψ ≡ φ ∪ ψ.
 Proof.
   intro x; unfold pattern_impl.
   repeat rewrite !elem_of_union, !elem_of_complement.
@@ -290,7 +292,7 @@ Proof.
   - by intros [].
 Qed.
 
-Lemma pattern_and_to_intersection (φ ψ : Pattern) : φ ∧ₚ ψ ≡ φ ∩ ψ.
+Lemma pattern_and_to_intersection (φ ψ : Pattern) : φ ∧ₛ ψ ≡ φ ∩ ψ.
 Proof.
   intro x; unfold pattern_impl.
   repeat (rewrite !complement_union_classic || rewrite !complement_twice_classic ||
@@ -302,7 +304,7 @@ Proof.
   by set_solver.
 Qed.
 
-Lemma pattern_neg_to_complement (φ : Pattern) : ¬ₚ φ ≡ complement φ.
+Lemma pattern_neg_to_complement (φ : Pattern) : ¬ₛ φ ≡ complement φ.
 Proof.
   intro; unfold pattern_impl.
   rewrite pattern_bot_to_empty.
@@ -339,7 +341,7 @@ Qed.
   proving all tautologies of propositional logic.
 *)
 Lemma ax_lukasiewicz (A B C D : Pattern) :
-  ((A →ₚ B) →ₚ C) →ₚ (C →ₚ A) →ₚ (D →ₚ A).
+  ((A →ₛ B) →ₛ C) →ₛ (C →ₛ A) →ₛ (D →ₛ A).
 Proof.
   apply pattern_to_sets; intro.
   unfold pattern_impl.
@@ -352,7 +354,7 @@ Proof.
   by contradict Hneg; left.
 Qed.
 
-Lemma modus_ponens (φ ψ : Pattern) : φ → φ →ₚ ψ → ψ.
+Lemma modus_ponens (φ ψ : Pattern) : φ → φ →ₛ ψ → ψ.
 Proof.
   rewrite !pattern_to_sets.
   unfold pattern_impl.
@@ -361,7 +363,7 @@ Proof.
   by destruct Himpl.
 Qed.
 
-Definition top_impl (φ ψ : Pattern) : Prop := φ →ₚ ψ.
+Definition top_impl (φ ψ : Pattern) : Prop := φ →ₛ ψ.
 
 #[export] Instance top_impl_reflexive : Reflexive top_impl.
 Proof. by intro; apply pattern_impl_to_inclusion. Qed.
@@ -375,19 +377,19 @@ Qed.
 
 (** ∃-Quantifier axiom of AML *)
 Lemma ex_quantifier (φ : Element -> Pattern) (y : Element) :
-  φ y →ₚ ∃ₚ x, (φ x).
+  φ y →ₛ ∃ₛ x, (φ x).
 Proof.
   intro a.
   unfold pattern_impl, pattern_ex; rewrite !elem_of_union,
     !elem_of_complement, elem_of_indexed_union.
-  split; [by destruct (classic (a ∈ ⊥ₚ)); set_solver |].
+  split; [by destruct (classic (a ∈ ⊥ₛ)); set_solver |].
   intros _.
   destruct (classic (a ∈ φ y)); [| by left].
   by right; eexists.
 Qed.
 
 (** Axiom for Propagation of ⊥ through contexts *)
-Lemma context_False (C : context) : context_app C (⊥ₚ) →ₚ ⊥ₚ.
+Lemma context_False (C : context) : context_app C (⊥ₛ) →ₛ ⊥ₛ.
 Proof.
   apply pattern_impl_to_inclusion.
   rewrite pattern_bot_to_empty.
@@ -396,14 +398,14 @@ Proof.
 Qed.
 
 (** Derived axiom for Propagation of ⊥ on the rhs of application *)
-Lemma app_False_r (φ : Pattern) : (φ $$ ⊥ₚ) →ₚ ⊥ₚ.
+Lemma app_False_r (φ : Pattern) : (φ $$ ⊥ₛ) →ₛ ⊥ₛ.
 Proof.
   etransitivity; [| apply (context_False (context_app_r φ))].
   by rewrite context_app_r_eqv.
 Qed.
 
 (** Derived axiom for Propagation of ⊥ on the lhs of application *)
-Lemma app_False_l (φ : Pattern) : (⊥ₚ $$ φ) →ₚ ⊥ₚ.
+Lemma app_False_l (φ : Pattern) : (⊥ₛ $$ φ) →ₛ ⊥ₛ.
 Proof.
   etransitivity; [| apply (context_False (context_app_l φ))].
   by rewrite context_app_l_eqv.
@@ -411,7 +413,7 @@ Qed.
 
 (** Axiom for Propagation of ∨ through contexts *)
 Lemma context_or (C : context) (ϕ ψ : Pattern) :
-  context_app C (ϕ ∨ₚ ψ) →ₚ  context_app C ϕ ∨ₚ context_app C ψ.
+  context_app C (ϕ ∨ₛ ψ) →ₛ  context_app C ϕ ∨ₛ context_app C ψ.
 Proof.
   apply pattern_impl_to_inclusion.
   rewrite !pattern_or_to_union.
@@ -420,22 +422,22 @@ Proof.
 Qed.
 
 (** Derived axiom for Propagation of ∨ on the lhs of application *)
-Lemma app_or_l (φ ψ χ : Pattern) : (φ ∨ₚ ψ) $$ χ →ₚ φ $$ χ ∨ₚ ψ $$ χ.
+Lemma app_or_l (φ ψ χ : Pattern) : (φ ∨ₛ ψ) $$ χ →ₛ φ $$ χ ∨ₛ ψ $$ χ.
 Proof.
-  by transitivity (context_app (context_app_l χ) (φ ∨ₚ ψ));
+  by transitivity (context_app (context_app_l χ) (φ ∨ₛ ψ));
     [| etransitivity; [by apply context_or |]]; rewrite !context_app_l_eqv.
 Qed.
 
 (** Derived axiom for Propagation of ∨ on the rhs of application *)
-Lemma app_or_r (φ ψ χ : Pattern) : χ $$ (φ ∨ₚ ψ) →ₚ χ $$ φ ∨ₚ χ $$ ψ.
+Lemma app_or_r (φ ψ χ : Pattern) : χ $$ (φ ∨ₛ ψ) →ₛ χ $$ φ ∨ₛ χ $$ ψ.
 Proof.
-  by transitivity (context_app (context_app_r χ) (φ ∨ₚ ψ));
+  by transitivity (context_app (context_app_r χ) (φ ∨ₛ ψ));
     [| etransitivity; [by apply context_or |]]; rewrite !context_app_r_eqv.
 Qed.
 
 (** Axiom for Propagation of ∃ through contexts *)
 Lemma context_ex (C : context) (ϕ : Element -> Pattern) :
-  context_app C (∃ₚ x, ϕ x) →ₚ  ∃ₚ x, context_app C (ϕ x).
+  context_app C (∃ₛ x, ϕ x) →ₛ  ∃ₛ x, context_app C (ϕ x).
 Proof.
   apply pattern_impl_to_inclusion; unfold pattern_ex.
   intro x; rewrite elem_of_indexed_union, !elem_of_context_app.
@@ -446,18 +448,18 @@ Qed.
 
 (** Axiom for Propagation of ∃ on the lhs of application *)
 Lemma app_ex_l (φ : Element -> Pattern) (ψ : Pattern) :
-  (∃ₚ x, φ x) $$ ψ →ₚ ∃ₚ x, φ x $$ ψ.
+  (∃ₛ x, φ x) $$ ψ →ₛ ∃ₛ x, φ x $$ ψ.
 Proof.
-  by transitivity (context_app (context_app_l ψ) ((∃ₚ x, φ x)));
+  by transitivity (context_app (context_app_l ψ) ((∃ₛ x, φ x)));
     [| etransitivity; [by apply context_ex |]];
     setoid_rewrite context_app_l_eqv.
 Qed.
 
 (** Axiom for Propagation of ∃ on the rhs of application *)
 Lemma app_ex_r (φ : Element -> Pattern) (ψ : Pattern) :
-  ψ $$ (∃ₚ x, φ x) →ₚ ∃ₚ x, ψ $$ φ x.
+  ψ $$ (∃ₛ x, φ x) →ₛ ∃ₛ x, ψ $$ φ x.
 Proof.
-  by transitivity (context_app (context_app_r ψ) ((∃ₚ x, φ x)));
+  by transitivity (context_app (context_app_r ψ) ((∃ₛ x, φ x)));
     [| etransitivity; [by apply context_ex |]];
     setoid_rewrite context_app_r_eqv.
 Qed.
@@ -467,11 +469,11 @@ Qed.
   constraint (monotonicity).
 *)
 Lemma pre_fixpoint (φ : Pattern -> Pattern) `{!Proper ((⊆) ==> (⊆)) φ} :
-  φ (μₚ X, φ X) →ₚ μₚ X, φ X.
+  φ (μₛ X, φ X) →ₛ μₛ X, φ X.
 Proof. by apply pattern_impl_to_inclusion, knaster_tarsky_lfp_fix_sub. Qed.
 
 (** Existence axiom *)
-Lemma existence : ∃ₚ x, {[ x ]}.
+Lemma existence : ∃ₛ x, {[ x ]}.
 Proof.
   apply pattern_to_sets; intro x.
   unfold pattern_ex.
@@ -483,7 +485,7 @@ Qed.
   Singleton Variable axiom, with contexts as modeled above.
 *)
 Lemma singleton_variable (C₁ C₂ : context) (ϕ : Pattern) (x : Element) :
-  ¬ₚ (context_app C₁ ({[ x ]} ∧ₚ ϕ) ∧ₚ context_app C₂ ({[ x ]} ∧ₚ ¬ₚ ϕ)).
+  ¬ₛ (context_app C₁ ({[ x ]} ∧ₛ ϕ) ∧ₛ context_app C₂ ({[ x ]} ∧ₛ ¬ₛ ϕ)).
 Proof.
   apply pattern_to_sets.
   intro e.
@@ -497,7 +499,7 @@ Proof.
 Qed.
 
 Lemma ex_quantifier_rule (ϕ : Element -> Pattern) (ψ : Pattern) (e : Element) :
-  ϕ e →ₚ ψ -> ∃ₚ x, ϕ x →ₚ ψ.
+  ϕ e →ₛ ψ -> ∃ₛ x, ϕ x →ₛ ψ.
 Proof.
   intro Himpl.
   apply pattern_to_sets; intro a.
@@ -533,10 +535,10 @@ Proof.
     by apply framing.
 Qed.
 
-Lemma framing_r (ϕ ψ χ : Pattern) : ϕ →ₚ ψ -> χ $$ ϕ →ₚ χ $$ ψ.
+Lemma framing_r (ϕ ψ χ : Pattern) : ϕ →ₛ ψ -> χ $$ ϕ →ₛ χ $$ ψ.
 Proof. by apply framing_app. Qed.
 
-Lemma framing_l (ϕ ψ χ : Pattern) : ϕ →ₚ ψ -> ϕ $$ χ →ₚ ψ $$ χ.
+Lemma framing_l (ϕ ψ χ : Pattern) : ϕ →ₛ ψ -> ϕ $$ χ →ₛ ψ $$ χ.
 Proof. by intro; apply framing_app. Qed.
 
 Lemma set_variable_substitution (ϕ : Pattern -> Pattern) (ψ : Pattern) :
@@ -544,7 +546,7 @@ Lemma set_variable_substitution (ϕ : Pattern -> Pattern) (ψ : Pattern) :
 Proof. done. Qed.
 
 Lemma knaster_tarsky (ϕ : Pattern -> Pattern) (ψ : Pattern) :
-  ϕ ψ →ₚ ψ -> μₚ X, ϕ X →ₚ ψ.
+  ϕ ψ →ₛ ψ -> μₛ X, ϕ X →ₛ ψ.
 Proof.
   intros Hincl%pattern_impl_to_inclusion.
   apply pattern_impl_to_inclusion.
@@ -557,14 +559,17 @@ Parameter def : Element.
 
 Definition defined (phi : Pattern) : Pattern := {[def]} $$ phi.
 
-Notation "⌈ x ⌉" := (defined x) (at level 39) : ml_scope.
+Notation "⌈ x ⌉" := (defined x) (at level 39) : sml_scope.
 
-Axiom definedness : ∀ₚ x, ⌈{[x]}⌉.
+Axiom definedness : ∀ₛ x, ⌈{[x]}⌉.
 
 Definition total (phi : Pattern) : Pattern :=
-  ¬ₚ⌈¬ₚ phi⌉.
+  ¬ₛ⌈¬ₛ phi⌉.
 
-Notation "⌊ x ⌋" := ({[def]} $$ x) (at level 39) : ml_scope.
-  
+Notation "⌊ x ⌋" := ({[def]} $$ x) (at level 39) : sml_scope.
+
 
 End sec_definedness.
+End sec_shallow_ml.
+
+Global Hint Unfold Is_top : core.
