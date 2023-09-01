@@ -1,0 +1,31 @@
+opam-version: "2.0"
+maintainer: "traian.serbanuta@gmail.com"
+version: "dev"
+
+homepage: "https://github.com/traiansf/aml-in-coq"
+dev-repo: "git+https://github.com/traiansf/aml-in-coq.git"
+bug-reports: "https://github.com/traiansf/aml-in-coq/issues"
+license: "MIT"
+
+synopsis: "Coq formalization of applicative matching logic"
+description: """
+Formalization of syntax, semantics, and soundness for applicative matching logic
+closely following Laurentiu Leustean's lecture notes."""
+
+build: ["dune" "build" "-p" name "-j" jobs]
+depends: [
+  "dune" {>= "2.5"}
+  "coq" {>= "8.15"}
+  "coq-stdpp" {>= "1.8.0"}
+  "coq-itauto"
+  "coq-sets"
+]
+
+tags: [
+  "keyword:logic"
+  "keyword:AML"
+  "keyword:soundness"
+]
+authors: [
+  "Traian Florin Șerbănuță"
+]

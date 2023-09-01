@@ -1,0 +1,9 @@
+(coq.theory
+ (name AML)
+ (package coq-aml)
+ (synopsis "Coq formalization of applicative matching logic")
+ (flags :standard
+   -w -future-coercion-class-field
+   -w -deprecated-tacopt-without-locality))
+
+(include_subdirs qualified)
