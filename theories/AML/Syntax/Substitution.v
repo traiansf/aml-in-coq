@@ -313,20 +313,22 @@ Lemma evar_rename_FreeFor x y ϕ (Hxy : x <> y) (Hocc : ~ EOccursInd y ϕ) :
   EFreeForInd x (PEVar y) (evar_rename x y ϕ).
 Proof.
   induction ϕ; cbn; intros; cycle 4. 3-5: by constructor.
-  - feed specialize IHϕ; [by contradict Hocc; apply eo_mu |].
-    by constructor; [| inversion 1].
+  - constructor; [| inversion 1].
+    apply IHϕ.
+    by contradict Hocc; apply eo_mu.
   - by constructor; [apply IHϕ1 | apply IHϕ2];
       contradict Hocc; [apply eo_app_left | apply eo_app_right].
   - by constructor; [apply IHϕ1 | apply IHϕ2];
       contradict Hocc; [apply eo_impl_left | apply eo_impl_right].
-  - feed specialize IHϕ; [by contradict Hocc; apply eo_ex_neq |].
+  -
     case_decide; [subst e |].
     + apply EFreeForInd_x_not_occurs.
       cut (~ EOccursInd x (evar_sub0 x (PEVar y) (evar_rename x y ϕ)));
         [rewrite <- !EOccursInd_iff, EOccurs_ex by done; itauto |].
       by apply evar_sub_rename_not_occurs.
-    + constructor; [done |].
-      by inversion 1; subst; contradict Hocc; constructor.
+    + constructor.
+      * by apply IHϕ; contradict Hocc; apply eo_ex_neq.
+      * by inversion 1; subst; contradict Hocc; constructor.
 Qed.
 
 Lemma evar_rename_FreeFor_1 x y z ϕ (Hxy : z <> y) (Hocc : ~ EOccursInd z ϕ) :
@@ -649,16 +651,16 @@ Proof.
       contradict Hocc; [apply so_app_left | apply so_app_right].
   - by constructor; [apply IHϕ1 | apply IHϕ2];
       contradict Hocc; [apply so_impl_left | apply so_impl_right].
-  - feed specialize IHϕ; [by contradict Hocc; apply so_ex |].
-    by constructor; [| inversion 1].
-  - feed specialize IHϕ; [by contradict Hocc; apply so_mu_neq |].
-    case_decide; [subst s |].
+  - constructor; [| by inversion 1].
+    by apply IHϕ; contradict Hocc; apply so_ex.
+  - case_decide; [subst s |].
     + apply SFreeForInd_x_not_occurs.
       cut (~ SOccursInd x (svar_sub0 x (PSVar y) (svar_rename x y ϕ)));
         [rewrite <- !SOccursInd_iff, SOccurs_mu by done; itauto |].
       by apply svar_sub_rename_not_occurs.
-    + constructor; [done |].
-      by inversion 1; subst; contradict Hocc; constructor.
+    + constructor.
+      * by apply IHϕ; contradict Hocc; apply so_mu_neq.
+      * by inversion 1; subst; contradict Hocc; constructor.
 Qed.
 
 Definition esubst (ϕ : Pattern) (x : EVar) (ψ : Pattern) :=
