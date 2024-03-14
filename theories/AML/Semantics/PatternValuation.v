@@ -720,7 +720,7 @@ Lemma pattern_valuation_mu_unroll ϕ X e :
 Proof.
   intros Hocc.
   pose proof (pattern_valuation_positive_proper e ϕ X Hocc).
-  symmetry; apply (knaster_tarsky_lfp_fix (pattern_valuation_functor e ϕ X)).
+  symmetry; apply (knaster_tarski_lfp_fix (pattern_valuation_functor e ϕ X)).
 Qed.
 
 Lemma pattern_valuation_mu_lfp ϕ X e B :
@@ -730,7 +730,7 @@ Lemma pattern_valuation_mu_lfp ϕ X e B :
 Proof.
   intros Hocc Hfix.
   pose proof (pattern_valuation_positive_proper e ϕ X Hocc).
-  by apply (knaster_tarsky_lfp_least (pattern_valuation_functor e ϕ X)).
+  by apply (knaster_tarski_lfp_least (pattern_valuation_functor e ϕ X)).
 Qed.
 
 Lemma pattern_valuation_nu_unroll ϕ X e :
@@ -741,7 +741,7 @@ Proof.
   intros Hocc.
   pose proof (pattern_valuation_positive_proper e ϕ X Hocc).
   rewrite pattern_valuation_nu_classic at 1.
-  specialize (knaster_tarsky_gfp_fix (pattern_valuation_functor e ϕ X)) as Hgfp.
+  specialize (knaster_tarski_gfp_fix (pattern_valuation_functor e ϕ X)) as Hgfp.
   unfold fixpoint, gfp, pattern_valuation_functor, post_fixpoint in Hgfp; cbn in Hgfp.
   rewrite <- Hgfp.
   apply pattern_valuation_proper; [| done].
@@ -757,7 +757,7 @@ Proof.
   intros Hocc Hfix.
   pose proof (pattern_valuation_positive_proper e ϕ X Hocc).
   rewrite pattern_valuation_nu_classic.
-  by apply (knaster_tarsky_gfp_greatest (pattern_valuation_functor e ϕ X)).
+  by apply (knaster_tarski_gfp_greatest (pattern_valuation_functor e ϕ X)).
 Qed.
 
 Lemma pattern_valuation_context_hole e ϕ :

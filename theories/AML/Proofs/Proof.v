@@ -73,7 +73,7 @@ Proof.
     + by exists []; apply ml_proof_axiom; [constructor |].
     + destruct IHMLXGammaTheorem1 as [proof_ϕ Hproof_ϕ].
       destruct IHMLXGammaTheorem2 as [proof_ψ Hproof_ψ].
-      exists ((ϕ :: proof_ϕ) ++ ψ :: proof_ψ). 
+      exists ((ϕ :: proof_ϕ) ++ ψ :: proof_ψ).
       apply ml_proof_modus_ponens with ϕ ψ.
       * by apply MLProof_app.
       * done.
@@ -93,11 +93,11 @@ Proof.
     + by apply ml_thm_axiom.
     + apply elem_of_list_split in Hϕ0 as (? & proof_ϕ0 & Heqproof_ϕ0).
       assert (Hϕ0 : MLProof Gamma (ϕ0 :: proof_ϕ0))
-        by (subst; eapply MLProof_suffix; done). 
+        by (subst; eapply MLProof_suffix; done).
       apply (f_equal length) in Heqproof_ϕ0.
       apply elem_of_list_split in Hψ as (? & proof_ψ & Heqproof_ψ).
       assert (Hψ : MLProof Gamma (ψ :: proof_ψ))
-        by (subst; eapply MLProof_suffix; done). 
+        by (subst; eapply MLProof_suffix; done).
       apply (f_equal length) in Heqproof_ψ.
       rewrite app_length in Heqproof_ϕ0, Heqproof_ψ; cbn in Heqproof_ϕ0, Heqproof_ψ.
       apply ml_thm_modus_ponens with ϕ0 ψ; [done |..]; eapply Hind.
@@ -105,7 +105,7 @@ Proof.
       all: cbn; lia.
     + apply elem_of_list_split in Hϕ0 as (? & proof_ϕ0 & Heqproof_ϕ0).
       assert (Hϕ0 : MLProof Gamma (ϕ0 :: proof_ϕ0))
-        by (subst; eapply MLProof_suffix; done). 
+        by (subst; eapply MLProof_suffix; done).
       apply (f_equal length) in Heqproof_ϕ0.
       rewrite app_length in Heqproof_ϕ0; cbn in Heqproof_ϕ0.
       eapply ml_thm_single_premise; [done |].
@@ -138,11 +138,11 @@ Inductive ElaboratedProofStep:=
 | eps_singleton_variable : forall (x : EVar) (phi : Pattern) (C1 C2 : AppContext),
     ElaboratedProofStep
 | eps_ex_quantifier : forall (n : nat) (x : EVar), ElaboratedProofStep
-| eps_framing_l : forall (n : nat) (chi : Pattern), ElaboratedProofStep 
-| eps_framing_r : forall (n : nat) (chi : Pattern), ElaboratedProofStep 
+| eps_framing_l : forall (n : nat) (chi : Pattern), ElaboratedProofStep
+| eps_framing_r : forall (n : nat) (chi : Pattern), ElaboratedProofStep
 | eps_set_variable_substitution : forall (n : nat) (psi : Pattern),
     ElaboratedProofStep
-| eps_knaster_tarsky : forall (n : nat) (X : SVar) (phi : Pattern), ElaboratedProofStep
+| eps_knaster_tarski : forall (n : nat) (X : SVar) (phi : Pattern), ElaboratedProofStep
 | eps_modus_ponens : forall (n_impl n_premise : nat), ElaboratedProofStep
 .
 

@@ -86,7 +86,7 @@ Notation "'∃ₛ' x .. y , P" := (pattern_ex (λ x, .. (pattern_ex (λ y, P)) .
 
 (**
   Mu binding is also modeled using HOAS and identifying the mu-bound pattern
-  with its semantics as the Knaster-Tarsky lfp of the pattern seen as a
+  with its semantics as the Knaster-Tarski lfp of the pattern seen as a
   function from sets to sets.
 *)
 Definition pattern_mu (φ : Pattern -> Pattern) : Pattern := lfp φ.
@@ -470,7 +470,7 @@ Qed.
 *)
 Lemma pre_fixpoint (φ : Pattern -> Pattern) `{!Proper ((⊆) ==> (⊆)) φ} :
   φ (μₛ X, φ X) →ₛ μₛ X, φ X.
-Proof. by apply pattern_impl_to_inclusion, knaster_tarsky_lfp_fix_sub. Qed.
+Proof. by apply pattern_impl_to_inclusion, knaster_tarski_lfp_fix_sub. Qed.
 
 (** Existence axiom *)
 Lemma existence : ∃ₛ x, {[ x ]}.
@@ -545,12 +545,12 @@ Lemma set_variable_substitution (ϕ : Pattern -> Pattern) (ψ : Pattern) :
   (forall X, ϕ X) -> ϕ ψ.
 Proof. done. Qed.
 
-Lemma knaster_tarsky (ϕ : Pattern -> Pattern) (ψ : Pattern) :
+Lemma knaster_tarski (ϕ : Pattern -> Pattern) (ψ : Pattern) :
   ϕ ψ →ₛ ψ -> μₛ X, ϕ X →ₛ ψ.
 Proof.
   intros Hincl%pattern_impl_to_inclusion.
   apply pattern_impl_to_inclusion.
-  by apply knaster_tarsky_least_pre_fixpoint.
+  by apply knaster_tarski_least_pre_fixpoint.
 Qed.
 
 Section sec_definedness.

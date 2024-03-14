@@ -272,21 +272,21 @@ Proof.
   by intros; eapply ml_thm_single_premise; [apply rule_set_variable_substitution |].
 Qed.
 
-Lemma local_ml_knaster_tarsky : forall ϕ X ψ,
+Lemma local_ml_knaster_tarski : forall ϕ X ψ,
     SFreeFor X ψ ϕ ->
     Γ ⊢ₗ svar_sub0 X ψ ϕ →ₚ ψ ->
     Γ ⊢ₗ μₚ X ϕ →ₚ ψ.
 Proof.
-  by intros; eapply ml_thm_single_premise; [apply rule_knaster_tarsky |].
+  by intros; eapply ml_thm_single_premise; [apply rule_knaster_tarski |].
 Qed.
 
-Lemma ml_knaster_tarsky : forall ϕ X ψ,
+Lemma ml_knaster_tarski : forall ϕ X ψ,
     SFreeFor X ψ ϕ ->
     Γ ⊢ svar_sub0 X ψ ϕ →ₚ ψ ->
     Γ ⊢ μₚ X ϕ →ₚ ψ.
 Proof.
   by intros; eapply ml_thm_single_premise;
-    [apply rule_local_premise, rule_knaster_tarsky |].
+    [apply rule_local_premise, rule_knaster_tarski |].
 Qed.
 
 Lemma ml_modus_ponens spr : forall ϕ ψ,

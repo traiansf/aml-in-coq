@@ -36,16 +36,16 @@ Inductive MLAxiom : Pattern -> Prop :=
 
 Inductive MLStrongSinglePremiseRule : Pattern -> Pattern -> Prop := .
 
-Inductive MLLocalSinglePremiseRule : Pattern -> Pattern -> Prop := 
+Inductive MLLocalSinglePremiseRule : Pattern -> Pattern -> Prop :=
 | rule_framing_l : forall ϕ ψ χ,
     MLLocalSinglePremiseRule (PImpl ϕ ψ) (PImpl (PApp ϕ χ) (PApp ψ χ))
 | rule_framing_r : forall ϕ ψ χ,
     MLLocalSinglePremiseRule (PImpl ϕ ψ) (PImpl (PApp χ ϕ) (PApp χ ψ))
-| rule_knaster_tarsky : forall ϕ X ψ,
+| rule_knaster_tarski : forall ϕ X ψ,
     SFreeFor X ψ ϕ ->
     MLLocalSinglePremiseRule (PImpl (svar_sub0 X ψ ϕ) ψ) (PImpl (μₚ X ϕ) ψ).
 
-Inductive MLGlobalSinglePremiseRule : Pattern -> Pattern -> Prop := 
+Inductive MLGlobalSinglePremiseRule : Pattern -> Pattern -> Prop :=
 | rule_local_premise : forall ϕ ψ,
     MLLocalSinglePremiseRule ϕ ψ ->
     MLGlobalSinglePremiseRule ϕ ψ
