@@ -122,7 +122,8 @@ Proof.
     specialize (Hlocal s (valuation_eupdate (valuation_eupdate inhabitant x true) y false)).
     unfold esatisfies in Hlocal.
     rewrite top_pattern_valuation_and_classic in Hlocal by typeclasses eauto.
-    edestruct Hlocal as [Hx Hy].
+
+    destruct Hlocal as [Hx Hy].
     + rewrite top_pattern_valuation_or_classic by typeclasses eauto.
       cbn; rewrite fn_update_eq.
       unfold fn_update at 1; rewrite decide_False by done.
@@ -131,8 +132,9 @@ Proof.
     + apply esatisfies_evar in Hx as [a Ha].
       cbn in Ha.
       cut (true = false); [done |].
-      by transitivity a; [| symmetry]; unshelve eapply elem_of_singleton;
-        [..| by rewrite <- Ha | by rewrite <- Ha]; typeclasses eauto.
+      transitivity a; [| symmetry];
+        unshelve eapply elem_of_singleton; [..| by rewrite <- Ha | by rewrite <- Ha];
+        typeclasses eauto.
 Qed.
 
 Lemma global_semantic_consequence_not_local :
